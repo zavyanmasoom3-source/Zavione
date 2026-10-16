@@ -1,0 +1,83 @@
+name: Build ZAVI ONE Android APKs
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Build ${{ matrix.app }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: ZAVI_ONE
+            archive: ZAVI_ONE_ANDROID_V31_SOURCE.zip
+
+          - app: ZAVI_ONE_ADMIN
+            archive: ZAVI_ONE_ADMIN_ANDROID_V31_SOURCE.zip
+
+    steps:
+
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Install Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Extract Android projects
+        run: |
+          unzip -q ZAVI_ANDROID_GITHUB_SOURCES_V31.zip \
+            -d "$RUNNER_TEMP/bundle"
+
+          mkdir -p "$RUNNER_TEMP/android-project"
+
+          unzip -q \
+            "$RUNNER_TEMP/bundle/${{ matrix.archive }}" \
+            -d "$RUNNER_TEMP/android-project"
+
+          test -f "$RUNNER_TEMP/android-project/settings.gradle"
+
+      - name: Build Android APK
+        run: |
+          cd "$RUNNER_TEMP/android-project"
+
+          gradle --no-daemon --stacktrace :app:assembleDebug
+
+      - name: Verify APK
+        run: |
+          APK="$RUNNER_TEMP/android-project/app/build/outputs/apk/debug/app-debug.apk"
+
+          test -s "$APK"
+
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" \
+            verify --verbose "$APK"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}_V31_TEST_APK
+          path: ${{ runner.temp }}/android-project/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

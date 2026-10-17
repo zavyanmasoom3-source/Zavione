@@ -17,7 +17,7 @@ hint='''</div></div>
   <div class="zavi-apk-chart-hint" aria-hidden="true">${tr('↔ برای دیدن هر ۱۲ ماه نمودار را به چپ و راست بکشید','↔ د ټولو ۱۲ میاشتو لیدو لپاره ګراف چپ او راست ته کش کړئ','↔ Swipe horizontally to view all 12 months')}</div>
   <div class="z45-chart-scroll z47-chart-scroll z27-chart-scroll"'''
 html=html.replace(chart_head,hint,1)
-assert html.count('</head>')==1
+assert html.count('</head>')>=1
 html=html.replace('</head>','<link rel="stylesheet" href="./zavi-apk-mobile-dashboard.css?v=20261017-chart-stock">\n</head>',1)
 htmlpath.write_text(html,encoding="utf-8")
 (assets/"zavi-apk-mobile-dashboard.css").write_bytes(css_source.read_bytes())

@@ -77,6 +77,15 @@ jobs:
           test -s android-build/app/src/main/assets/index.html
           echo "Captured $(find android-build/app/src/main/assets -type f | wc -l) frontend files."
 
+      - name: Repair ZAVI ONE mobile chart and low-stock cards (APK only)
+        if: matrix.mode == 'one'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 android-build/patches/apply_zavi_one_mobilefix.py android-build/app/src/main/assets
+          grep -q 'zavi-apk-dashboard-cards' android-build/app/src/main/assets/index.html
+          grep -q 'minmax(0,1fr)' android-build/app/src/main/assets/zavi-apk-mobile-dashboard.css
+
       - name: Apply user-supplied launcher logo only
         shell: bash
         run: |
@@ -107,6 +116,10 @@ jobs:
           "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 26 "$APK" > apk-signature.txt
           unzip -Z1 "$APK" | grep -Fx 'assets/index.html'
           unzip -Z1 "$APK" | grep -Fx 'classes.dex'
+          if [ "${{ matrix.mode }}" = "one" ]; then
+            unzip -Z1 "$APK" | grep -Fx 'assets/zavi-apk-mobile-dashboard.css'
+            unzip -p "$APK" assets/index.html | grep -q 'zavi-apk-dashboard-cards'
+          fi
           mkdir -p dist
           cp "$APK" "dist/${{ matrix.apk }}"
           sha256sum "dist/${{ matrix.apk }}" > "dist/${{ matrix.apk }}.sha256"

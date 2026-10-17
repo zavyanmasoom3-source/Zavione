@@ -77,6 +77,15 @@ jobs:
           test -s android-build/app/src/main/assets/index.html
           echo "Captured $(find android-build/app/src/main/assets -type f | wc -l) frontend files."
 
+      - name: Apply user-supplied launcher logo only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          cp "android-build/icons/${{ matrix.mode }}.webp" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+          test -s android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+          echo "Installed icon source: android-build/icons/${{ matrix.mode }}.webp"
+
       - name: Build non-debuggable signed universal APK
         shell: bash
         working-directory: android-build

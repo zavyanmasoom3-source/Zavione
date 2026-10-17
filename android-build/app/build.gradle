@@ -1,0 +1,30 @@
+plugins { id 'com.android.application' }
+
+String appVariant = providers.gradleProperty("zaviApp").getOrElse("one")
+if (!(appVariant in ["one", "admin"])) throw new GradleException("zaviApp must be one or admin")
+boolean admin = appVariant == "admin"
+android {
+    namespace 'com.zavione.mobile'
+    compileSdk 36
+    defaultConfig {
+        applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
+        minSdk 26
+        targetSdk 36
+        versionCode admin ? 4121 : 4110
+        versionName admin ? '41.2.1' : '41.1.0'
+        resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            debuggable false
+            // Interim distribution: the GitHub runner's generated debug certificate.
+            // For commercial production updates, replace with persistent secure release signing.
+            signingConfig signingConfigs.debug
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    packaging { resources { excludes += ['/META-INF/{AL2.0,LGPL2.1}'] } }
+}
+dependencies { implementation 'androidx.webkit:webkit:1.13.0' }

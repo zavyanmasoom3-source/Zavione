@@ -89,7 +89,7 @@ const pkg={
     appId:c.appId,productName:c.productName,asar:true,
     directories:{output:"dist"},
     files:["main.cjs","desktop-server.cjs","web/**/*","package.json","!**/*.map"],
-    win:{target:[{target:"nsis",arch:["x64"]}],requestedExecutionLevel:"asInvoker"},
+    win:{icon:mode==="one"?"web/icon-512.png":"web/icon.png",target:[{target:"nsis",arch:["x64"]}],requestedExecutionLevel:"asInvoker"},
     nsis:{oneClick:false,perMachine:false,allowToChangeInstallationDirectory:true,
       createDesktopShortcut:true,createStartMenuShortcut:true,shortcutName:c.productName,
       artifactName:c.exe,deleteAppDataOnUninstall:false}

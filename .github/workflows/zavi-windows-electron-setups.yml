@@ -1,0 +1,93 @@
+name: ZAVI ONE Windows 10-11 x64 Setup Installers
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'windows-build/**'
+      - '.github/workflows/zavi-windows-electron-setups.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Build ${{ matrix.name }}
+    runs-on: windows-2022
+    timeout-minutes: 80
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: one
+            folder: ZAVI_ONE
+            name: ZAVI ONE
+            artifact: ZAVI_ONE-Windows-10-11-64bit-Setup
+          - mode: admin
+            folder: ZAVI_ONE_ADMIN
+            name: ZAVI ONE ADMIN
+            artifact: ZAVI_ONE_ADMIN-Windows-10-11-64bit-Setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Capture live ZAVI frontend as offline-bundled desktop files
+        shell: pwsh
+        run: node windows-build/fetch-and-stage.mjs ${{ matrix.mode }}
+
+      - name: Verify captured source inventory
+        shell: pwsh
+        run: |
+          $folder = "windows-output/${{ matrix.folder }}"
+          $report = Get-Content "$folder/BUILD_SOURCE_REPORT.json" -Raw | ConvertFrom-Json
+          Write-Host "Captured files: $($report.files)"
+          Write-Host "Live source: $($report.source)"
+          if ($report.files -lt 20) { throw "Incomplete downloaded source" }
+          if (-not (Test-Path "$folder/web/index.html")) { throw "Missing index.html" }
+          node --check "$folder/main.cjs"
+          node --check "$folder/desktop-server.cjs"
+
+      - name: Install Electron and NSIS packaging tools
+        shell: pwsh
+        working-directory: windows-output/${{ matrix.folder }}
+        run: npm install --no-audit --no-fund
+
+      - name: Validate desktop shell
+        shell: pwsh
+        working-directory: windows-output/${{ matrix.folder }}
+        run: npm test
+
+      - name: Build directly-installable Windows x64 EXE
+        shell: pwsh
+        working-directory: windows-output/${{ matrix.folder }}
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npm run dist:win
+
+      - name: Verify EXE and generate checksum
+        shell: pwsh
+        working-directory: windows-output/${{ matrix.folder }}
+        run: |
+          $exe = Get-ChildItem -Path dist -Filter "Setup_*.exe" | Select-Object -First 1
+          if (-not $exe) { throw "Setup.exe not found" }
+          if ($exe.Length -lt 30000000) { throw "Installer unexpectedly small: $($exe.Length) bytes" }
+          $hash = (Get-FileHash -Path $exe.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($exe.Name)" | Set-Content -Path "dist/$($exe.Name).sha256" -Encoding ascii
+          Write-Host "Windows 64-bit installer built: $($exe.Name), size=$($exe.Length), SHA256=$hash"
+
+      - name: Upload downloadable Windows Setup
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            windows-output/${{ matrix.folder }}/dist/Setup_*.exe
+            windows-output/${{ matrix.folder }}/dist/Setup_*.exe.sha256
+            windows-output/${{ matrix.folder }}/BUILD_SOURCE_REPORT.json
+          if-no-files-found: error
+          retention-days: 30

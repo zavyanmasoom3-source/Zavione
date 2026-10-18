@@ -111,10 +111,10 @@ export function applyZaviV60(web) {
  // V61: use the LAST real closing body tag. The first occurrence can be inside
  // JavaScript receipt templates; inserting a <script> there breaks the entire app.
  const lastBody=html.toLowerCase().lastIndexOf('</body>');
- if(lastBody<0 || !/<\\/html>\\s*$/i.test(html))throw Error('V61: invalid staged main HTML');
+ if(lastBody<0 || !html.trimEnd().toLowerCase().endsWith('</html>'))throw Error('V61: invalid staged main HTML');
  const teamAssets='<link rel="stylesheet" href="./zavi-v60-team.css?v=61"><script src="./zavi-v60-team.js?v=61" defer></script>';
  html=html.slice(0,lastBody)+teamAssets+html.slice(lastBody);
- if((html.match(/<script src="\\.\\/zavi-v60-team\\.js/g)||[]).length!==1)throw Error('V61: team script must be injected once');
+ if(html.split('src="./zavi-v60-team.js').length!==2)throw Error('V61: team script must be injected once');
  fs.writeFileSync(index,html,'utf8');
  const sw=path.join(web,'sw.js');
  if(fs.existsSync(sw)){

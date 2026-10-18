@@ -3,6 +3,10 @@ name: ZAVI ONE Supabase Encrypted Database Backup
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/zavi-supabase-private-database-backup.yml'
 
 permissions:
   contents: read

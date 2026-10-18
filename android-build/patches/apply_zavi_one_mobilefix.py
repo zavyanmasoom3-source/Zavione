@@ -12,11 +12,15 @@ needle='<div class="layout-2" style="margin-bottom:18px"><section class="card"><
 assert html.count(needle)==1, f"Unexpected mobile dashboard markup: {html.count(needle)}"
 html=html.replace(needle,'<div class="layout-2 zavi-apk-dashboard-cards" style="margin-bottom:18px"><section class="card"><div class="panel-head"><h3>فروش ماهوار',1)
 chart_head='</div></div>\n  <div class="z45-chart-scroll z47-chart-scroll z27-chart-scroll"'
-assert html.count(chart_head)==1, f"Unexpected monthly chart header: {html.count(chart_head)}"
+# The V58-V60 layout can change this exact wrapping without breaking horizontal swipe.
+# Keep the CSS-based scroll correction even when the old hint anchor no longer exists.
+if html.count(chart_head) != 1:
+    print(f"ZAVI mobile chart: legacy hint anchor not present ({html.count(chart_head)}); stylesheet still applied.")
 hint='''</div></div>
   <div class="zavi-apk-chart-hint" aria-hidden="true">${tr('↔ برای دیدن هر ۱۲ ماه نمودار را به چپ و راست بکشید','↔ د ټولو ۱۲ میاشتو لیدو لپاره ګراف چپ او راست ته کش کړئ','↔ Swipe horizontally to view all 12 months')}</div>
   <div class="z45-chart-scroll z47-chart-scroll z27-chart-scroll"'''
-html=html.replace(chart_head,hint,1)
+if html.count(chart_head)==1:
+    html=html.replace(chart_head,hint,1)
 assert html.count('</head>')>=1
 html=html.replace('</head>','<link rel="stylesheet" href="./zavi-apk-mobile-dashboard.css?v=20261017-chart-stock">\n</head>',1)
 htmlpath.write_text(html,encoding="utf-8")

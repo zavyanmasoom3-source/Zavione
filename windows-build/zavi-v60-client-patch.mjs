@@ -108,7 +108,13 @@ export function applyZaviV60(web) {
  if(!html.includes('cloud.js'))throw Error('ZAVI V60: unexpected frontend; cloud.js missing');
  fs.writeFileSync(path.join(web,'zavi-v60-team.css'),css,'utf8');
  fs.writeFileSync(path.join(web,'zavi-v60-team.js'),script,'utf8');
- html=html.replace(/<\/body>/i,'<link rel="stylesheet" href="./zavi-v60-team.css?v=60"><script src="./zavi-v60-team.js?v=60" defer></script></body>');
+ // V61: use the LAST real closing body tag. The first occurrence can be inside
+ // JavaScript receipt templates; inserting a <script> there breaks the entire app.
+ const lastBody=html.toLowerCase().lastIndexOf('</body>');
+ if(lastBody<0 || !/<\\/html>\\s*$/i.test(html))throw Error('V61: invalid staged main HTML');
+ const teamAssets='<link rel="stylesheet" href="./zavi-v60-team.css?v=61"><script src="./zavi-v60-team.js?v=61" defer></script>';
+ html=html.slice(0,lastBody)+teamAssets+html.slice(lastBody);
+ if((html.match(/<script src="\\.\\/zavi-v60-team\\.js/g)||[]).length!==1)throw Error('V61: team script must be injected once');
  fs.writeFileSync(index,html,'utf8');
  const sw=path.join(web,'sw.js');
  if(fs.existsSync(sw)){

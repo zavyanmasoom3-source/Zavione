@@ -3,10 +3,6 @@ name: ZAVI ONE Supabase Encrypted Database Backup
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/zavi-supabase-private-database-backup.yml'
 
 permissions:
   contents: read
@@ -27,8 +23,8 @@ jobs:
             echo "::error::Set Actions secret ZAVI_SUPABASE_DB_URL using Supabase Session pooler PostgreSQL URI."
             exit 1
           fi
-          if [ "$(printf %s "$ZAVI_BACKUP_ENCRYPTION_PASSWORD" | wc -c)" -lt 12 ]; then
-            echo "::error::Set ZAVI_BACKUP_ENCRYPTION_PASSWORD with 12+ characters (20+ recommended) and keep your private copy."
+          if [ "$(printf %s "$ZAVI_BACKUP_ENCRYPTION_PASSWORD" | wc -c)" -lt 20 ]; then
+            echo "::error::Set ZAVI_BACKUP_ENCRYPTION_PASSWORD with 20+ characters and keep your private copy."
             exit 1
           fi
           # Support a PostgreSQL URI copied alone, inside quotes, or from a 'psql' command.

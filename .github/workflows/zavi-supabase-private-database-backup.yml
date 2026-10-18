@@ -31,10 +31,20 @@ jobs:
             echo "::error::Set ZAVI_BACKUP_ENCRYPTION_PASSWORD with 12+ characters (20+ recommended) and keep your private copy."
             exit 1
           fi
-          if [[ "$ZAVI_SUPABASE_DB_URL" != postgresql://* && "$ZAVI_SUPABASE_DB_URL" != postgres://* ]]; then
-            echo "::error::Database URL must be PostgreSQL URI."
-            exit 1
-          fi
+          # Support a PostgreSQL URI copied alone, inside quotes, or from a 'psql' command.
+          # NEVER print the URI; it contains the database password.
+          python3 - <<'PY'
+          import os, re, sys
+          raw=os.getenv('ZAVI_SUPABASE_DB_URL','')
+          m=re.search(r"""(?:postgresql|postgres)://[^\s"'\x60]+""",raw)
+          if not m:
+              print('::error::The secret ZAVI_SUPABASE_DB_URL is not a PostgreSQL URI. Supabase Dashboard -> Connect -> Session Pooler -> URI -> Copy, then Update secret.',file=sys.stderr)
+              sys.exit(1)
+          uri=m.group(0)
+          with open(os.environ['GITHUB_ENV'],'a',encoding='utf-8') as f:
+              f.write('ZAVI_SUPABASE_DB_URL='+uri+'\n')
+          print('A PostgreSQL URI was located and prepared without displaying secrets.')
+          PY
 
       - name: Install AES-256 archive utility
         shell: bash

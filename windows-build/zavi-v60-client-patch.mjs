@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const css = String.raw\`
+const css = String.raw`
 #z61TeamPanel{margin:0 0 17px;max-width:100%;min-width:0;overflow:hidden}
 #z61TeamPanel .z61-box{padding:15px!important;border:1px solid #138db177!important;border-radius:17px!important;background:linear-gradient(120deg,#0c315e,#064e72)!important;color:#f4fbff!important}
 #z61TeamPanel .z61-title{font-size:17px;font-weight:800;margin:0;color:white}
@@ -25,9 +25,9 @@ const css = String.raw\`
 #z61TeamPanel .z61-box{padding:13px!important}
 #z61TeamPanel .z61-remove{padding:7px 9px;font-size:12px}
 }
-\`;
+`;
 
-const script = String.raw\`/* ZAVI ONE V60 desktop & APK colleagues panel. Server RLS controls access. */
+const script = String.raw`/* ZAVI ONE V60 desktop & APK colleagues panel. Server RLS controls access. */
 (()=>{'use strict';
 let scope='',rows=[],loaded=false,error='',loading=false,lastCheck=0;
 const $=s=>document.querySelector(s);
@@ -57,7 +57,7 @@ function draw(){
 }
 async function request(method,url,body){
  const c=source(),s=sess();if(!c?.url||!c?.key||!s?.access_token)throw Error('برای فهرست همکاران، اتصال و ورود معتبر لازم است.');
- const res=await fetch(c.url.replace(/\\/$/,'')+url,{
+ const res=await fetch(c.url.replace(/\/$/,'')+url,{
   method,headers:{apikey:c.key,Authorization:'Bearer '+s.access_token,'Content-Type':'application/json',Prefer:'return=representation'},
   body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)
  });
@@ -80,7 +80,7 @@ async function load(force=false){
 }
 async function remove(uid){
  const o=own(),member=rows.find(m=>m.member_uid===uid);if(!o||!member)return;
- if(!confirm(label('دسترسی همکار انتخاب‌شده لغو شود؟ این کار حساب یا معاملات را حذف نمی‌کند.','د همکار لاسرسی ختم کړئ؟ معلومات نه حذف کېږي.','Remove this colleague\\'s access? No accounting records will be deleted.')))return;
+ if(!confirm(label('دسترسی همکار انتخاب‌شده لغو شود؟ این کار حساب یا معاملات را حذف نمی‌کند.','د همکار لاسرسی ختم کړئ؟ معلومات نه حذف کېږي.','Remove this colleague\'s access? No accounting records will be deleted.')))return;
  try{
   const data=await request('DELETE','/rest/v1/zavi_workspace_members?workspace_id=eq.'+encodeURIComponent(o.ws)+'&member_uid=eq.'+encodeURIComponent(uid)+'&select=member_uid');
   if(!Array.isArray(data)||!data.some(m=>m.member_uid===uid))throw Error('سرور حذف را تأیید نکرد.');
@@ -99,7 +99,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('online',()=>load(true));
 window.addEventListener('load',()=>{draw();load(true)});
 })();
-\`;
+`;
 
 export function applyZaviV60(web) {
  const index=path.join(web,'index.html');

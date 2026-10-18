@@ -1,10 +1,11 @@
 import fs from "node:fs";
+import {applyZaviV60} from "./zavi-v60-client-patch.mjs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 const here=path.dirname(fileURLToPath(import.meta.url));
 const mode=process.argv[2];
 const configs={
-  one:{base:"https://zavione1.netlify.app/",folder:"ZAVI_ONE",productName:"ZAVI ONE",name:"zavi-one-desktop",version:"41.0.0",appId:"com.zavione.accounting",exe:"Setup_ZAVI_ONE_Windows_x64_41.exe"},
+  one:{base:"https://zavione1.netlify.app/",folder:"ZAVI_ONE",productName:"ZAVI ONE",name:"zavi-one-desktop",version:"60.0.0",appId:"com.zavione.accounting",exe:"Setup_ZAVI_ONE_Windows_x64_V60.exe"},
   admin:{base:"https://zavione0.netlify.app/",folder:"ZAVI_ONE_ADMIN",productName:"ZAVI ONE ADMIN",name:"zavi-one-admin-desktop",version:"41.2.0",appId:"com.zavione.admin",exe:"Setup_ZAVI_ONE_ADMIN_Windows_x64_41_2.exe"}
 };
 const c=configs[mode];
@@ -99,5 +100,6 @@ fs.writeFileSync(path.join(root,"package.json"),JSON.stringify(pkg,null,2));
 let report={product:c.productName,source:c.base,generated:new Date().toISOString(),files:downloaded.size,
   missingOptional:[...failures].sort(),criticalReferences:0,
   warning:"Files fetched from live Netlify deployment, not an independently verified matching V41 local archive. Verify accounting, login, updates and offline behavior on Windows before client distribution."};
+if(mode==="one"){applyZaviV60(web);report.version="V60 team member count and revocation";report.patch="zavi-v60-client-patch.mjs";}
 fs.writeFileSync(path.join(root,"BUILD_SOURCE_REPORT.json"),JSON.stringify(report,null,2));
 console.log(JSON.stringify({message:"Web assets staged for Electron",mode,folder:root,downloaded:downloaded.size,missing:failures.size},null,2));

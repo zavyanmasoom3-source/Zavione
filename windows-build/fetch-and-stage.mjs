@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import {applyZaviV60} from "./zavi-v60-client-patch.mjs";
+import {applyPerformancePatch} from "./performance-patch.mjs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 const here=path.dirname(fileURLToPath(import.meta.url));
@@ -101,5 +102,7 @@ let report={product:c.productName,source:c.base,generated:new Date().toISOString
   missingOptional:[...failures].sort(),criticalReferences:0,
   warning:"Files fetched from live Netlify deployment, not an independently verified matching V41 local archive. Verify accounting, login, updates and offline behavior on Windows before client distribution."};
 if(mode==="one"){applyZaviV60(web);report.version="V63 persistent Daily Operations colleague entry + add and remove";report.patch="zavi-v60-client-patch.mjs (V63)";}
+const performance=applyPerformancePatch(web,mode);
+report.performance=performance;
 fs.writeFileSync(path.join(root,"BUILD_SOURCE_REPORT.json"),JSON.stringify(report,null,2));
-console.log(JSON.stringify({message:"Web assets staged for Electron",mode,folder:root,downloaded:downloaded.size,missing:failures.size},null,2));
+console.log(JSON.stringify({message:"Web assets staged for Electron",mode,folder:root,downloaded:downloaded.size,missing:failures.size,performance:performance.applied},null,2));

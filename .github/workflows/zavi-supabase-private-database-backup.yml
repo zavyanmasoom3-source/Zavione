@@ -1,0 +1,95 @@
+# Private, manual database snapshot. The encrypted archive is the only uploaded output.
+name: ZAVI ONE Supabase Encrypted Database Backup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secure-snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      ZAVI_SUPABASE_DB_URL: ${{ secrets.ZAVI_SUPABASE_DB_URL }}
+      ZAVI_BACKUP_ENCRYPTION_PASSWORD: ${{ secrets.ZAVI_BACKUP_ENCRYPTION_PASSWORD }}
+    steps:
+      - name: Validate private secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$ZAVI_SUPABASE_DB_URL" ]; then
+            echo "::error::Set Actions secret ZAVI_SUPABASE_DB_URL using Supabase Session pooler PostgreSQL URI."
+            exit 1
+          fi
+          if [ "$(printf %s "$ZAVI_BACKUP_ENCRYPTION_PASSWORD" | wc -c)" -lt 20 ]; then
+            echo "::error::Set ZAVI_BACKUP_ENCRYPTION_PASSWORD with 20+ characters and keep your private copy."
+            exit 1
+          fi
+          if [[ "$ZAVI_SUPABASE_DB_URL" != postgresql://* && "$ZAVI_SUPABASE_DB_URL" != postgres://* ]]; then
+            echo "::error::Database URL must be PostgreSQL URI."
+            exit 1
+          fi
+
+      - name: Install AES-256 archive utility
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends p7zip-full >/dev/null
+
+      - name: Back up production PostgreSQL schemas and Auth metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/zavi-private-snapshot" "$RUNNER_TEMP/zavi-encrypted"
+          docker run --rm \
+            -e ZAVI_SUPABASE_DB_URL \
+            -v "$RUNNER_TEMP/zavi-private-snapshot:/backup" \
+            postgres:17-alpine sh -ec '
+              pg_dump --dbname="$ZAVI_SUPABASE_DB_URL" \
+                --format=custom \
+                --no-owner --no-acl \
+                --schema=public --schema=private \
+                --schema=auth --schema=storage \
+                --schema=supabase_migrations \
+                --file=/backup/zavi_postgres17_schemas_and_data.dump
+              pg_restore --list /backup/zavi_postgres17_schemas_and_data.dump \
+                >/backup/backup_contents_list.txt
+            '
+          test -s "$RUNNER_TEMP/zavi-private-snapshot/zavi_postgres17_schemas_and_data.dump"
+          test -s "$RUNNER_TEMP/zavi-private-snapshot/backup_contents_list.txt"
+
+      - name: Password-encrypt before upload and delete plaintext
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/zavi-private-snapshot/README_DARI.txt" <<'EOF'
+          ZAVI ONE / ADMIN - confidential Supabase snapshot.
+          Includes schema and rows for public, private, auth, storage, supabase_migrations.
+          Store only in a safe private location. Contains private customer/authentication data.
+          This does not export Storage object bodies, environment secrets, platform config,
+          Edge Functions secrets, or customers' local IndexedDB.
+          Restore to a separate test project; never overwrite production for testing.
+          EOF
+          date -u +"UTC created: %Y-%m-%dT%H:%M:%SZ" > "$RUNNER_TEMP/zavi-private-snapshot/timestamp.txt"
+          tar -C "$RUNNER_TEMP/zavi-private-snapshot" -czf "$RUNNER_TEMP/zavi-unencrypted-snapshot.tar.gz" .
+          encrypted_path="$RUNNER_TEMP/zavi-encrypted/ZAVI_ONE_SUPABASE_DB_$(date -u +'%Y%m%d_%H%M%S').7z"
+          7z a -t7z -mhe=on -mx=7 \
+            "-p$ZAVI_BACKUP_ENCRYPTION_PASSWORD" \
+            "$encrypted_path" "$RUNNER_TEMP/zavi-unencrypted-snapshot.tar.gz" >/dev/null
+          7z t "-p$ZAVI_BACKUP_ENCRYPTION_PASSWORD" "$encrypted_path" >/dev/null
+          test -s "$encrypted_path"
+          rm -f "$RUNNER_TEMP/zavi-unencrypted-snapshot.tar.gz"
+          rm -rf "$RUNNER_TEMP/zavi-private-snapshot"
+          echo "Success: encrypted backup validated. Uploading only AES-256-encrypted .7z."
+
+      - name: Upload private encrypted backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ONE_SUPABASE_PRIVATE_ENCRYPTED_BACKUP
+          path: ${{ runner.temp }}/zavi-encrypted/*.7z
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7

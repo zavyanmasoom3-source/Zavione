@@ -43,7 +43,7 @@ function arrange(){
   const order=['secure','store','display','printing','data','advanced'];
   for(const key of order){const container=document.createElement('section');container.className='zavi-settings-6546-group';container.dataset.section=key;container.setAttribute('aria-label',t[key]);const h=document.createElement('h3');h.textContent=t[key];container.append(h);groups.set(key,container)}
   for(const card of cards)groups.get(category(card)).append(card);
-  const anchor=intro.nextSibling;
+  const anchor=cards[cards.length-1].nextSibling;
   for(const key of order){const c=groups.get(key);if(c.children.length>1)root.insertBefore(c,anchor)}
  }finally{busy=false}
 }

@@ -1,44 +1,20 @@
-/* ZAVI ONE 65.50 premium neon, graphics are vector/CSS, data and printing preserved */
-html.zavi-luxe{--zl-blue:#1b7afa;--zl-cyan:#06d5f1;--zl-purple:#825af5;--zl-teal:#0bcaa5;--zl-orange:#ff9b39;--zl-radius:19px}
-html.zavi-luxe[data-zavi-theme="dark"]{--zl-bg:#071631;--zl-panel:#102a54;--zl-ink:#f4faff;--zl-muted:#b8cae3;--zl-line:#2879b055;--zl-elev:0 14px 34px #020c25a6;--zl-input:#0e2448;--zl-top:#0a1d43f0}
-html.zavi-luxe[data-zavi-theme="light"]{--zl-bg:#f2f8ff;--zl-panel:#fff;--zl-ink:#123451;--zl-muted:#57728d;--zl-line:#d4e4f4;--zl-elev:0 12px 30px #0e4d9d21;--zl-input:#fff;--zl-top:#f8fcfff2}
-html.zavi-luxe body{background:radial-gradient(ellipse 800px 500px at 95% 0%,#1c98f524,transparent 75%),var(--zl-bg)!important;color:var(--zl-ink)}
-html.zavi-luxe .content{min-width:0}
-html.zavi-luxe :is(.card,.panel,.stat,.settings-card,.report-card,.debt-card,.account-box,.record-card){position:relative;min-width:0;border-radius:var(--zl-radius)!important;border:1px solid var(--zl-line)!important;background:var(--zl-panel)!important;box-shadow:var(--zl-elev);color:var(--zl-ink);transition:border-color .2s ease,box-shadow .2s ease}
-html.zavi-luxe[data-zavi-theme="dark"] :is(.card,.panel,.stat,.settings-card,.account-box,.record-card){background:linear-gradient(135deg,#183969,#0d2248)!important}
-html.zavi-luxe[data-zavi-theme="light"] :is(.card,.panel,.stat,.settings-card,.account-box,.record-card){background:linear-gradient(135deg,#fff,#f8fcff)!important}
-html.zavi-luxe :is(.stat,.report-stat){overflow:hidden}
-html.zavi-luxe :is(.stat,.report-stat)::after{content:"";position:absolute;top:-45px;left:-50px;width:130px;height:130px;background:radial-gradient(circle,#12ccfb24,transparent 72%);pointer-events:none}
-html.zavi-luxe :is(.stat-value,.amount){font-variant-numeric:tabular-nums;font-weight:850;letter-spacing:-.03em}
-html.zavi-luxe :is(.stat-label,.muted,.tiny-note,.stat-foot){color:var(--zl-muted)}
-html.zavi-luxe :is(.welcome,.zavi-hero,.zsh-hero){position:relative;isolation:isolate;overflow:hidden;border-radius:23px!important;border:1px solid #62cdff88!important;background:linear-gradient(115deg,#08265f,#07539c 67%,#0499bf)!important;box-shadow:0 12px 36px #00468a55!important;color:white!important}
-html.zavi-luxe :is(.welcome,.zavi-hero,.zsh-hero)::before{content:"";position:absolute;inset:-100px -80px auto auto;width:330px;height:290px;border-radius:50%;background:radial-gradient(circle,#69efff66,transparent 65%);pointer-events:none;animation:zlFloat 10s ease-in-out infinite alternate;z-index:-1}
-html.zavi-luxe :is(.welcome,.zavi-hero,.zsh-hero)::after{content:"";position:absolute;inset:auto 0 0 auto;width:min(45%,320px);height:65%;background:url('./zavi-luxe-graph-v1.svg') center /contain no-repeat;opacity:.37;pointer-events:none;z-index:-1}
-html.zavi-luxe :is(.welcome,.zavi-hero,.zsh-hero) :is(h1,h2,h3,p,span,strong){color:#fff!important}
-html.zavi-luxe :is(.sidebar,#side.sidebar){background:linear-gradient(165deg,#071b40,#092451 60%,#07162e)!important;border-inline-end:1px solid #48b6fe55;color:#eaf5ff!important}
-html.zavi-luxe :is(.sidebar,#side.sidebar) :is(.nav-btn,.nav-item){min-height:44px;border-radius:12px!important;color:#cbe1fa;transition:background-color .2s ease,color .2s ease}
-html.zavi-luxe :is(.sidebar,#side.sidebar) :is(.nav-btn.active,.nav-item.selected,.nav-item.active){background:linear-gradient(110deg,#1c74ef,#07a9d6)!important;color:#fff!important;box-shadow:0 6px 18px #004f9c40}
-html.zavi-luxe :is(.topbar,.mobile-bottom){background:var(--zl-top)!important;backdrop-filter:blur(13px);border-color:var(--zl-line)!important;color:var(--zl-ink)}
-html.zavi-luxe .mobile-bottom .bottom-btn.active{background:linear-gradient(125deg,#177bf9,#06bfe0)!important;color:white!important;border-radius:13px!important}
-html.zavi-luxe .zavi-v37-actions{gap:11px!important}
-html.zavi-luxe .zavi-v37-actions .zavi-v37-action{position:relative;overflow:hidden;border-radius:18px!important;box-shadow:0 8px 22px #04172e33;transition:transform .22s ease}
-html.zavi-luxe .zavi-v37-actions .zavi-v37-action:active{transform:scale(.975)}
-html.zavi-luxe .zavi-v37-sale{background:linear-gradient(120deg,#1179f4,#3653dd)!important}
-html.zavi-luxe .zavi-v37-purchase{background:linear-gradient(120deg,#8050f4,#5646c8)!important}
-html.zavi-luxe .zavi-v37-receive{background:linear-gradient(120deg,#079ca2,#04b790)!important}
-html.zavi-luxe .zavi-v37-pay{background:linear-gradient(120deg,#f0832a,#d94d61)!important}
-html.zavi-luxe :is(.btn.primary,.button.primary){background:linear-gradient(110deg,#137ff5,#08b8e0)!important;border:1px solid #73dafa7a!important;color:white!important;border-radius:12px!important;box-shadow:0 6px 17px #1267e745!important}
-html.zavi-luxe :is(.btn,.button){transition:transform .18s ease,filter .18s ease}
-html.zavi-luxe :is(.btn,.button):not(:disabled):active{transform:scale(.98)}
-html.zavi-luxe :is(button,input,select,a,textarea):focus-visible{outline:3px solid #04cbed!important;outline-offset:2px}
-html.zavi-luxe :is(.content,.modal,.settings-card) :is(input:not([type=checkbox]):not([type=radio]),select,textarea){border:1px solid var(--zl-line)!important;border-radius:11px!important;background:var(--zl-input)!important;color:var(--zl-ink)!important;max-width:100%}
-html.zavi-luxe :is(table th,.transaction-table th){background:var(--zl-panel)!important;color:var(--zl-ink)}
-html.zavi-luxe :is(.table-wrap,.table-scroll){overflow:auto;max-width:100%;-webkit-overflow-scrolling:touch;border-radius:13px!important}
-html.zavi-luxe .zl-enter{animation:zlRise .42s cubic-bezier(.17,.74,.3,1) both}
-html.zavi-luxe .zl-brand-mark{filter:drop-shadow(0 3px 12px #22adff88)}
-html.zavi-luxe .zl-icon-accent{display:inline-grid;place-items:center;width:36px;height:36px;flex-shrink:0;background:#2191eb24;border:1px solid #31afff44;border-radius:11px;margin-inline-end:8px}
-@keyframes zlRise{from{opacity:0;transform:translate3d(0,9px,0)}to{opacity:1;transform:translateZ(0)}}
-@keyframes zlFloat{from{transform:translate3d(0,0,0)}to{transform:translate3d(-30px,13px,0)}}
-@media(max-width:760px){html.zavi-luxe .content{padding-inline:clamp(11px,3.2vw,17px)!important;padding-bottom:max(96px,env(safe-area-inset-bottom,0px))}html.zavi-luxe .stat{padding:13px!important}html.zavi-luxe .stat-value{font-size:clamp(16px,4vw,24px)!important}html.zavi-luxe :is(.card,.panel){border-radius:16px!important}html.zavi-luxe :is(.welcome,.zavi-hero){padding:18px!important}html.zavi-luxe :is(.welcome,.zavi-hero)::after{opacity:.24}html.zavi-luxe #side.sidebar.mobile-drawer{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;max-height:100dvh!important;overflow-y:auto!important;z-index:2147481900!important;touch-action:pan-y!important}html.zavi-luxe #side.sidebar.mobile-drawer .zavi-v6-menu-scroll{overflow-y:auto!important;max-height:none!important;-webkit-overflow-scrolling:touch}}
-@media(prefers-reduced-motion:reduce){html.zavi-luxe *,html.zavi-luxe *::before,html.zavi-luxe *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
-@media print{html.zavi-luxe body{background:white!important;color:black!important}html.zavi-luxe :is(.welcome,.zavi-hero)::before,html.zavi-luxe :is(.welcome,.zavi-hero)::after{display:none!important}html.zavi-luxe :is(.card,.panel){background:white!important;box-shadow:none!important}html.zavi-luxe .zl-enter{animation:none!important}}
+/* ZAVI ONE / ADMIN — crash-safe premium visual v2. Stays OUT of application layout/rendering. */
+html.zavi-luxe-safe{--zl-cyan:#09d2ec;--zl-blue:#1778f4;--zl-line-dark:rgba(87,179,255,.25);--zl-line-light:#d7e7f6}
+html.zavi-luxe-safe[data-zavi-theme="dark"]{--zl-line:var(--zl-line-dark);--zl-shadow:0 7px 22px rgba(0,10,35,.16)}
+html.zavi-luxe-safe[data-zavi-theme="light"]{--zl-line:var(--zl-line-light);--zl-shadow:0 7px 22px rgba(28,79,146,.10)}
+html.zavi-luxe-safe[data-zavi-theme="dark"] body{background-color:#071932}
+html.zavi-luxe-safe[data-zavi-theme="light"] body{background-color:#f3f8ff}
+html.zavi-luxe-safe :where(.stat,.settings-card,.report-card,.summary-card){border-radius:16px;border-color:var(--zl-line);box-shadow:var(--zl-shadow)}
+html.zavi-luxe-safe :where(.zavi-v37-action,.zsvc-shortcut){border-radius:16px;transition:filter .18s ease}
+html.zavi-luxe-safe :where(.zavi-v37-action,.zsvc-shortcut):active{filter:brightness(.94)}
+html.zavi-luxe-safe :where(.btn.primary,.button.primary){background-image:linear-gradient(120deg,#1978ed,#0ea9d9);border-radius:11px;color:white}
+html.zavi-luxe-safe :where(.welcome,.zavi-hero,.zsh-hero){border-radius:18px;background-image:linear-gradient(115deg,#153a75,#0e67af 75%,#069dc2)}
+html.zavi-luxe-safe :where(.zavi-v37-sale){background-image:linear-gradient(120deg,#137bec,#315cdd)}
+html.zavi-luxe-safe :where(.zavi-v37-purchase){background-image:linear-gradient(120deg,#7a52e5,#5441b9)}
+html.zavi-luxe-safe :where(.zavi-v37-receive){background-image:linear-gradient(120deg,#0a9e9c,#0eaf80)}
+html.zavi-luxe-safe :where(.zavi-v37-pay){background-image:linear-gradient(120deg,#ee7e38,#d95263)}
+html.zavi-luxe-safe :where(button,a,input,select,textarea):focus-visible{outline:2px solid #0bd0ec;outline-offset:2px}
+@media(max-width:760px){html.zavi-luxe-safe :where(.zavi-v37-action,.zsvc-shortcut){min-height:70px}html.zavi-luxe-safe :where(.nav-btn,.nav-item){min-height:42px}html.zavi-luxe-safe :where(.table-wrap,.zsvc-table-scroll){max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}}
+@media(prefers-reduced-motion:reduce){html.zavi-luxe-safe *,html.zavi-luxe-safe *::before,html.zavi-luxe-safe *::after{animation:none!important;transition-duration:0ms!important}}
+@media print{html.zavi-luxe-safe body{background:#fff!important}html.zavi-luxe-safe :where(.stat,.settings-card,.report-card){box-shadow:none!important}}
+/* Do NOT set display, opacity, visibility, position, z-index, height, or overflow on app containers. */

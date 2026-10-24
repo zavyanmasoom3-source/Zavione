@@ -1,0 +1,118 @@
+name: ZAVI ONE v65.49 full APK audit and release QA
+on:
+  push:
+    branches: [zavi-v6549-stability-20261024]
+    paths:
+      - 'android-build/**'
+      - '.github/workflows/zavi-v6549-apk-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  store:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Install Android SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Download original v65.48 APK from private release (preserve EVERY web module)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zavi648
+          gh release download zavi-onetime-wa-v65-48-20261024 --pattern 'ZAVI_ONE_V65_48_WHATSAPP_ONCE_QA.apk' --dir /tmp/zavi648
+          src=/tmp/zavi648/ZAVI_ONE_V65_48_WHATSAPP_ONCE_QA.apk
+          unzip -t "$src" >/dev/null
+          unzip -Z1 "$src" | grep -qx 'assets/zavi-signup-whatsapp-once-v6548.js'
+          unzip -Z1 "$src" | grep -qx 'assets/zavi-biometric-ui-v6546.js'
+          unzip -Z1 "$src" | grep -qx 'assets/zavi-mobile-ux-safe-v6547.js'
+          unzip -Z1 "$src" | grep -qx 'assets/zavi-display-settings-v6545.js'
+          mkdir -p android-build/app/src/main/assets
+          unzip -oq "$src" 'assets/*' -d /tmp/zavi648
+          cp -a /tmp/zavi648/assets/. android-build/app/src/main/assets/
+          files=$(find android-build/app/src/main/assets -type f | wc -l)
+          test "$files" -ge 150
+          echo "Retained $files upstream ZAVI ONE assets"
+      - name: Add v65.49 mobile readability and safe scroll
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-build/patches/zavi-v6549-ergonomics.js
+          cp android-build/patches/zavi-v6549-ergonomics.js android-build/app/src/main/assets/
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='android-build/app/src/main/assets/index.html';
+          let html=fs.readFileSync(p,'utf8');
+          if(!html.includes('zavi-signup-whatsapp-once-v6548.js'))throw Error('Latest signup script missing');
+          if(!html.includes('zavi-v6549-ergonomics.js'))
+            html=html.replace('</head>','<script defer src="./zavi-v6549-ergonomics.js?v=65.49"></script></head>');
+          if(!html.includes('zavi-v6549-ergonomics.js'))throw Error('Injection failed');
+          fs.writeFileSync(p,html);
+          NODE
+          for f in android-build/app/src/main/assets/*.js; do node --check "$f" >/dev/null || exit 3; done
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path("android-build/app/src/main/assets")
+          missing=[]
+          for name in ("index.html","invoice.html"):
+            p=root/name
+            if not p.exists():continue
+            body=p.read_text()
+            for ref in re.findall(r'(?:src|href)=["\']([^"\']+)["\']',body):
+              if ref.startswith(("./","/")) and not ref.startswith("//"):
+                dest=(root/ref.split("?")[0].lstrip("./")).resolve()
+                if root.resolve() not in dest.parents and dest!=root.resolve(): raise RuntimeError("Path outside assets")
+                if not dest.exists(): missing.append((name,ref))
+          if missing:raise RuntimeError(f"Missing local assets: {missing[:25]}")
+          print("PASS: JS syntax and local HTML references")
+          PY
+      - name: Configure icon
+        run: |
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          cp android-build/icons/one.webp android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+      - name: Compile native Android with fixed WebView camera and biometric implementation
+        working-directory: android-build
+        run: gradle --no-daemon --stacktrace -PzaviApp=one :app:assembleDebug
+      - name: Verify APK signature, permissions and unchanged modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=android-build/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$f"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$f"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$f" | tee /tmp/zavi-permissions.txt
+          grep -q android.permission.CAMERA /tmp/zavi-permissions.txt
+          for path in assets/zavi-signup-whatsapp-once-v6548.js assets/zavi-biometric-ui-v6546.js assets/zavi-mobile-ux-safe-v6547.js assets/zavi-display-settings-v6545.js assets/zavi-v6549-ergonomics.js assets/zavi-barcode-v641.js assets/cloud.js assets/index.html; do
+            unzip -Z1 "$f" | grep -Fx "$path"
+          done
+          mkdir -p dist
+          cp "$f" dist/ZAVI_ONE_V65_49_STABILITY_QA.apk
+          sha256sum dist/ZAVI_ONE_V65_49_STABILITY_QA.apk > dist/ZAVI_ONE_V65_49_STABILITY_QA.apk.sha256
+      - name: Publish APK in private prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-v6549-stability-qa-20261024
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1;then
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI ONE v65.49 — stability QA (NOT production-signed)" --notes "Based on exact ZAVI ONE v65.48 APK web assets, preserving all previously supported functionality. Full-screen More menu accessibility and scroll improvements. Debug-signed QA; do not uninstall a previous app with unsynced offline transactions. Physical-device and secure release signing still required." || gh release view "$TAG" >/dev/null
+          fi
+          gh release upload "$TAG" dist/ZAVI_ONE_V65_49_STABILITY_QA.apk dist/ZAVI_ONE_V65_49_STABILITY_QA.apk.sha256 --clobber

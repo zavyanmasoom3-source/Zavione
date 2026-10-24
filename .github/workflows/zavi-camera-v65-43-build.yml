@@ -20,10 +20,10 @@ jobs:
         include:
           - mode: one
             folder: ZAVI_ONE
-            file: ZAVI_ONE_V65_43_CAMERA_TEST.apk
+            file: ZAVI_ONE_V65_44_DISPLAY_TEST.apk
           - mode: admin
             folder: ZAVI_ONE_ADMIN
-            file: ZAVI_ONE_ADMIN_V1_3_2_CAMERA_TEST.apk
+            file: ZAVI_ONE_ADMIN_V1_3_3_DISPLAY_TEST.apk
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -62,6 +62,20 @@ jobs:
           mkdir -p android-build/app/src/main/assets
           cp -a "windows-output/${{ matrix.folder }}/web/." android-build/app/src/main/assets/
           test -s android-build/app/src/main/assets/index.html
+      - name: Apply saved display density and hide platform name from customer sales invoices
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-build/patches/zavi-display-scale-v6544.js
+          node --check android-build/patches/patch-android-ui-v6544.mjs
+          node android-build/patches/patch-android-ui-v6544.mjs "android-build/app/src/main/assets" "${{ matrix.mode }}"
+          test -s android-build/app/src/main/assets/zavi-display-scale-v6544.js
+          grep -Fq 'zavi-display-scale-v6544.js' android-build/app/src/main/assets/index.html
+          if [ "${{ matrix.mode }}" = one ]; then
+            if test -f android-build/app/src/main/assets/invoice.html; then
+              ! grep -q '<b>ZAVI ONE</b>' android-build/app/src/main/assets/invoice.html
+            fi
+          fi
       - name: Configure app icon
         run: |
           mkdir -p android-build/app/src/main/res/drawable-nodpi
@@ -86,11 +100,11 @@ jobs:
       - name: Publish test APK directly to private GitHub prerelease
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: zavi-camera-test-20261024
+          TAG: zavi-display-v65-44-test-20261024
         shell: bash
         run: |
           set -euo pipefail
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI Camera Fix - Android QA test builds" --notes "Testing only: debug-signed APKs; install on a test device, do not uninstall existing ZAVI ONE with offline data. Native camera permissions updated, but camera performance is not yet verified on physical Android devices." || gh release view "$TAG" >/dev/null
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI display size + camera fixes - Android QA test builds" --notes "QA only: display-size selector added in 3 languages, customer invoice branding removed, native camera permissions enabled. APK uses test signing and is not guaranteed to update installed previous APKs. Physical device testing still required." || gh release view "$TAG" >/dev/null
           fi
           gh release upload "$TAG" "dist/${{ matrix.file }}" "dist/${{ matrix.file }}.sha256" --clobber

@@ -43,6 +43,18 @@ jobs:
           SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
           if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n1)"; fi
           "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Ignore obsolete V60 desktop-only patch in Android staging
+        if: matrix.mode == 'one'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('windows-build/fetch-and-stage.mjs')
+          s=p.read_text()
+          before='if(mode==="one"){applyZaviV60(web);report.version='
+          assert before in s, 'Unexpected staging script layout'
+          p.write_text(s.replace(before,'if(mode==="one"){report.version='))
+          PY
       - name: Stage latest published web files
         run: |
           set -euo pipefail

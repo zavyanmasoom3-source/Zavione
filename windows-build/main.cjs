@@ -23,7 +23,26 @@ if(!app.requestSingleInstanceLock()){app.quit();}else{
       });
       wc.on("will-navigate",(event,url)=>{if(!url.startsWith("http://127.0.0.1:"+PORT+"/")){event.preventDefault();if(/^https:\/\//i.test(url))shell.openExternal(url).catch(()=>{});}});
       wc.on("will-attach-webview",event=>event.preventDefault());
-      wc.session.setPermissionRequestHandler((_wc,p,cb)=>cb(p==="clipboard-sanitized-write"));
+      wc.session.setPermissionRequestHandler(async (_webContents,permission,callback,details)=>{
+        if(permission==="clipboard-sanitized-write")return callback(true);
+        const requestingUrl=String(details?.requestingUrl||"");
+        const types=Array.isArray(details?.mediaTypes)?details.mediaTypes:[];
+        const local=requestingUrl.startsWith("http://127.0.0.1:"+PORT+"/");
+        if(permission==="media"&&local&&types.includes("video")&&!types.includes("audio")){
+          try{
+            const result=await dialog.showMessageBox(win,{
+              type:"question",
+              title:pkg.productName+" - Camera",
+              message:"اجازه استفاده از دوربین برای اسکن بارکد را می‌دهید؟",
+              detail:"Camera access is requested only by this local ZAVI ONE application.",
+              buttons:["اجازه می‌دهم / Allow","رد / Deny"],
+              defaultId:1,cancelId:1,noLink:true
+            });
+            return callback(result.response===0);
+          }catch{ return callback(false); }
+        }
+        callback(false);
+      });
       Menu.setApplicationMenu(Menu.buildFromTemplate([{label:"ZAVI ONE",submenu:[{label:"Reload / تازه‌سازی",accelerator:"CmdOrCtrl+R",click:()=>wc.reload()},{label:"Print / چاپ",accelerator:"CmdOrCtrl+P",click:()=>wc.print({silent:false})},{type:"separator"},{label:"Exit / خروج",role:"quit"}]},{label:"View / نمایش",submenu:[{label:"Full screen",role:"togglefullscreen"},{label:"Zoom in",role:"zoomIn"},{label:"Zoom out",role:"zoomOut"},{label:"Actual size",role:"resetZoom"}]}]));
       win.once("ready-to-show",()=>win.show());
       wc.on("did-fail-load",(_e,code,desc,url,isMain)=>{if(isMain)dialog.showErrorBox(pkg.productName,"بارگذاری برنامه ناموفق بود: "+desc+" ("+code+") "+url);});

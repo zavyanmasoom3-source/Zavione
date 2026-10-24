@@ -39,10 +39,11 @@ jobs:
           from pathlib import Path
           import re
           p=Path('site/index.html');s=p.read_text()
-          assert s.count('</head>')==1 and s.count('</body>')==1
+          assert s.find('</head>')>=0 and s.rfind('</body>')>s.find('</head>'), 'Missing actual document shell'
           assert 'zavi-web-responsive-v1.css' not in s
           s=s.replace('</head>','<link rel="stylesheet" href="./zavi-web-responsive-v1.css?v=20261024-1"></head>',1)
-          s=s.replace('</body>','<script defer src="./zavi-web-responsive-v1.js?v=20261024-1"></script></body>',1)
+          ending=s.rfind('</body>')
+          s=s[:ending]+'<script defer src="./zavi-web-responsive-v1.js?v=20261024-1"></script>'+s[ending:]
           p.write_text(s)
           sw=Path('site/sw.js');a=sw.read_text()
           a,n=re.subn(r"const CACHE_NAME='[^']+';","const CACHE_NAME='zavi-store-web-v65-54-responsive-20261024';",a,count=1)

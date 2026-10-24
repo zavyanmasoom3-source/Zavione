@@ -1,7 +1,7 @@
-name: ZAVI ONE v65.49 full APK audit and release QA
+name: ZAVI ONE v65.50 neon design + full APK QA
 on:
   push:
-    branches: [zavi-v6549-stability-20261024]
+    branches: [zavi-v6550-neon-premium]
     paths:
       - 'android-build/**'
       - '.github/workflows/zavi-v6549-apk-audit.yml'
@@ -36,8 +36,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/zavi648
-          gh release download zavi-onetime-wa-v65-48-20261024 --pattern 'ZAVI_ONE_V65_48_WHATSAPP_ONCE_QA.apk' --dir /tmp/zavi648
-          src=/tmp/zavi648/ZAVI_ONE_V65_48_WHATSAPP_ONCE_QA.apk
+          gh release download zavi-v6549-stability-qa-20261024 --pattern 'ZAVI_ONE_V65_49_STABILITY_QA.apk' --dir /tmp/zavi648
+          src=/tmp/zavi648/ZAVI_ONE_V65_49_STABILITY_QA.apk
           unzip -t "$src" >/dev/null
           unzip -Z1 "$src" | grep -qx 'assets/zavi-signup-whatsapp-once-v6548.js'
           unzip -Z1 "$src" | grep -qx 'assets/zavi-biometric-ui-v6546.js'
@@ -83,6 +83,26 @@ jobs:
           if missing:raise RuntimeError(f"Missing local assets: {missing[:25]}")
           print("PASS: JS syntax and local HTML references")
           PY
+      - name: Add premium dark/light UI and high-fidelity vector branding
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-build/patches/zavi-luxe-v1.js
+          for f in zavi-luxe-v1.js zavi-luxe-v1.css zavi-luxe-graph-v1.svg; do
+            cp "android-build/patches/$f" "android-build/app/src/main/assets/$f"
+          done
+          node - <<'NODE'
+          const fs=require('fs'),p='android-build/app/src/main/assets/index.html';
+          let html=fs.readFileSync(p,'utf8');
+          if(!html.includes('zavi-luxe-v1.css'))html=html.replace('</head>','<link rel="stylesheet" href="./zavi-luxe-v1.css?v=65.50" data-zavi-visual="neon-premium"></head>');
+          if(!html.includes('zavi-luxe-v1.js'))html=html.replace('</body>','<script defer src="./zavi-luxe-v1.js?v=65.50"></script></body>');
+          if(!html.includes('zavi-luxe-v1.js')||!html.includes('zavi-luxe-v1.css'))throw Error('Neon design assets not injected');
+          fs.writeFileSync(p,html);
+          NODE
+          grep -Fq 'data-zavi-theme="dark"' android-build/app/src/main/assets/zavi-luxe-v1.css
+          grep -Fq 'data-zavi-theme="light"' android-build/app/src/main/assets/zavi-luxe-v1.css
+          grep -Fq 'prefers-reduced-motion' android-build/app/src/main/assets/zavi-luxe-v1.css
+          test -s android-build/app/src/main/assets/zavi-luxe-graph-v1.svg
       - name: Configure icon
         run: |
           mkdir -p android-build/app/src/main/res/drawable-nodpi
@@ -99,20 +119,20 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$f"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$f" | tee /tmp/zavi-permissions.txt
           grep -q android.permission.CAMERA /tmp/zavi-permissions.txt
-          for path in assets/zavi-signup-whatsapp-once-v6548.js assets/zavi-biometric-ui-v6546.js assets/zavi-mobile-ux-safe-v6547.js assets/zavi-display-settings-v6545.js assets/zavi-v6549-ergonomics.js assets/zavi-barcode-v641.js assets/cloud.js assets/index.html; do
+          for path in assets/zavi-signup-whatsapp-once-v6548.js assets/zavi-biometric-ui-v6546.js assets/zavi-mobile-ux-safe-v6547.js assets/zavi-display-settings-v6545.js assets/zavi-v6549-ergonomics.js assets/zavi-luxe-v1.js assets/zavi-luxe-v1.css assets/zavi-luxe-graph-v1.svg assets/zavi-barcode-v641.js assets/cloud.js assets/index.html; do
             unzip -Z1 "$f" | grep -Fx "$path"
           done
           mkdir -p dist
-          cp "$f" dist/ZAVI_ONE_V65_49_STABILITY_QA.apk
-          sha256sum dist/ZAVI_ONE_V65_49_STABILITY_QA.apk > dist/ZAVI_ONE_V65_49_STABILITY_QA.apk.sha256
+          cp "$f" dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk
+          sha256sum dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk > dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk.sha256
       - name: Publish APK in private prerelease
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: zavi-v6549-stability-qa-20261024
+          TAG: zavi-v6550-neon-premium-qa-20261024
         run: |
           set -euo pipefail
           if ! gh release view "$TAG" >/dev/null 2>&1;then
-            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI ONE v65.49 — stability QA (NOT production-signed)" --notes "Based on exact ZAVI ONE v65.48 APK web assets, preserving all previously supported functionality. Full-screen More menu accessibility and scroll improvements. Debug-signed QA; do not uninstall a previous app with unsynced offline transactions. Physical-device and secure release signing still required." || gh release view "$TAG" >/dev/null
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI ONE 65.50 — premium neon design QA" --notes "Based on latest ZAVI ONE v65.49 APK web assets, retaining existing modules. Adds neon vector hero, polished cards, iconography and responsive light/dark styling with reduced-motion support. Debug-signed QA; do not uninstall a previous app with unsynced offline transactions. Physical-device and secure release signing still required." || gh release view "$TAG" >/dev/null
           fi
-          gh release upload "$TAG" dist/ZAVI_ONE_V65_49_STABILITY_QA.apk dist/ZAVI_ONE_V65_49_STABILITY_QA.apk.sha256 --clobber
+          gh release upload "$TAG" dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk.sha256 --clobber

@@ -20,10 +20,10 @@ jobs:
         include:
           - mode: one
             folder: ZAVI_ONE
-            file: ZAVI_ONE_V65_44_DISPLAY_TEST.apk
+            file: ZAVI_ONE_V65_45_SETTINGS_TEST.apk
           - mode: admin
             folder: ZAVI_ONE_ADMIN
-            file: ZAVI_ONE_ADMIN_V1_3_3_DISPLAY_TEST.apk
+            file: ZAVI_ONE_ADMIN_V1_3_4_SETTINGS_TEST.apk
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -66,11 +66,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --check android-build/patches/zavi-display-scale-v6544.js
-          node --check android-build/patches/patch-android-ui-v6544.mjs
-          node android-build/patches/patch-android-ui-v6544.mjs "android-build/app/src/main/assets" "${{ matrix.mode }}"
-          test -s android-build/app/src/main/assets/zavi-display-scale-v6544.js
-          grep -Fq 'zavi-display-scale-v6544.js' android-build/app/src/main/assets/index.html
+          node --check android-build/patches/zavi-display-settings-v6545.js
+          node --check android-build/patches/patch-android-ui-v6545.mjs
+          node android-build/patches/patch-android-ui-v6545.mjs "android-build/app/src/main/assets" "${{ matrix.mode }}"
+          test -s android-build/app/src/main/assets/zavi-display-settings-v6545.js
+          grep -Fq 'zavi-display-settings-v6545.js' android-build/app/src/main/assets/index.html
+          ! grep -Fq 'zavi-display-scale-v6544.js' android-build/app/src/main/assets/index.html
+          grep -Fq 'MIN=50,MAX=115' android-build/app/src/main/assets/zavi-display-settings-v6545.js
+          grep -Fq "'.zavi-theme-settings'" android-build/app/src/main/assets/zavi-display-settings-v6545.js
+          grep -Fq "'#zaviSettingsLanguage'" android-build/app/src/main/assets/zavi-display-settings-v6545.js
           if [ "${{ matrix.mode }}" = one ]; then
             if test -f android-build/app/src/main/assets/invoice.html; then
               ! grep -q '<b>ZAVI ONE</b>' android-build/app/src/main/assets/invoice.html
@@ -100,11 +104,11 @@ jobs:
       - name: Publish test APK directly to private GitHub prerelease
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: zavi-display-v65-44-test-20261024
+          TAG: zavi-display-settings-v65-45-test-20261024
         shell: bash
         run: |
           set -euo pipefail
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI display size + camera fixes - Android QA test builds" --notes "QA only: display-size selector added in 3 languages, customer invoice branding removed, native camera permissions enabled. APK uses test signing and is not guaranteed to update installed previous APKs. Physical device testing still required." || gh release view "$TAG" >/dev/null
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI display size inside Settings 50-115 + Camera - Android QA builds" --notes "QA only: former floating display overlay removed; display size now inside Settings with 50–115% slider and close control. Customer invoice unbranding, camera permissions. APK uses test signing and is not guaranteed to update installed previous APKs. Physical device testing still required." || gh release view "$TAG" >/dev/null
           fi
           gh release upload "$TAG" "dist/${{ matrix.file }}" "dist/${{ matrix.file }}.sha256" --clobber

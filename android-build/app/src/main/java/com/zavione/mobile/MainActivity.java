@@ -2,6 +2,14 @@ package com.zavione.mobile;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.Manifest;
+import android.content.ClipData;
+import android.content.pm.PackageManager;
+import android.provider.MediaStore;
+import android.webkit.PermissionRequest;
+import androidx.core.content.FileProvider;
+import java.io.File;
+import java.io.IOException;
 import android.app.DownloadManager;
 import android.print.PrintManager;
 import android.content.Context;
@@ -43,6 +51,7 @@ import java.util.Locale;
 public final class MainActivity extends Activity {
     private static final String BASE = "https://appassets.androidplatform.net/";
     private static final int PICK_UPLOAD = 4701;
+    private static final int CAMERA_PERMISSION = 4703;
     private static final int SAVE_DOCUMENT = 4702;
     private static final int MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024;
     private static final String BRIDGE_SCRIPT = "(function(){"
@@ -61,6 +70,9 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private WebViewAssetLoader assetLoader;
     private ValueCallback<Uri[]> fileCallback;
+    private Uri pendingPhotoUri;
+    private File pendingPhotoFile;
+    private PermissionRequest pendingCamera;
     private byte[] pendingSave;
     private String pendingMime;
     private long lastBackPress;
@@ -123,16 +135,58 @@ public final class MainActivity extends Activity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onShowFileChooser(WebView w, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
-                fileCallback = callback;
+                discardPendingPhoto();
+                fileCallback=callback;
+                boolean isImage=false;
+                for(String mime:params.getAcceptTypes()) if(mime!=null&&mime.toLowerCase(java.util.Locale.ROOT).startsWith("image/"))isImage=true;
+                Intent pick;
+                try { pick=params.createIntent(); }
+                catch(Exception e) {pick=new Intent(Intent.ACTION_GET_CONTENT).setType(isImage?"image/*":"*/*");}
+                pick.addCategory(Intent.CATEGORY_OPENABLE);
                 try {
-                    Intent pick = params.createIntent();
-                    startActivityForResult(pick, PICK_UPLOAD);
+                    if(!isImage){startActivityForResult(pick,PICK_UPLOAD);return true;}
+                    Intent camera=new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                    if(camera.resolveActivity(getPackageManager()) != null){
+                        File directory=new File(getCacheDir(),"camera");
+                        if(!directory.isDirectory()&&!directory.mkdirs())throw new IOException("Camera directory");
+                        pendingPhotoFile=File.createTempFile("zavi_barcode_",".jpg",directory);
+                        pendingPhotoUri=FileProvider.getUriForFile(MainActivity.this,getPackageName()+".camera",pendingPhotoFile);
+                        camera.putExtra(MediaStore.EXTRA_OUTPUT,pendingPhotoUri);
+                        camera.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        camera.setClipData(ClipData.newRawUri("ZAVI barcode photo",pendingPhotoUri));
+                        if(params.isCaptureEnabled()){startActivityForResult(camera,PICK_UPLOAD);}
+                        else{
+                            Intent chooser=Intent.createChooser(pick,"Camera or gallery");
+                            chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS,new Intent[]{camera});
+                            startActivityForResult(chooser,PICK_UPLOAD);
+                        }
+                    }else startActivityForResult(pick,PICK_UPLOAD);
                     return true;
-                } catch (Exception ex) {
-                    fileCallback = null;
-                    toast("File picker unavailable / انتخاب فایل ممکن نیست");
-                    return false;
+                } catch(Exception error) {
+                    discardPendingPhoto();
+                    fileCallback=null;callback.onReceiveValue(null);
+                    toast("Camera or photo picker unavailable");
+                    return true;
                 }
+            }
+            @Override public void onPermissionRequest(PermissionRequest request) {
+                String origin=request.getOrigin()==null?"":request.getOrigin().toString().replaceAll("/+$","");
+                if(!"https://appassets.androidplatform.net".equals(origin)
+                   || request.getResources().length!=1
+                   || !PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(request.getResources()[0])){
+                    request.deny();return;
+                }
+                runOnUiThread(()->{
+                    if(checkSelfPermission(Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED)request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+                    else{
+                        if(pendingCamera!=null)pendingCamera.deny();
+                        pendingCamera=request;
+                        requestPermissions(new String[]{Manifest.permission.CAMERA},CAMERA_PERMISSION);
+                    }
+                });
+            }
+            @Override public void onPermissionRequestCanceled(PermissionRequest request) {
+                if(pendingCamera==request)pendingCamera=null;
             }
         });
         webView.setWebViewClient(new WebViewClient() {
@@ -246,8 +300,14 @@ public final class MainActivity extends Activity {
         super.onActivityResult(request,result,data);
         if(request==PICK_UPLOAD){
             if(fileCallback!=null){
-                Uri[] uris= WebChromeClient.FileChooserParams.parseResult(result,data);
+                Uri[] uris=null;
+                if(result==RESULT_OK){
+                    if(data!=null&&data.getData()!=null)uris=new Uri[]{data.getData()};
+                    else if(pendingPhotoUri!=null&&pendingPhotoFile!=null&&pendingPhotoFile.length()>0)uris=new Uri[]{pendingPhotoUri};
+                    else uris=WebChromeClient.FileChooserParams.parseResult(result,data);
+                }
                 fileCallback.onReceiveValue(uris);
+                if(uris==null||uris.length==0||!uris[0].equals(pendingPhotoUri))discardPendingPhoto();
                 fileCallback=null;
             }
         }
@@ -263,6 +323,18 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void discardPendingPhoto() {
+        pendingPhotoUri=null;
+        if(pendingPhotoFile!=null){pendingPhotoFile.delete();pendingPhotoFile=null;}
+    }
+    @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results) {
+        super.onRequestPermissionsResult(request,permissions,results);
+        if(request==CAMERA_PERMISSION && pendingCamera!=null){
+            PermissionRequest current=pendingCamera;pendingCamera=null;
+            if(results.length>0 && results[0]==PackageManager.PERMISSION_GRANTED)current.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+            else current.deny();
+        }
+    }
     private void toast(String message) {runOnUiThread(()->Toast.makeText(this,message,Toast.LENGTH_LONG).show());}
     @Override public void onBackPressed() {
         if(webView!=null && webView.canGoBack()){webView.goBack();return;}
@@ -273,6 +345,9 @@ public final class MainActivity extends Activity {
     @Override protected void onPause(){super.onPause();if(webView!=null)webView.onPause();}
     @Override protected void onResume(){super.onResume();if(webView!=null)webView.onResume();}
     @Override protected void onDestroy(){
+        if(fileCallback!=null){fileCallback.onReceiveValue(null);fileCallback=null;}
+        if(pendingCamera!=null){pendingCamera.deny();pendingCamera=null;}
+        discardPendingPhoto();
         if(webView!=null){
             container.removeView(webView);
             webView.stopLoading();webView.destroy();webView=null;

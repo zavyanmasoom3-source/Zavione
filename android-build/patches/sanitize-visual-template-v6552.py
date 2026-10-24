@@ -34,6 +34,20 @@ class Audit(HTMLParser):
         elif not self.in_style and any(x in data for x in
             ('db.tx.filter(','function renderUSDOverview','w.document.write(content)','t.date===nowISO()','const ICON={')):
             self.leaks.append((self.getpos(),data[:120]))
+# The main application is one large INLINE script. Earlier global HTML replacements
+# introduced literal </script> tokens inside printable HTML template strings.
+# Browsers terminate the JavaScript block at the first such token and display
+# the remainder as user-facing text. Escape ONLY the tokens inside this script,
+# keeping its real terminal </script> tag unchanged.
+marker='const ICON={'
+suffix='<script src="offline-backup.js'
+if marker not in h or suffix not in h:raise RuntimeError('App source boundaries changed; stop build')
+anchor=h.index(marker);start=h.rfind('<script',0,anchor);following=h.index(suffix,anchor)
+ending=h.rfind('</script>',start,following)
+if start<0 or ending<0 or ending<=start:raise RuntimeError('Main script boundary not found')
+middle,count=re.subn(r'</script(?=\s*>)',r'<\/script',h[start:ending],flags=re.I)
+h=h[:start]+middle+h[ending:]
+print('Escaped',count,'embedded script-closing tags, retained actual app script end')
 a=Audit();a.feed(h)
 if a.leaks:raise RuntimeError('JavaScript visible as page text: '+str(a.leaks[:5]))
 for attrs,parts in a.scripts:

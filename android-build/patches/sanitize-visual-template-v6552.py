@@ -7,9 +7,9 @@ import subprocess,re,sys
 p=Path(sys.argv[1]);h=p.read_text(encoding='utf8')
 for name in ('zavi-luxe-v1.css','zavi-luxe-v1.js'):
     if name.endswith('.css'):
-        pat=r'<link[^>]*zavi-luxe-v1\\.css[^>]*>'
+        pat=r'<link[^>]*zavi-luxe-v1[.]css[^>]*>'
     else:
-        pat=r'<script[^>]*zavi-luxe-v1\\.js[^>]*>\\s*</script>'
+        pat=r'<script[^>]*zavi-luxe-v1[.]js[^>]*>[ \t\r\n]*</script>'
     # Regex is intentionally scoped to the injected asset, not other script tags.
     m=list(re.finditer(pat,h,flags=re.I))
     if not m:raise RuntimeError('Missing visual script/link: '+name)

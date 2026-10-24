@@ -16,7 +16,7 @@ function paint(){
  dialog.querySelector('.zA47List').innerHTML=rows.length?rows.map(function(x){
   var phone=/^\+[1-9][0-9]{5,14}$/.test(x.phone_e164||'')?x.phone_e164:'';
   var wa=/^\+[1-9][0-9]{5,14}$/.test(x.whatsapp_e164||'')?x.whatsapp_e164:'';
-  var links=(phone?'<a href="tel:'+phone+'">☎ '+esc(phone)+'</a> ':'')+(wa?'<a href="https://wa.me/'+wa.slice(1)+'" target="_blank" rel="noopener">💬 WhatsApp</a>':'');
+  var links=(phone?'<a href="tel:'+phone+'">☎ '+esc(phone)+'</a> ':'')+(wa?'<a href="https://wa.me/'+wa.slice(1)+'" rel="noopener">💬 WhatsApp</a>':'');
   return '<article><b>'+esc(x.account_email)+'</b><div dir="ltr">'+esc(phone||'—')+' · '+esc(wa||'—')+'</div><div>'+links+'</div></article>'
  }).join(''):'<p>'+esc(w(4))+'</p>';
 }

@@ -1,0 +1,127 @@
+name: ZAVI ONE WEB V65.54 Responsive Mobile Desktop
+on:
+  push:
+    branches: [zavi-web-store-responsive-v6554]
+    paths: ["web-build/**", ".github/workflows/zavi-web-store-responsive.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  web-qa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Extract exact latest V65.54 web assets from APK
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p source site
+          gh release download zavi-v6554-manual-usd-dashboard-qa-20261024 --pattern 'ZAVI_ONE_V65_54_MANUAL_USD_DASHBOARD_QA.apk' --dir source
+          unzip -t source/ZAVI_ONE_V65_54_MANUAL_USD_DASHBOARD_QA.apk >/dev/null
+          unzip -oq source/ZAVI_ONE_V65_54_MANUAL_USD_DASHBOARD_QA.apk 'assets/*' -d source
+          cp -a source/assets/. site/
+          test "$(find site -type f | wc -l)" -ge 170
+          grep -Fq 'id="usdRateDashboardForm"' site/index.html
+          ! grep -Fq 'id="usdRateForm"' site/index.html
+          for f in index.html cloud.js sw.js manifest.webmanifest zavi-signup-whatsapp-once-v6548.js zavi-biometric-ui-v6546.js zavi-mobile-ux-safe-v6547.js;do test -s "site/$f";done
+      - name: Add responsive web styling, retain store operations and language
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp web-build/zavi-web-responsive-v1.css web-build/zavi-web-responsive-v1.js site/
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('site/index.html');s=p.read_text()
+          assert s.count('</head>')==1 and s.count('</body>')==1
+          assert 'zavi-web-responsive-v1.css' not in s
+          s=s.replace('</head>','<link rel="stylesheet" href="./zavi-web-responsive-v1.css?v=20261024-1"></head>',1)
+          s=s.replace('</body>','<script defer src="./zavi-web-responsive-v1.js?v=20261024-1"></script></body>',1)
+          p.write_text(s)
+          sw=Path('site/sw.js');a=sw.read_text()
+          a,n=re.subn(r"const CACHE_NAME='[^']+';","const CACHE_NAME='zavi-store-web-v65-54-responsive-20261024';",a,count=1)
+          assert n==1
+          if "const EXTRA=[" in a:a=a.replace("const EXTRA=[","const EXTRA=['zavi-web-responsive-v1.css','zavi-web-responsive-v1.js',",1)
+          elif "const CORE=[" in a:a=a.replace("const CORE=[","const CORE=['zavi-web-responsive-v1.css','zavi-web-responsive-v1.js',",1)
+          else:raise RuntimeError('Unknown SW precache structure')
+          sw.write_text(a)
+          PY
+          cat > site/_headers <<'HEADERS'
+          /index.html
+            Cache-Control: no-cache, max-age=0, must-revalidate
+          /sw.js
+            Cache-Control: no-cache, max-age=0, must-revalidate
+          /*
+            X-Content-Type-Options: nosniff
+            Referrer-Policy: strict-origin-when-cross-origin
+            X-Frame-Options: DENY
+          HEADERS
+          cat > site/README_WEB_DARI.txt <<'README'
+          ZAVI ONE WEB — V65.54 RESPONSIVE FOR MOBILE AND COMPUTER
+          Based on the exact V65.54 ZAVI ONE APK frontend (not an older UI).
+          USD rate is edited manually from Dashboard. Store modules, offline sync,
+          barcode camera, shop settings, printing and translations are retained.
+          Deploy the CONTENTS of this ZIP at the root of ZAVI ONE's dedicated HTTPS site.
+          This is NOT the ZAVI ONE ADMIN site: keep administration at a different host.
+          Configure new origin in authentication/OAuth redirect allowlist before login.
+          On real browsers, test online/offline synchronization, PWA, barcode and printing.
+          Do not delete existing application data or prior saved/offline transactions.
+          Windows installers will be prepared separately, not in this web archive.
+          README
+      - name: Validate Javascript, intact invoice HTML, local assets, mobile CSS
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in site/*.js;do node --check "$f" >/dev/null;done
+          node --check site/sw.js
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import subprocess,re
+          p=Path('site');h=(p/'index.html').read_text()
+          class C(HTMLParser):
+            def __init__(self):
+              super().__init__();self.scripts=[];self.on=False;self.current=[];self.errors=[]
+            def handle_starttag(self,tag,attrs):
+              if tag=='script':self.on=True;self.current=[]
+            def handle_endtag(self,tag):
+              if tag=='script' and self.on:self.scripts.append(''.join(self.current));self.on=False
+            def handle_data(self,data):
+              if self.on:self.current.append(data)
+              elif any(v in data for v in ('db.tx.filter(','const ICON={','function renderUSDOverview','w.document.write(content)')):self.errors.append(data[:80])
+          checker=C();checker.feed(h);assert not checker.errors,checker.errors
+          for inline in checker.scripts:
+            if inline.strip():
+              x=subprocess.run(['node','--check','--input-type=commonjs'],input=inline,text=True,capture_output=True)
+              assert x.returncode==0,x.stderr[:700]
+          for f in ('index.html','invoice.html'):
+            file=p/f
+            if not file.exists():continue
+            for link in re.findall(r'(?:src|href)=["\x27]([^"\x27]+)["\x27]',file.read_text()):
+              if link.startswith('./'):
+                dest=p/link.split('?',1)[0][2:]
+                assert dest.is_file(),f'Broken reference: {f} {dest}'
+          assert 'usdRateDashboardForm' in h and 'zavi-web-responsive-v1.css' in h
+          print('PASS: V65.54 original web features, web-only styling, valid inline JS, no leaked source, no missing links')
+          PY
+          test "$(find site -type f | wc -l)" -ge 170
+          cd site && zip -qr ../ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip .
+          cd .. && sha256sum ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip > ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip.sha256
+          unzip -t ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip | tail -1
+      - name: Publish WEB release for preview (leave current Netlify site unchanged)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-web-v6554-responsive-20261024
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1;then
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI ONE WEB V65.54 Responsive QA" --notes "Exact latest APK assets repackaged for mobile+desktop HTTPS web browsers. This is a preview ZIP; no live site changed. Login, printing, camera, offline and permissions need browser E2E acceptance."
+          fi
+          gh release upload "$TAG" ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip.sha256 --clobber

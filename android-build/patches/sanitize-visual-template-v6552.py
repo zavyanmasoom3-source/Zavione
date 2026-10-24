@@ -12,6 +12,13 @@ for name in ('zavi-luxe-v1.css','zavi-luxe-v1.js'):
         pat=r'<script[^>]*zavi-luxe-v1[.]js[^>]*>[ \t\r\n]*</script>'
     # Regex is intentionally scoped to the injected asset, not other script tags.
     m=list(re.finditer(pat,h,flags=re.I))
+    if not m and name.endswith('.js'):
+        # The already-repaired v65.52 shell can escape an injected script tag.
+        # Add exactly one document-level visual script at the LAST closing body.
+        end=h.rfind('</body>')
+        if end<0:raise RuntimeError('Missing document body closing tag')
+        h=h[:end]+'<script defer src="./zavi-luxe-v1.js?v=65.53"></script>'+h[end:]
+        m=list(re.finditer(pat,h,flags=re.I))
     if not m:raise RuntimeError('Missing visual script/link: '+name)
     keep=m[0].start() if name.endswith('.css') else m[-1].start()
     for match in reversed(m):

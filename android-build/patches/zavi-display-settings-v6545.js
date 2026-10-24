@@ -36,7 +36,7 @@ function save(n){
 function injectCSS(){
  if(document.getElementById('zavi-display-settings-style-v6545'))return;
  const st=document.createElement('style');st.id='zavi-display-settings-style-v6545';
- st.textContent=String.raw\`
+ st.textContent=String.raw`
 /* Hide v65.44 overlay even if an old offline cache injects it */
 #zavi-display-control{display:none!important}
 #zavi-display-settings-v6545{position:relative;box-sizing:border-box;width:100%;max-width:100%;grid-column:1/-1;min-width:0;direction:inherit;text-align:start;border:1px solid #9bbcd3;border-radius:15px;background:#f4f9fd;color:#18334f;padding:14px 15px;margin:12px 0;font:inherit;box-shadow:none}
@@ -62,7 +62,7 @@ body.dark #zavi-display-settings-v6545 button,
 html.dark #zavi-display-settings-v6545 button,
 body[data-theme="dark"] #zavi-display-settings-v6545 button{background:#234765;color:#fff;border-color:#5a89ad}
 @media print{html{zoom:1!important}#zavi-display-settings-v6545,#zavi-display-control{display:none!important}}
-\`;
+`;
  (document.head||document.documentElement).appendChild(st);
 }
 function update(){

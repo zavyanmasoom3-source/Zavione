@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - zavi-camera-fix-v65-43-20261024
+      - zavi-mobile-ux-v6547-20261024
     paths:
       - 'android-build/**'
       - '.github/workflows/zavi-camera-v65-43-build.yml'
@@ -20,10 +21,10 @@ jobs:
         include:
           - mode: one
             folder: ZAVI_ONE
-            file: ZAVI_ONE_V65_46_BIOMETRIC_TEST.apk
+            file: ZAVI_ONE_V65_47_UI_TEST.apk
           - mode: admin
             folder: ZAVI_ONE_ADMIN
-            file: ZAVI_ONE_ADMIN_V1_3_5_SETTINGS_TEST.apk
+            file: ZAVI_ONE_ADMIN_V1_3_6_UI_TEST.apk
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -95,6 +96,23 @@ jobs:
             grep -Fq '✕ بستن' android-build/app/src/main/assets/zavi-business-plus-v644.js
             grep -Fq 'ZaviAndroidBiometric' android-build/app/src/main/java/com/zavione/mobile/MainActivity.java
           fi
+      - name: Apply V65.47 full-screen menus and account-contact registration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-build/patches/zavi-mobile-ux-safe-v6547.js
+          node --check android-build/patches/zavi-account-contact-v6547.js
+          node --check android-build/patches/zavi-admin-contact-v6547.js
+          node --check android-build/patches/patch-zavi-ux-v6547.mjs
+          node android-build/patches/patch-zavi-ux-v6547.mjs "android-build/app/src/main/assets" "${{ matrix.mode }}"
+          grep -Fq 'zavi-mobile-ux-safe-v6547.js' android-build/app/src/main/assets/index.html
+          if [ "${{ matrix.mode }}" = one ]; then
+            grep -Fq 'zavi-account-contact-v6547.js' android-build/app/src/main/assets/index.html
+            grep -Fq 'zavi_contact:contact' android-build/app/src/main/assets/cloud.js
+            test -s android-build/app/src/main/assets/zavi-country-dials-v6547.json
+          else
+            grep -Fq 'zavi-admin-contact-v6547.js' android-build/app/src/main/assets/index.html
+          fi
       - name: Configure app icon
         run: |
           mkdir -p android-build/app/src/main/res/drawable-nodpi
@@ -119,11 +137,11 @@ jobs:
       - name: Publish test APK directly to private GitHub prerelease
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: zavi-pin-fingerprint-v65-46-test-20261024
+          TAG: zavi-mobile-ux-v65-47-test-20261024
         shell: bash
         run: |
           set -euo pipefail
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI V65.46 PIN and fingerprint + thermal close + organized settings (Android QA)" --notes "QA only: Optional Android BiometricPrompt fingerprint with existing PIN fallback; close button on 58/80 mm thermal receipt; Settings prioritized. Also includes 50–115% size settings and camera fixes. APK uses test signing and is not guaranteed to update installed previous APKs. Physical device testing still required." || gh release view "$TAG" >/dev/null
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI V65.47 fullscreen More, category icons, registration phone and WhatsApp (Android QA)" --notes "QA only: full-screen More and searchable icon menu; prioritized settings; consent-based international phone/WhatsApp signup UI and admin view. Secure contact database migration must be separately deployed and checked. APK uses test signing and device tests are required." || gh release view "$TAG" >/dev/null
           fi
           gh release upload "$TAG" "dist/${{ matrix.file }}" "dist/${{ matrix.file }}.sha256" --clobber

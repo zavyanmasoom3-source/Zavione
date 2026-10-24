@@ -4,6 +4,7 @@ on:
     branches: [zavi-windows-v6554-setup]
     paths:
       - ".github/workflows/zavi-windows-v6554-exact.yml"
+      - "windows-build/main.cjs"
   workflow_dispatch:
 permissions:
   contents: write

@@ -80,15 +80,6 @@ jobs:
           $hash=(Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  Setup_ZAVI_ONE_65_54_Windows_x64.exe" | Set-Content windows-output/ZAVI_ONE/dist/Setup_ZAVI_ONE_65_54_Windows_x64.exe.sha256 -Encoding ascii
           Write-Host "PASS: direct NSIS Windows x64 setup, $size bytes, SHA256 $hash"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ZAVI_ONE_V65_54_WINDOWS_X64_SETUP
-          path: |
-            windows-output/ZAVI_ONE/dist/Setup_ZAVI_ONE_65_54_Windows_x64.exe
-            windows-output/ZAVI_ONE/dist/Setup_ZAVI_ONE_65_54_Windows_x64.exe.sha256
-            windows-output/ZAVI_ONE/BUILD_SOURCE_REPORT.json
-          if-no-files-found: error
-          retention-days: 30
       - name: Release installer
         env:
           GH_TOKEN: ${{ github.token }}

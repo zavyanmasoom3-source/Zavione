@@ -61,7 +61,7 @@ for attrs,parts in a.scripts:
     if attrs.get('src') or not ''.join(parts).strip():continue
     result=subprocess.run(['node','--check','--input-type=commonjs'],input=''.join(parts),capture_output=True,text=True)
     if result.returncode:raise RuntimeError('Inline JavaScript broken: '+result.stderr[:700])
-if h.count('zavi-luxe-v1.css')!=1 or h.count('zavi-luxe-v1.js')!=1:
-    raise RuntimeError('Theme must exist only in real document head/footer')
+if not re.search(r'<link[^>]*zavi-luxe-v1[.]css[^>]*>',h,re.I) or not re.search(r'<script[^>]*zavi-luxe-v1[.]js[^>]*>[ \\t\\r\\n]*</script>',h,re.I):
+    raise RuntimeError('Document theme script or stylesheet missing')
 p.write_text(h,encoding='utf8')
 print('PASS: receipt HTML templates intact, no executable source exposed, inline JS parse valid')

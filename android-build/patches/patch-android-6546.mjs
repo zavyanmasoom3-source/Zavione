@@ -23,7 +23,7 @@ if(mode==='one'){
   if(has('zavi-business-plus-v644.js')){
    let source=read('zavi-business-plus-v644.js');
    const before='<nav class="toolbar"><button onclick="window.print()">چاپ رسید</button></nav>';
-   const after='<nav class="toolbar" role="toolbar" aria-label="چاپ و بستن رسید"><button type="button" onclick="window.print()">🖨 چاپ رسید</button><button type="button" aria-label="بستن پیش‌نمایش رسید و بازگشت به برنامه" onclick="if(window.opener&&!window.opener.closed){window.close()}else if(history.length>1){history.back()}else{window.location.replace(\\'./index.html\\')}" style="background:#9b2730">✕ بستن</button></nav>';
+   const after=`<nav class="toolbar" role="toolbar" aria-label="چاپ و بستن رسید"><button type="button" onclick="window.print()">🖨 چاپ رسید</button><button type="button" aria-label="بستن پیش‌نمایش رسید و بازگشت به برنامه" onclick="if(window.opener&&!window.opener.closed){window.close()}else if(history.length>1){history.back()}else{window.location.replace('./index.html')}" style="background:#9b2730">✕ بستن</button></nav>`;
    if(source.includes(before))source=source.replace(before,after);
    if(!source.includes('✕ بستن'))throw Error('Thermal receipt toolbar not patched');
    write('zavi-business-plus-v644.js',source);

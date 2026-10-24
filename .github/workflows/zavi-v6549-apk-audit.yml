@@ -1,7 +1,7 @@
-name: ZAVI ONE v65.53 USD rate settings to dashboard QA
+name: ZAVI ONE v65.54 manual USD rate editing directly on dashboard
 on:
   push:
-    branches: [zavi-v6553-dashboard-usd-rate]
+    branches: [zavi-v6554-usd-dashboard-edit]
     paths:
       - 'android-build/**'
       - '.github/workflows/zavi-v6549-apk-audit.yml'
@@ -36,8 +36,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/zavi648
-          gh release download zavi-v6552-template-repair-qa-20261024 --pattern 'ZAVI_ONE_V65_52_UI_REPAIRED_QA.apk' --dir /tmp/zavi648
-          src=/tmp/zavi648/ZAVI_ONE_V65_52_UI_REPAIRED_QA.apk
+          gh release download zavi-v6553-dashboard-usd-qa-20261024 --pattern 'ZAVI_ONE_V65_53_USD_DASHBOARD_QA.apk' --dir /tmp/zavi648
+          src=/tmp/zavi648/ZAVI_ONE_V65_53_USD_DASHBOARD_QA.apk
           unzip -t "$src" >/dev/null
           unzip -Z1 "$src" | grep -qx 'assets/zavi-signup-whatsapp-once-v6548.js'
           unzip -Z1 "$src" | grep -qx 'assets/zavi-biometric-ui-v6546.js'
@@ -112,7 +112,7 @@ jobs:
           import re
           p=Path("android-build/app/src/main/assets/sw.js")
           s=p.read_text()
-          s,n=re.subn(r"const CACHE_NAME='[^']+';", "const CACHE_NAME='zavi-one-v65-53-usd-rate-shell-20261024';",s,count=1)
+          s,n=re.subn(r"const CACHE_NAME='[^']+';", "const CACHE_NAME='zavi-one-v65-54-manual-usd-shell-20261024';",s,count=1)
           if n!=1:raise SystemExit('CACHE_NAME missing in service worker')
           if 'const CORE=[' in s:
               s=s.replace('const CORE=[','const CORE=["zavi-luxe-v1.css","zavi-luxe-v1.js",',1)
@@ -135,13 +135,18 @@ jobs:
           # Fail the release if the template parser still leaves code in visible document text.
           grep -Fq 'zavi-luxe-v1.css' android-build/app/src/main/assets/index.html
           grep -Fq 'zavi-luxe-v1.js' android-build/app/src/main/assets/index.html
-      - name: Show USD rate from Settings on dashboard; check unmodified accounting source
+      - name: Move existing USD rate editor into dashboard (without changing financial storage)
         shell: bash
         run: |
           set -euo pipefail
-          python3 android-build/patches/patch-dashboard-usd-v6553.py android-build/app/src/main/assets/index.html
+          python3 -m py_compile android-build/patches/patch-usd-dashboard-edit-v6554.py
+          python3 android-build/patches/patch-usd-dashboard-edit-v6554.py android-build/app/src/main/assets/index.html
           python3 android-build/patches/sanitize-visual-template-v6552.py android-build/app/src/main/assets/index.html
           grep -Fq 'function zaviUsdRateDashboardCard()' android-build/app/src/main/assets/index.html
+          grep -Fq 'id="usdRateDashboardForm"' android-build/app/src/main/assets/index.html
+          grep -Fq "if(e.target.id==='usdRateDashboardForm')" android-build/app/src/main/assets/index.html
+          ! grep -Fq 'id="usdRateForm"' android-build/app/src/main/assets/index.html
+          ! grep -Fq 'نرخ دالر برای نمایش گدام (USD)</h3>' android-build/app/src/main/assets/index.html
           grep -Fq 'usdRateUpdatedAt=new Date().toISOString()' android-build/app/src/main/assets/index.html
           grep -Fq 'zavi-usd-today-card' android-build/app/src/main/assets/index.html
           grep -Fq 'نرخ امروز دالر' android-build/app/src/main/assets/index.html
@@ -165,16 +170,16 @@ jobs:
             unzip -Z1 "$f" | grep -Fx "$path"
           done
           mkdir -p dist
-          cp "$f" dist/ZAVI_ONE_V65_53_USD_DASHBOARD_QA.apk
-          sha256sum dist/ZAVI_ONE_V65_53_USD_DASHBOARD_QA.apk > dist/ZAVI_ONE_V65_53_USD_DASHBOARD_QA.apk.sha256
+          cp "$f" dist/ZAVI_ONE_V65_54_MANUAL_USD_DASHBOARD_QA.apk
+          sha256sum dist/ZAVI_ONE_V65_54_MANUAL_USD_DASHBOARD_QA.apk > dist/ZAVI_ONE_V65_54_MANUAL_USD_DASHBOARD_QA.apk.sha256
       - name: Publish APK in private prerelease
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: zavi-v6553-dashboard-usd-qa-20261024
+          TAG: zavi-v6554-manual-usd-dashboard-qa-20261024
         run: |
           set -euo pipefail
           if ! gh release view "$TAG" >/dev/null 2>&1;then
-            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI ONE v65.53 — today's manually saved USD rate on dashboard QA" --notes "Based on exact V65.52 repaired APK assets. Shows manually saved USD conversion rate from Settings on dashboard and records the new rate update date. Keeps prior barcode, offline transfer, PIN/fingerprint, invoices and safe neon design; zero external FX calls or accounting data resets. No accounting or offline data migration. QA signing; install only on test device. Debug-signed QA; do not uninstall a previous app with unsynced offline transactions. Physical-device and secure release signing still required." || gh release view "$TAG" >/dev/null
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI ONE v65.54 — change USD rate on dashboard without Settings QA" --notes "Based on exact V65.53 APK assets. Moves the manual USD rate editor directly into Dashboard; Settings entry removed but stored rate and authorized commit/sync path unchanged. Keeps prior barcode, offline transfer, PIN/fingerprint, invoices and safe neon design; zero external FX calls or accounting data resets. No accounting or offline data migration. QA signing; install only on test device. Debug-signed QA; do not uninstall a previous app with unsynced offline transactions. Physical-device and secure release signing still required." || gh release view "$TAG" >/dev/null
           fi
-          gh release upload "$TAG" dist/ZAVI_ONE_V65_53_USD_DASHBOARD_QA.apk dist/ZAVI_ONE_V65_53_USD_DASHBOARD_QA.apk.sha256 --clobber
+          gh release upload "$TAG" dist/ZAVI_ONE_V65_54_MANUAL_USD_DASHBOARD_QA.apk dist/ZAVI_ONE_V65_54_MANUAL_USD_DASHBOARD_QA.apk.sha256 --clobber

@@ -8,7 +8,7 @@ on:
       - '.github/workflows/zavi-camera-v65-43-build.yml'
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   android-apk:
     name: Build ${{ matrix.mode }} Android camera fix APK
@@ -83,12 +83,14 @@ jobs:
           mkdir -p dist
           cp "$APK" "dist/${{ matrix.file }}"
           sha256sum "dist/${{ matrix.file }}" > "dist/${{ matrix.file }}.sha256"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.mode }}-camera-fix-test-apk
-          path: |
-            dist/${{ matrix.file }}
-            dist/${{ matrix.file }}.sha256
-            permissions.txt
-          if-no-files-found: error
-          retention-days: 30
+      - name: Publish test APK directly to private GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-camera-test-20261024
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI Camera Fix - Android QA test builds" --notes "Testing only: debug-signed APKs; install on a test device, do not uninstall existing ZAVI ONE with offline data. Native camera permissions updated, but camera performance is not yet verified on physical Android devices." || gh release view "$TAG" >/dev/null
+          fi
+          gh release upload "$TAG" "dist/${{ matrix.file }}" "dist/${{ matrix.file }}.sha256" --clobber

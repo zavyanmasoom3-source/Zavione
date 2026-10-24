@@ -6,8 +6,10 @@ from html.parser import HTMLParser
 import subprocess,re,sys
 p=Path(sys.argv[1]);h=p.read_text(encoding='utf8')
 for name in ('zavi-luxe-v1.css','zavi-luxe-v1.js'):
-    pat=(r'<link\b[^>]*href=["\\'][^"\\']*'+re.escape(name)+r'[^"\\']*["\\'][^>]*>' if name.endswith('.css')
-         else r'<script\b[^>]*src=["\\'][^"\\']*'+re.escape(name)+r'[^"\\']*["\\'][^>]*>\s*</script>')
+    if name.endswith('.css'):
+        pat=r'<link[^>]*zavi-luxe-v1\\.css[^>]*>'
+    else:
+        pat=r'<script[^>]*zavi-luxe-v1\\.js[^>]*>\\s*</script>'
     # Regex is intentionally scoped to the injected asset, not other script tags.
     m=list(re.finditer(pat,h,flags=re.I))
     if not m:raise RuntimeError('Missing visual script/link: '+name)

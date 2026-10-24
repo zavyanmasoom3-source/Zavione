@@ -20,10 +20,10 @@ jobs:
         include:
           - mode: one
             folder: ZAVI_ONE
-            file: ZAVI_ONE_V65_45_SETTINGS_TEST.apk
+            file: ZAVI_ONE_V65_46_BIOMETRIC_TEST.apk
           - mode: admin
             folder: ZAVI_ONE_ADMIN
-            file: ZAVI_ONE_ADMIN_V1_3_4_SETTINGS_TEST.apk
+            file: ZAVI_ONE_ADMIN_V1_3_5_SETTINGS_TEST.apk
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -80,6 +80,21 @@ jobs:
               ! grep -q '<b>ZAVI ONE</b>' android-build/app/src/main/assets/invoice.html
             fi
           fi
+      - name: Add PIN or fingerprint choice, thermal print close and sorted settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-build/patches/zavi-biometric-ui-v6546.js
+          node --check android-build/patches/zavi-settings-priority-v6546.js
+          node --check android-build/patches/patch-android-6546.mjs
+          node android-build/patches/patch-android-6546.mjs "android-build/app/src/main/assets" "${{ matrix.mode }}"
+          grep -Fq 'zavi-settings-priority-v6546.js' android-build/app/src/main/assets/index.html
+          if [ "${{ matrix.mode }}" = one ]; then
+            grep -Fq 'zavi-biometric-ui-v6546.js' android-build/app/src/main/assets/index.html
+            grep -Fq 'zavi-pin-changed' android-build/app/src/main/assets/index.html
+            grep -Fq '✕ بستن' android-build/app/src/main/assets/zavi-business-plus-v644.js
+            grep -Fq 'ZaviAndroidBiometric' android-build/app/src/main/java/com/zavione/mobile/MainActivity.java
+          fi
       - name: Configure app icon
         run: |
           mkdir -p android-build/app/src/main/res/drawable-nodpi
@@ -104,11 +119,11 @@ jobs:
       - name: Publish test APK directly to private GitHub prerelease
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: zavi-display-settings-v65-45-test-20261024
+          TAG: zavi-pin-fingerprint-v65-46-test-20261024
         shell: bash
         run: |
           set -euo pipefail
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI display size inside Settings 50-115 + Camera - Android QA builds" --notes "QA only: former floating display overlay removed; display size now inside Settings with 50–115% slider and close control. Customer invoice unbranding, camera permissions. APK uses test signing and is not guaranteed to update installed previous APKs. Physical device testing still required." || gh release view "$TAG" >/dev/null
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI V65.46 PIN and fingerprint + thermal close + organized settings (Android QA)" --notes "QA only: Optional Android BiometricPrompt fingerprint with existing PIN fallback; close button on 58/80 mm thermal receipt; Settings prioritized. Also includes 50–115% size settings and camera fixes. APK uses test signing and is not guaranteed to update installed previous APKs. Physical device testing still required." || gh release view "$TAG" >/dev/null
           fi
           gh release upload "$TAG" "dist/${{ matrix.file }}" "dist/${{ matrix.file }}.sha256" --clobber

@@ -1,7 +1,7 @@
-name: ZAVI ONE v65.50 neon design + full APK QA
+name: ZAVI ONE v65.51 safe interface repair with cache upgrade
 on:
   push:
-    branches: [zavi-v6550-neon-premium]
+    branches: [zavi-v6551-safe-ui-hotfix]
     paths:
       - 'android-build/**'
       - '.github/workflows/zavi-v6549-apk-audit.yml'
@@ -36,8 +36,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/zavi648
-          gh release download zavi-v6549-stability-qa-20261024 --pattern 'ZAVI_ONE_V65_49_STABILITY_QA.apk' --dir /tmp/zavi648
-          src=/tmp/zavi648/ZAVI_ONE_V65_49_STABILITY_QA.apk
+          gh release download zavi-v6550-neon-premium-qa-20261024 --pattern 'ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk' --dir /tmp/zavi648
+          src=/tmp/zavi648/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk
           unzip -t "$src" >/dev/null
           unzip -Z1 "$src" | grep -qx 'assets/zavi-signup-whatsapp-once-v6548.js'
           unzip -Z1 "$src" | grep -qx 'assets/zavi-biometric-ui-v6546.js'
@@ -94,8 +94,8 @@ jobs:
           node - <<'NODE'
           const fs=require('fs'),p='android-build/app/src/main/assets/index.html';
           let html=fs.readFileSync(p,'utf8');
-          if(!html.includes('zavi-luxe-v1.css'))html=html.replace('</head>','<link rel="stylesheet" href="./zavi-luxe-v1.css?v=65.50" data-zavi-visual="neon-premium"></head>');
-          if(!html.includes('zavi-luxe-v1.js'))html=html.replace('</body>','<script defer src="./zavi-luxe-v1.js?v=65.50"></script></body>');
+          if(!html.includes('zavi-luxe-v1.css'))html=html.replace('</head>','<link rel="stylesheet" href="./zavi-luxe-v1.css?v=65.51" data-zavi-visual="safe-neon-hotfix"></head>');
+          if(!html.includes('zavi-luxe-v1.js'))html=html.replace('</body>','<script defer src="./zavi-luxe-v1.js?v=65.51"></script></body>');
           if(!html.includes('zavi-luxe-v1.js')||!html.includes('zavi-luxe-v1.css'))throw Error('Neon design assets not injected');
           fs.writeFileSync(p,html);
           NODE
@@ -103,6 +103,30 @@ jobs:
           grep -Fq 'data-zavi-theme="light"' android-build/app/src/main/assets/zavi-luxe-v1.css
           grep -Fq 'prefers-reduced-motion' android-build/app/src/main/assets/zavi-luxe-v1.css
           test -s android-build/app/src/main/assets/zavi-luxe-graph-v1.svg
+      - name: Eliminate mixed legacy UI caches without deleting app data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path("android-build/app/src/main/assets/sw.js")
+          s=p.read_text()
+          s,n=re.subn(r"const CACHE_NAME='[^']+';", "const CACHE_NAME='zavi-one-v65-51-safe-shell-20261024';",s,count=1)
+          if n!=1:raise SystemExit('CACHE_NAME missing in service worker')
+          if 'const CORE=[' in s:
+              s=s.replace('const CORE=[','const CORE=["zavi-luxe-v1.css","zavi-luxe-v1.js",',1)
+          elif 'const CORE =' in s:
+              s=s.replace('const CORE =','const CORE =',1)
+          else:raise SystemExit('Unexpected service worker CORE structure')
+          s=s.replace('await self.clients.claim()', 'await self.clients.claim()')
+          p.write_text(s)
+          print('Versioned UI cache installed, accounting storage left unchanged.')
+          PY
+          node --check android-build/app/src/main/assets/sw.js
+          # No unconditional full-screen opacity/visibility/layout overrides in refreshed visual layer.
+          ! grep -Eq 'opacity:0|visibility:hidden|display:none|position:fixed|MutationObserver|\.zl-enter' android-build/app/src/main/assets/zavi-luxe-v1.css
+          ! grep -Fq 'MutationObserver' android-build/app/src/main/assets/zavi-luxe-v1.js
       - name: Configure icon
         run: |
           mkdir -p android-build/app/src/main/res/drawable-nodpi
@@ -123,16 +147,16 @@ jobs:
             unzip -Z1 "$f" | grep -Fx "$path"
           done
           mkdir -p dist
-          cp "$f" dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk
-          sha256sum dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk > dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk.sha256
+          cp "$f" dist/ZAVI_ONE_V65_51_SAFE_DESIGN_QA.apk
+          sha256sum dist/ZAVI_ONE_V65_51_SAFE_DESIGN_QA.apk > dist/ZAVI_ONE_V65_51_SAFE_DESIGN_QA.apk.sha256
       - name: Publish APK in private prerelease
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: zavi-v6550-neon-premium-qa-20261024
+          TAG: zavi-v6551-safe-ui-hotfix-qa-20261024
         run: |
           set -euo pipefail
           if ! gh release view "$TAG" >/dev/null 2>&1;then
-            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI ONE 65.50 — premium neon design QA" --notes "Based on latest ZAVI ONE v65.49 APK web assets, retaining existing modules. Adds neon vector hero, polished cards, iconography and responsive light/dark styling with reduced-motion support. Debug-signed QA; do not uninstall a previous app with unsynced offline transactions. Physical-device and secure release signing still required." || gh release view "$TAG" >/dev/null
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI ONE 65.51 — safe UI repair QA" --notes "Based on exact V65.50 store APK assets. Removes broad visual CSS overrides and observer animation to restore rendered content; changes static shell cache identity to avoid mixing old/new frontend resources. No accounting or offline data migration. QA signing; install only on test device. Debug-signed QA; do not uninstall a previous app with unsynced offline transactions. Physical-device and secure release signing still required." || gh release view "$TAG" >/dev/null
           fi
-          gh release upload "$TAG" dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk dist/ZAVI_ONE_V65_50_NEON_DESIGN_QA.apk.sha256 --clobber
+          gh release upload "$TAG" dist/ZAVI_ONE_V65_51_SAFE_DESIGN_QA.apk dist/ZAVI_ONE_V65_51_SAFE_DESIGN_QA.apk.sha256 --clobber

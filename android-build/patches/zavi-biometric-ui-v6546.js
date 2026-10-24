@@ -12,7 +12,8 @@ const word=()=>strings[locale()];
 const bridge=()=>!!window.ZaviAndroidBiometric?.postMessage;
 let status={available:false,enabled:false},busy=false,pending=false,lastStatus=0,layout=null,gateButton=null;
 function configured(){try{return !!JSON.parse(localStorage.getItem(pinKey)||'null')?.hash}catch(_){return false}}
-function send(op){if(!bridge())return false;try{window.ZaviAndroidBiometric.postMessage(JSON.stringify({op}));return true}catch(_){return false}}
+function pinSignature(){try{return String(JSON.parse(localStorage.getItem(pinKey)||'null')?.hash||'')}catch(_){return ''}}
+function send(op){if(!bridge())return false;try{window.ZaviAndroidBiometric.postMessage(JSON.stringify({op,pinSig:pinSignature()}));return true}catch(_){return false}}
 function update(){
  const t=word(),card=document.getElementById('zavi-biometric-preferences-v6546');
  if(card){
@@ -87,6 +88,6 @@ window.addEventListener('zavi:native-biometric',event=>{
 document.addEventListener('zavi-pin-changed',()=>{status.enabled=false;pending=false;send('disable');update()});
 document.addEventListener('zavi-v24-pin-reset-success',()=>{status.enabled=false;pending=false;send('disable');update()});
 document.addEventListener('change',e=>{if(e.target.matches('#zaviSettingsLanguage,#zaviGateLanguage'))update()});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{style();setup();new MutationObserver(()=>{if(!document.getElementById('zavi-biometric-preferences-v6546'))setup();else update()}).observe(document.getElementById('content')||document.body,{childList:true,subtree:true})},{once:true});
-else{style();setup();new MutationObserver(()=>{if(!document.getElementById('zavi-biometric-preferences-v6546'))setup();else update()}).observe(document.getElementById('content')||document.body,{childList:true,subtree:true})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{style();setup();new MutationObserver(()=>{if(document.querySelector('#zawiChangePin')&&!document.getElementById('zavi-biometric-preferences-v6546'))setup()}).observe(document.getElementById('content')||document.body,{childList:true,subtree:true})},{once:true});
+else{style();setup();new MutationObserver(()=>{if(document.querySelector('#zawiChangePin')&&!document.getElementById('zavi-biometric-preferences-v6546'))setup()}).observe(document.getElementById('content')||document.body,{childList:true,subtree:true})}
 })();

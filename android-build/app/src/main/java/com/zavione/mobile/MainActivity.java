@@ -1,6 +1,11 @@
 package com.zavione.mobile;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
+import androidx.fragment.app.FragmentActivity;
+import androidx.biometric.BiometricManager;
+import androidx.biometric.BiometricPrompt;
+import androidx.core.content.ContextCompat;
 import android.app.AlertDialog;
 import android.Manifest;
 import android.content.ClipData;
@@ -48,7 +53,7 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Locale;
 
-public final class MainActivity extends Activity {
+public final class MainActivity extends FragmentActivity {
     private static final String BASE = "https://appassets.androidplatform.net/";
     private static final int PICK_UPLOAD = 4701;
     private static final int CAMERA_PERMISSION = 4703;
@@ -76,6 +81,8 @@ public final class MainActivity extends Activity {
     private byte[] pendingSave;
     private String pendingMime;
     private long lastBackPress;
+    private String biometricMode;
+    private String biometricPinSignature;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -226,6 +233,13 @@ public final class MainActivity extends Activity {
                     if (!isMainFrame || !origin.toString().equals("https://appassets.androidplatform.net")) return;
                     runOnUiThread(this::printPage);
                 });
+            WebViewCompat.addWebMessageListener(webView, "ZaviAndroidBiometric",
+                Collections.singleton("https://appassets.androidplatform.net"),
+                (view, message, origin, isMainFrame, reply) -> {
+                    if (!isMainFrame || !origin.toString().equals("https://appassets.androidplatform.net")) return;
+                    final String data=message.getData();
+                    if (data!=null && data.length()<8192) runOnUiThread(()->handleBiometricMessage(data));
+                });
         }
         webView.setDownloadListener((url,userAgent,disposition,mime,size) -> {
             if (url == null) return;
@@ -287,6 +301,93 @@ public final class MainActivity extends Activity {
                 catch(Exception ex){pendingSave=null;toast("Unable to save file");}
             });
         } catch (Exception ignored) {toast("Unable to prepare download");}
+    }
+
+
+    // Fingerprint authentication is performed by Android, never by JavaScript.
+    // The PIN hash signature binds enrollment to the PIN configured in the local store.
+    private SharedPreferences biometricPreferences() {
+        return getSharedPreferences("zavi_biometric_v6546", MODE_PRIVATE);
+    }
+    private boolean biometricReady() {
+        try {
+            return BiometricManager.from(this).canAuthenticate(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG
+            )==BiometricManager.BIOMETRIC_SUCCESS;
+        } catch (Exception e) {return false;}
+    }
+    private boolean biometricEnabled(String signature) {
+        return signature!=null && signature.length()>=20 &&
+            biometricPreferences().getBoolean("enabled",false) &&
+            signature.equals(biometricPreferences().getString("pin_signature",""));
+    }
+    private void sendBiometricEvent(String op,boolean success,String sig) {
+        if(webView==null)return;
+        try {
+            JSONObject payload=new JSONObject();
+            payload.put("op",op);
+            payload.put("success",success);
+            payload.put("available",biometricReady());
+            payload.put("enabled",biometricEnabled(sig));
+            String js="window.dispatchEvent(new CustomEvent('zavi:native-biometric',{detail:"+
+                JSONObject.quote(payload.toString())+"}));";
+            webView.evaluateJavascript(js,null);
+        } catch(Exception ignored){}
+    }
+    private void handleBiometricMessage(String input) {
+        String op;
+        String sig;
+        try {
+            JSONObject request=new JSONObject(input);
+            op=request.optString("op","");
+            sig=request.optString("pinSig","");
+        } catch(Exception e){return;}
+        if("status".equals(op)){sendBiometricEvent("status",true,sig);return;}
+        if("disable".equals(op)){
+            biometricPreferences().edit().remove("enabled").remove("pin_signature").apply();
+            sendBiometricEvent("disabled",true,sig);return;
+        }
+        if(!"enable".equals(op)&&!"authenticate".equals(op))return;
+        if(sig.length()<20 || !biometricReady() || biometricMode!=null) {
+            sendBiometricEvent("authenticate".equals(op)?"authenticated":"enabled",false,sig);
+            return;
+        }
+        if("authenticate".equals(op)&&!biometricEnabled(sig)){
+            sendBiometricEvent("authenticated",false,sig);return;
+        }
+        biometricMode=op;
+        biometricPinSignature=sig;
+        BiometricPrompt.AuthenticationCallback callback=new BiometricPrompt.AuthenticationCallback(){
+            private void finish(boolean success) {
+                String kind=biometricMode,signature=biometricPinSignature;
+                biometricMode=null;biometricPinSignature=null;
+                if(kind==null)return;
+                if(success&&"enable".equals(kind)){
+                    biometricPreferences().edit().putBoolean("enabled",true)
+                      .putString("pin_signature",signature).apply();
+                }
+                sendBiometricEvent("enable".equals(kind)?"enabled":"authenticated",success,signature);
+            }
+            @Override public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
+                super.onAuthenticationSucceeded(result);finish(true);
+            }
+            @Override public void onAuthenticationError(int code,CharSequence message) {
+                super.onAuthenticationError(code,message);finish(false);
+            }
+        };
+        try {
+            BiometricPrompt prompt=new BiometricPrompt(this,ContextCompat.getMainExecutor(this),callback);
+            BiometricPrompt.PromptInfo info=new BiometricPrompt.PromptInfo.Builder()
+                .setTitle("ZAVI ONE - Fingerprint / اثر انگشت")
+                .setSubtitle("Confirm your fingerprint to unlock the application")
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+                .setNegativeButtonText("Use PIN / ورود با رمز")
+                .build();
+            prompt.authenticate(info);
+        } catch(Exception ex){
+            biometricMode=null;biometricPinSignature=null;
+            sendBiometricEvent("enable".equals(op)?"enabled":"authenticated",false,sig);
+        }
     }
 
     private void printPage() {

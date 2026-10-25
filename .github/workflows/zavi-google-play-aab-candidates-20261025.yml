@@ -1,0 +1,347 @@
+name: ZAVI ONE 65.69 and ADMIN 1.4.16 Google Play AAB Candidates
+on:
+  push:
+    branches: [zavi-google-play-aab-release-candidate-20261025]
+    paths:
+      - ".github/workflows/zavi-google-play-aab-candidates-20261025.yml"
+      - "android-build/patches/zavi-reference-*.css"
+      - "android-build/patches/zavi-reference-*.js"
+      - "android-build/patches/zavi-final-settings-*.js"
+      - "android-build/patches/zavi-final-settings-*.css"
+      - "android-build/patches/zavi-cinematic-v2.css"
+      - "android-build/patches/zavi-cinematic-v2.js"
+      - "android-build/patches/zavi-final-reference-*.css"
+      - "android-build/patches/zavi-final-reference-*.js"
+      - "android-build/patches/zavi-dashboard-polish-v6562.css"
+      - "android-build/patches/zavi-dashboard-polish-v6562.js"
+      - "android-build/patches/zavi-mobile-cleanup-v6563.css"
+      - "android-build/patches/zavi-mobile-cleanup-v6563.js"
+      - "android-build/patches/zavi-v6564-layout.css"
+      - "android-build/patches/zavi-v6564-layout.js"
+      - "android-build/patches/zavi-v6565-sales-settings.js"
+      - "android-build/patches/zavi-v6565-sales-settings.css"
+      - "android-build/patches/zavi-admin-v1413-polish.css"
+      - "android-build/patches/zavi-admin-v1413-polish.js"
+      - "android-build/patches/zavi-v6567-sections-readable.css"
+      - "android-build/patches/zavi-v6567-sections-readable.js"
+      - "android-build/patches/zavi-admin-v1414-one-matched.css"
+      - "android-build/patches/zavi-admin-v1414-one-matched.js"
+      - "android-build/qa/zavi_browser_quality.py"
+      - "android-build/release/**"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  prepare:
+    name: Prepare pre-release AAB artifacts (NOT Google Play publication)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Create Play submission-candidate release, never mark as production
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-google-play-aab-candidates-20261025
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1;then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE 65.69 + ADMIN 1.4.16 — Android App Bundles for owner signing" \
+              --notes "AAB build candidates with canonical com.zavione.one and com.zavione.one.admin package identifiers, target Android API36, QA browser testing. NO debug signing allowed. When the owner sets their upload keystore as encrypted repository secrets, signed AAB candidates are built; otherwise explicitly labeled UNSIGNED AAB previews. Not Google Play submitted or approved. Real-device auth/camera/offline/print, privacy policy and account deletion remain independent publication gates."
+          fi
+  build:
+    needs: prepare
+    name: "Independent Google Play AAB Candidate — ${{ matrix.mode }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: one
+            app: ZAVI ONE
+            pkg: com.zavione.one
+            name: ZAVI_ONE_65_69.aab
+          - mode: admin
+            app: ZAVI ONE ADMIN
+            pkg: com.zavione.one.admin
+            name: ZAVI_ONE_ADMIN_1_4_16.aab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.13"
+      - name: Install Android platform and signing verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ];then SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n1)";fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Stage exact newest store and central ADMIN web applications
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p staging android-build/app/src/main/assets
+          if [ "${{ matrix.mode }}" = "one" ];then
+            gh release download zavi-web-v6554-responsive-20261024 --pattern 'ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip*' --dir staging
+            cd staging
+            sha256sum -c 'ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip.sha256'
+            cd ..
+            unzip -oq staging/ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip -d android-build/app/src/main/assets
+            test "$(find android-build/app/src/main/assets -type f | wc -l)" -ge 170
+            grep -q 'usdRateDashboardForm' android-build/app/src/main/assets/index.html
+            grep -q 'zavi-web-responsive-v1.css' android-build/app/src/main/assets/index.html
+          else
+            base64 -d windows-build/admin-v145-responsive-web.zip.base64 > staging/admin-source.zip
+            echo '06258f551304e7d147022ff4eaa881b99c68670d767f7816d833ccae958e3c03  staging/admin-source.zip' | sha256sum -c -
+            unzip -oq staging/admin-source.zip -d android-build/app/src/main/assets
+            test "$(find android-build/app/src/main/assets -type f | wc -l)" -ge 90
+            for f in index.html app.js account-control.js admin-portal.js zavi-admin-recovery-v141.js zavi-admin-service-whatsapp-v139.js;do test -s android-build/app/src/main/assets/"$f";done
+          fi
+          test -s android-build/app/src/main/assets/index.html
+          echo "Original frontend staged without replacing business or authentication logic."
+      - name: Add approved light/dark visual shell, preserve all original routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,re
+          mode='''${{ matrix.mode }}'''
+          root=Path('android-build/app/src/main/assets')
+          html=root/'index.html'
+          s=html.read_text(encoding='utf8')
+          assert '</head>' in s and '</body>' in s
+          assert 'zavi-reference-store-v6557.css' not in s and 'zavi-reference-admin-v148.css' not in s
+          if mode=='one':
+            style='zavi-reference-store-v6557.css'
+            js='zavi-reference-store-v6557.js'
+            for name in (style,js): (root/name).write_bytes((Path('android-build/patches')/name).read_bytes())
+            assert 'usdRateDashboardForm' in s
+            s=s.replace('</head>',f'<link rel="stylesheet" href="./{style}?v=65.59"></head>',1)
+            i=s.rfind('</body>')
+            s=s[:i]+f'<script defer src="./{js}?v=65.59"></script>'+s[i:]
+            assert 'zavi-web-responsive-v1.css' in s
+          else:
+            style='zavi-reference-admin-v148.css'
+            admin_script='zavi-reference-admin-v149.js'
+            (root/style).write_bytes((Path('android-build/patches')/style).read_bytes())
+            (root/admin_script).write_bytes((Path('android-build/patches')/admin_script).read_bytes())
+            assert 'account-control.js' in s and 'admin-portal.js' in s
+            s=s.replace('</head>',f'<link rel="stylesheet" href="./{style}?v=1.4.10"></head>',1)
+            i=s.rfind('</body>')
+            s=s[:i]+f'<script defer src="./{admin_script}?v=1.4.10"></script>'+s[i:]
+          # Attach searchable, categorized Settings without removing original fields or module handlers.
+          common='zavi-final-settings-common-v1.css'
+          control='zavi-final-settings-store-v6559.js' if mode=='one' else 'zavi-final-settings-admin-v1410.js'
+          for fname in (common,control):
+            (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+          s=s.replace('</head>',f'<link rel="stylesheet" href="./{common}?v=20261025-final"></head>',1)
+          idx=s.rfind('</body>')
+          s=s[:idx]+f'<script defer src="./{control}?v=20261025-final"></script>'+s[idx:]
+          assert s.count(control)==1 and s.count(common)==1
+          if mode=='one':
+            assert 'id="zaviEnableAllFeatures"' in s
+            assert 'function renderSettings()' in s
+          else:
+            assert (root/'app.js').is_file()
+            assert 'renderSettings' in (root/'app.js').read_text(encoding='utf8')
+          # Cinematic layer: additive only, maintain existing account/device/finance handlers.
+          for fname in ('zavi-cinematic-v2.css','zavi-cinematic-v2.js'):
+            assert fname not in s
+            (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+          s=s.replace('</head>','<link rel="stylesheet" href="./zavi-cinematic-v2.css?v=20261025-cinematic"></head>',1)
+          at=s.rfind('</body>')
+          s=s[:at]+'<script defer src="./zavi-cinematic-v2.js?v=20261025-cinematic"></script>'+s[at:]
+          # New responsive reference layouts – only UI, never replace original application scripts.
+          if mode=='one':
+            visual_files=('zavi-final-reference-store.css','zavi-final-reference-store.js')
+          else:
+            visual_files=('zavi-final-reference-admin.css',)
+          for fname in visual_files:
+            assert fname not in s
+            (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+          for fname in visual_files:
+            if fname.endswith('.css'):
+              s=s.replace('</head>',f'<link rel="stylesheet" href="./{fname}?v=ref-20261025"></head>',1)
+            else:
+              at=s.rfind('</body>')
+              s=s[:at]+f'<script defer src="./{fname}?v=ref-20261025"></script>'+s[at:]
+          if mode=='one':
+            # Only one original Dashboard call is removed; Settings health remains unchanged.
+            # Remove only the call inside renderDashboard(), not the same feature in Settings.
+            marker='${z6524CareLauncher()}'
+            dashboard_start=s.find('function renderDashboard')
+            target=s.find(marker,dashboard_start) if dashboard_start>=0 else -1
+            if target>=dashboard_start and target-dashboard_start<20000 and s.count(marker)>=2:
+              s=s[:target]+s[target+len(marker):]
+              print('PASS: native dashboard health call removed; Settings still has health feature')
+            else:
+              print('WARNING: health launcher template differs; isolated dashboard-only CSS hide retained')
+            for fname in ('zavi-dashboard-polish-v6562.css','zavi-dashboard-polish-v6562.js'):
+              assert fname not in s
+              (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+            s=s.replace('</head>','<link rel="stylesheet" href="./zavi-dashboard-polish-v6562.css?v=65.62"></head>',1)
+            at=s.rfind('</body>')
+            s=s[:at]+'<script defer src="./zavi-dashboard-polish-v6562.js?v=65.62"></script>'+s[at:]
+          # Mobile clean V65.63: independent visual-only layer and existing dashboard money cards.
+          if mode=='one':
+            for fname in ('zavi-mobile-cleanup-v6563.css','zavi-mobile-cleanup-v6563.js'):
+              assert fname not in s
+              (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+            s=s.replace('</head>','<link rel="stylesheet" href="./zavi-mobile-cleanup-v6563.css?v=65.63"></head>',1)
+            at=s.rfind('</body>')
+            s=s[:at]+'<script defer src="./zavi-mobile-cleanup-v6563.js?v=65.63"></script>'+s[at:]
+          # V65.64: only original app UI DOM is rearranged. No account/storage/transaction patches.
+          if mode=='one':
+            for fname in ('zavi-v6564-layout.css','zavi-v6564-layout.js'):
+              assert fname not in s
+              (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+            s=s.replace('</head>','<link rel="stylesheet" href="./zavi-v6564-layout.css?v=65.64"></head>',1)
+            at=s.rfind('</body>')
+            s=s[:at]+'<script defer src="./zavi-v6564-layout.js?v=65.64"></script>'+s[at:]
+          # V65.65 QA: UI-only de-duplicate selling, route scroll, and compact actual Settings.
+          if mode=='one':
+            for fname in ('zavi-v6565-sales-settings.css','zavi-v6565-sales-settings.js'):
+              assert fname not in s
+              (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+            s=s.replace('</head>','<link rel="stylesheet" href="./zavi-v6565-sales-settings.css?v=65.65"></head>',1)
+            at=s.rfind('</body>')
+            s=s[:at]+'<script defer src="./zavi-v6565-sales-settings.js?v=65.65"></script>'+s[at:]
+          if mode=='admin':
+            for fname in ('zavi-admin-v1413-polish.css','zavi-admin-v1413-polish.js'):
+              assert fname not in s
+              (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+            s=s.replace('</head>','<link rel="stylesheet" href="./zavi-admin-v1413-polish.css?v=1.4.13"></head>',1)
+            at=s.rfind('</body>')
+            s=s[:at]+'<script defer src="./zavi-admin-v1413-polish.js?v=1.4.13"></script>'+s[at:]
+          # V65.67 store and V1.4.14 ADMIN: add high contrast variable-height section menus.
+          extra = ('zavi-v6567-sections-readable.css','zavi-v6567-sections-readable.js') if mode=='one' else ('zavi-admin-v1414-one-matched.css','zavi-admin-v1414-one-matched.js')
+          for fname in extra:
+            assert fname not in s
+            (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+          cssfile,jsfile=extra
+          s=s.replace('</head>',f'<link rel="stylesheet" href="./{cssfile}?v=20261025.67"></head>',1)
+          at=s.rfind('</body>')
+          s=s[:at]+f'<script defer src="./{jsfile}?v=20261025.67"></script>'+s[at:]
+          html.write_text(s,encoding='utf8')
+          assert s.count(style)==1
+          print('PASS: image-inspired styles added to exact current application, original business modules retained',mode)
+          PY
+          if [ "${{ matrix.mode }}" = "one" ];then
+            node --check android-build/app/src/main/assets/zavi-reference-store-v6557.js
+            node --check android-build/app/src/main/assets/zavi-dashboard-polish-v6562.js
+            node --check android-build/app/src/main/assets/zavi-mobile-cleanup-v6563.js
+            node --check android-build/app/src/main/assets/zavi-v6564-layout.js
+            node --check android-build/app/src/main/assets/zavi-v6565-sales-settings.js
+            node --check android-build/app/src/main/assets/zavi-v6567-sections-readable.js
+          else
+            node --check android-build/app/src/main/assets/app.js
+            node --check android-build/app/src/main/assets/zavi-reference-admin-v149.js
+            node --check android-build/app/src/main/assets/zavi-admin-v1413-polish.js
+            node --check android-build/app/src/main/assets/zavi-admin-v1414-one-matched.js
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+          root=Path('android-build/app/src/main/assets')
+          s=(root/'index.html').read_text()
+          missing=[]
+          for href in re.findall(r'(?:href|src)\s*=\s*["\x27](\./[^"\x27]+)',s):
+            path=href.split('?',1)[0][2:]
+            if not (root/path).is_file():missing.append(path)
+          assert not missing, 'Missing relative assets: '+str(missing[:20])
+          files=list(root.glob('*.js'))
+          for f in files:
+            p=subprocess.run(['node','--check',str(f)],capture_output=True,text=True)
+            assert p.returncode==0, f'{f.name}: {p.stderr[:300]}'
+          print('PASS: missing linked files=0; JS parsed=',len(files))
+          PY
+      - name: Real browser UI regression on QA local data (no production account)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user --disable-pip-version-check playwright==1.56.0
+          python3 -m playwright install --with-deps chromium
+          python3 android-build/qa/zavi_browser_quality.py \
+            --assets android-build/app/src/main/assets \
+            --mode "${{ matrix.mode }}" \
+            --out "browser-qa-${{ matrix.mode }}"
+          test -s "browser-qa-${{ matrix.mode }}/qa.json"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('browser-qa-${{ matrix.mode }}/qa.json')
+          j=json.loads(p.read_text())
+          assert j['fail_count']==0,(j['fail_count'],[c for c in j['checks'] if not c['pass']][:8])
+          print('PASS: local browser UI checks',j['pass_count'],', screenshots',len(j['screenshots']))
+          PY
+          (cd "browser-qa-${{ matrix.mode }}" && zip -q -r "../ZAVI_BROWSER_QA_${{ matrix.mode }}.zip" .)
+
+      - name: Configure the permanent canonical Play package IDs and non-debug release build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 android-build/release/prepare_play_gradle.py --mode "${{ matrix.mode }}"
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          cp android-build/icons/${{ matrix.mode }}.webp android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+          grep -F "targetSdk 36" android-build/app/build.gradle
+          grep -F "signingConfig null" android-build/app/build.gradle
+          grep -F "com.zavione.one.admin' : 'com.zavione.one" android-build/app/build.gradle
+      - name: Compile real Android App Bundle (AAB) without unsafe debug signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd android-build
+          gradle --no-daemon --stacktrace -PzaviApp=${{ matrix.mode }} :app:bundleRelease
+      - name: Validate App Bundle structure, code and original embedded business frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB="$(find android-build/app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' | head -n1)"
+          test -s "$AAB"
+          test "$(stat -c %s "$AAB")" -gt 2000000
+          unzip -t "$AAB" | tail -n1
+          unzip -Z1 "$AAB" | grep -Fx base/manifest/AndroidManifest.xml
+          unzip -Z1 "$AAB" | grep -Fx base/dex/classes.dex
+          unzip -Z1 "$AAB" | grep -Fx base/assets/index.html
+          if [ "${{ matrix.mode }}" = "one" ];then
+            unzip -Z1 "$AAB" | grep -Fx base/assets/zavi-v6567-sections-readable.js
+            unzip -Z1 "$AAB" | grep -Fx base/assets/zavi-v6565-sales-settings.js
+            unzip -p "$AAB" base/assets/zavi-v6565-sales-settings.js | grep -Fq 'invoice.setAttribute'
+          else
+            unzip -Z1 "$AAB" | grep -Fx base/assets/account-control.js
+            unzip -Z1 "$AAB" | grep -Fx base/assets/zavi-admin-v1414-one-matched.js
+          fi
+          echo "PASS: structurally valid AAB; modules and canonical app config present"
+      - name: Sign ONLY with the owner's privately configured Play Upload Key
+        shell: bash
+        env:
+          ZAVI_UPLOAD_KEYSTORE_B64: ${{ matrix.mode == 'one' && secrets.ZAVI_ONE_UPLOAD_KEYSTORE_B64 || secrets.ZAVI_ADMIN_UPLOAD_KEYSTORE_B64 }}
+          ZAVI_UPLOAD_STORE_PASSWORD: ${{ matrix.mode == 'one' && secrets.ZAVI_ONE_UPLOAD_STORE_PASSWORD || secrets.ZAVI_ADMIN_UPLOAD_STORE_PASSWORD }}
+          ZAVI_UPLOAD_KEY_ALIAS: ${{ matrix.mode == 'one' && secrets.ZAVI_ONE_UPLOAD_KEY_ALIAS || secrets.ZAVI_ADMIN_UPLOAD_KEY_ALIAS }}
+          ZAVI_UPLOAD_KEY_PASSWORD: ${{ matrix.mode == 'one' && secrets.ZAVI_ONE_UPLOAD_KEY_PASSWORD || secrets.ZAVI_ADMIN_UPLOAD_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          AAB="$(find android-build/app/build/outputs/bundle/release -maxdepth 1 -type f -name '*.aab' | head -n1)"
+          python3 android-build/release/sign_bundle.py "${{ matrix.mode }}" "$AAB" dist
+          test "$(find dist -maxdepth 1 -name '*.aab' | wc -l)" -eq 1
+          sha256sum dist/*.aab > dist/AAB_SHA256.txt
+          cp "ZAVI_BROWSER_QA_${{ matrix.mode }}.zip" dist/
+          printf '%s\n' 'Not a public release. Privacy/data-safety/deletion, app access and live device tests are still required.' > dist/GOOGLE_PLAY_REVIEW_NOTES.txt
+          unzip -t "$AAB" | tail -n1
+      - name: Upload review-only AAB, signing status and browser QA evidence
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-google-play-aab-candidates-20261025
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
+          echo "AAB candidate uploaded for owner review; NOT deployed to Play"

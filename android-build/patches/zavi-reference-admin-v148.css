@@ -113,3 +113,81 @@ body #appScreen #view table td{border-color:var(--zar-border)!important;color:va
 @media(max-width:380px){body #appScreen #view .admin-kpi strong{font-size:clamp(18px,6vw,25px)!important}}
 @media(prefers-reduced-motion:reduce){body #appScreen .nav-item{transition:none!important}}
 @media print{body #appScreen #view .admin-hero{box-shadow:none!important}}
+
+
+/* V1.4.9: unmistakable visual layout polish matching executive admin reference */
+html body #appScreen .sidebar{width:236px!important;padding:16px 11px!important;
+ background:var(--zar-sidebar)!important;box-shadow:none!important}
+html body #appScreen .sidebar .brand{padding:9px 9px 17px!important;margin-bottom:10px!important;
+ border-bottom:1px solid var(--zar-border)!important}
+html body #appScreen .sidebar .brand img{width:40px!important;height:40px!important;border-radius:12px}
+html body #appScreen .sidebar .brand strong{font-size:19px!important;color:var(--zar-text)!important}
+html body #appScreen .sidebar .brand strong span{color:var(--zar-blue)!important}
+html body #appScreen .nav-item{display:flex!important;align-items:center;gap:11px;
+ min-height:44px!important;padding:10px 11px!important;margin-bottom:4px!important;
+ font-size:12px!important;line-height:1.6!important}
+html body #appScreen .nav-item span{color:var(--zar-blue)!important}
+html body #appScreen .workspace{margin-right:236px!important;width:calc(100% - 236px)!important}
+html body #appScreen .topbar{min-height:72px!important;padding-inline:20px!important}
+html body #appScreen #view .admin-hero{
+ background:linear-gradient(110deg,transparent,rgba(26,139,237,.1)),
+ linear-gradient(160deg,var(--zar-panel),var(--zar-soft))!important;
+ position:relative;min-height:158px!important;
+ border:1px solid var(--zar-border)!important}
+html body #appScreen #view .admin-hero:after{content:"";
+ position:absolute;inset:auto 0 0 auto;width:50%;height:88%;
+ background:linear-gradient(125deg,rgba(10,138,244,.16),transparent);
+ clip-path:polygon(0 100%,0 70%,20% 50%,29% 63%,48% 10%,61% 40%,74% 28%,89% 77%,100% 55%,100% 100%);
+ pointer-events:none}
+html body #appScreen #view .admin-hero h1{color:var(--zar-text)!important;
+ font-size:clamp(23px,2.4vw,37px)!important;font-weight:900!important}
+html body #appScreen #view .admin-hero h1 em{font-style:normal;color:var(--zar-blue)!important}
+html body #appScreen #view .admin-hero h2{font-size:clamp(15px,1.5vw,20px)!important}
+html body #appScreen #view .admin-hero-kicker{font-size:12px!important;font-weight:800;color:var(--zar-blue)!important}
+html body #appScreen #view .admin-kpis{grid-template-columns:repeat(5,minmax(0,1fr))!important;
+ gap:11px!important}
+html body #appScreen #view .admin-kpi{padding:15px!important;min-height:124px!important;
+ border-top:3px solid var(--zar-blue)!important;display:flex;flex-direction:column;gap:7px!important}
+html body #appScreen #view .admin-kpi.green{border-top-color:#13bb99!important}
+html body #appScreen #view .admin-kpi.orange{border-top-color:#eda653!important}
+html body #appScreen #view .admin-kpi.red{border-top-color:#ed6f97!important}
+html body #appScreen #view .admin-kpi.purple{border-top-color:#a17ef5!important}
+html body #appScreen #view .admin-kpi small{color:var(--zar-muted)!important;font-weight:750!important}
+html body #appScreen #view .admin-kpi strong{font-size:clamp(21px,2vw,29px)!important}
+html body #appScreen #view .admin-kpi .kpi-ico{font-size:23px!important;
+ border-radius:12px!important;color:var(--zar-blue)!important;
+ background:var(--zar-soft)!important}
+html body #appScreen #view .admin-analytics{
+ display:grid!important;grid-template-columns:minmax(0,1.6fr) minmax(270px,.95fr)!important;gap:12px!important}
+html body #appScreen #view .admin-secondary{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+html body #appScreen #view .admin-quick .admin-quick-grid{
+ display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important}
+html body #appScreen #view .panel{padding:18px!important;margin-bottom:13px!important}
+html body #appScreen #view .admin-list .admin-item{border-bottom:1px solid var(--zar-border)!important}
+html body .zavi-ref-top-tools{display:flex;align-items:center;gap:5px;
+ border:1px solid var(--zar-border)!important;background:var(--zar-soft)!important;
+ padding:4px;border-radius:12px}
+html body .zavi-ref-top-tools button{font-size:14px!important;min-height:33px!important;
+ border:0!important;padding:5px 10px!important;border-radius:9px!important;
+ color:var(--zar-muted)!important;background:transparent!important}
+html[data-zavi-theme="dark"] body .zavi-ref-top-tools button[data-zavi-theme-choice="dark"],
+html[data-zavi-theme="light"] body .zavi-ref-top-tools button[data-zavi-theme-choice="light"]{
+ background:var(--zar-panel)!important;color:var(--zar-blue)!important;
+ box-shadow:0 1px 7px rgba(26,87,150,.13)!important}
+@media(max-width:1100px){
+ html body #appScreen #view .admin-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ html body #appScreen #view .admin-quick .admin-quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media(max-width:900px){
+ html body #appScreen .workspace{width:100%!important;margin-right:0!important}
+ html body #appScreen .sidebar{width:min(86vw,315px)!important}
+ html body #appScreen #view .admin-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ html body #appScreen #view .admin-analytics,
+ html body #appScreen #view .admin-secondary{grid-template-columns:minmax(0,1fr)!important}
+ html body #appScreen #view .admin-quick .admin-quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ html body #appScreen #view .admin-hero{min-height:124px!important;padding:15px!important}
+ html body #appScreen #view .admin-kpi{min-height:102px!important}
+ html body .zavi-ref-top-tools{padding:2px;gap:2px}
+ html body .zavi-ref-top-tools button{min-height:28px!important;padding:2px 5px!important}
+}

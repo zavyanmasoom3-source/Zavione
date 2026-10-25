@@ -21,7 +21,7 @@ function open(){
  close();
  const dict=words[locale()];
  const screen=q('#appScreen');
- const originals=qa('.sidebar .nav-item',screen).filter(x=>x.offsetParent!==null&&!x.disabled&&!x.hidden&&x.textContent.trim());
+ const originals=qa('.sidebar .nav-item',screen).filter(x=>!x.disabled&&!x.hidden&&!x.closest('[hidden]')&&getComputedStyle(x).display!=='none'&&x.textContent.trim());
  if(!originals.length)return;
  const overlay=document.createElement('section');overlay.id='za67-menu';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',dict.all);
  const panel=document.createElement('div');panel.className='za67-panel';
@@ -66,7 +66,7 @@ function start(){
  const screen=q('#appScreen');if(!screen)return;
  // Only listen for topbar replacement; avoids expensive observers on financial dashboards.
  new MutationObserver(()=>{if(!q('#appScreen .za67-menu-trigger'))install()})
-  .observe(screen,{childList:true});
+  .observe(screen,{childList:true,attributes:true,attributeFilter:['style','class']});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&q('#za67-menu'))close()});
  document.addEventListener('change',e=>{
   if(e.target?.id==='zaviAdminLanguage'){

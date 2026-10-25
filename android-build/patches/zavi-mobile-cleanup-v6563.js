@@ -89,8 +89,9 @@ function quickGo(key){
  if(key==='receive'||key==='pay'){
   const required=key==='receive'?'customer_payment':'supplier_payment';
   // Ledger route renders the native form action; trigger its original button.
-  const run=()=>{const c=$('#content');const original=c?.querySelector('[data-action="'+required+'"]');if(original)original.click()};
-  run();requestAnimationFrame(run);
+  let clicked=false;
+  const run=()=>{if(clicked)return;const c=$('#content');const original=c?.querySelector('[data-action="'+required+'"]');if(original){clicked=true;original.click()}};
+  run();if(!clicked)requestAnimationFrame(run);
  }
 }
 let pend=false;

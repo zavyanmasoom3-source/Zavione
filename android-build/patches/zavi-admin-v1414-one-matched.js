@@ -66,7 +66,7 @@ function start(){
  const screen=q('#appScreen');if(!screen)return;
  // Only listen for topbar replacement; avoids expensive observers on financial dashboards.
  new MutationObserver(()=>{if(!q('#appScreen .za67-menu-trigger'))install()})
-  .observe(screen,{childList:true,attributes:true,attributeFilter:['style','class']});
+  .observe(screen,{childList:true,attributes:true,attributeFilter:['hidden','style','class']});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&q('#za67-menu'))close()});
  document.addEventListener('change',e=>{
   if(e.target?.id==='zaviAdminLanguage'){

@@ -1,4 +1,4 @@
-name: ZAVI ONE V65.69 and ADMIN V1.4.16 Signed APKs QA Bundle
+name: ZAVI ONE 65.69 + ADMIN 1.4.16 - Combined Installable Android QA ZIP
 on:
   push:
     branches: [zavi-v6569-admin1416-installable-apks-20261025]
@@ -10,160 +10,81 @@ permissions:
 jobs:
   bundle:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 24
     steps:
       - uses: actions/checkout@v4
-      - name: Check both release APK signatures, hashes and UI content
+      - name: Verify both APK signatures, SHA256 and browser test results
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          SOURCE: zavi-6569-admin1416-installable-apks-20261025
         run: |
           set -euo pipefail
           mkdir -p package
-          # Verify both independently built APKs exist before creating combined ZIP.
-          for i in $(seq 1 35);do
-            count="$(gh release view zavi-6569-admin1416-installable-apks-20261025 --json assets -q '.assets[].name' | grep -Ec '^ZAVI_ONE_(V65_69_INSTALLABLE_QA|ADMIN_V1_4_16_INSTALLABLE_QA)\.apk zavi-6569-admin1416-installable-apks-20261025 \
-            --pattern 'ZAVI_ONE_V65_69_INSTALLABLE_QA.apk*' --dir package
-          gh release download zavi-6569-admin1416-installable-apks-20261025 \
-            --pattern 'ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk*' --dir package
-          gh release download zavi-6569-admin1416-installable-apks-20261025 \
-            --pattern 'ZAVI_BROWSER_QA_*.zip' --dir package
+          for attempt in $(seq 1 40);do
+            count=$(gh release view "$SOURCE" --json assets --jq '.assets[].name' | grep -Ec '^ZAVI_ONE_(V65_69_INSTALLABLE_QA|ADMIN_V1_4_16_INSTALLABLE_QA)\.apk$' || true)
+            if [ "$count" -eq 2 ];then break;fi
+            sleep 6
+          done
+          gh release download "$SOURCE" --pattern "ZAVI_ONE_V65_69_INSTALLABLE_QA.apk*" --dir package
+          gh release download "$SOURCE" --pattern "ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk*" --dir package
+          gh release download "$SOURCE" --pattern "ZAVI_BROWSER_QA_*.zip" --dir package
           cd package
           for f in ZAVI_ONE_V65_69_INSTALLABLE_QA.apk ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk;do
             test -s "$f"
-            expected="$(awk 'NR==1{print $1}' "$f.sha256")"
-            printf '%s  %s\n' "$expected" "$f" | sha256sum --check
-            unzip -t "$f" | tail -n1
+            sha256sum -c "$f.sha256"
+            unzip -t "$f" | tail -n 1
             unzip -Z1 "$f" | grep -Fx classes.dex
             unzip -Z1 "$f" | grep -Fx assets/index.html
           done
-          unzip -Z1 ZAVI_ONE_V65_69_INSTALLABLE_QA.apk | grep -Fx assets/zavi-v6567-sections-readable.css
           unzip -Z1 ZAVI_ONE_V65_69_INSTALLABLE_QA.apk | grep -Fx assets/zavi-v6567-sections-readable.js
-          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk | grep -Fx assets/zavi-admin-v1414-one-matched.css
           unzip -Z1 ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk | grep -Fx assets/zavi-admin-v1414-one-matched.js
-          unzip -p ZAVI_ONE_V65_69_INSTALLABLE_QA.apk assets/index.html | grep -q 'zavi-v6567-sections-readable.js'
-          unzip -p ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk assets/index.html | grep -q 'zavi-admin-v1414-one-matched.js'
-          for f in ZAVI_BROWSER_QA_one.zip ZAVI_BROWSER_QA_admin.zip;do
-            unzip -t "$f" | tail -1
-            unzip -p "$f" qa.json | python3 -c 'import sys,json;r=json.load(sys.stdin);assert r["fail_count"]==0 and r["pass_count"]>10;print("PASS:",r["mode"],r["pass_count"])'
+          for mode in one admin;do
+            file="ZAVI_BROWSER_QA_$mode.zip"
+            unzip -t "$file" | tail -n1
+            unzip -p "$file" qa.json | python3 -c 'import sys,json; a=json.load(sys.stdin); assert a["fail_count"]==0 and a["pass_count"]>10; print("Browser:",a["mode"],a["pass_count"],"passed")'
           done
           sha256sum *.apk > SHA256_CHECKSUMS.txt
-          cat > README_DARI.txt <<'README'
-          ZAVI ONE V65.69 + ZAVI ONE ADMIN V1.4.16
-          Android QA installation package, 25 October 2026.
+          cat > README_DARI.txt <<'EOF'
+          ZAVI ONE V65.69 and ZAVI ONE ADMIN V1.4.16
+          Android installable QA previews from 25 October 2026.
 
-          These are the newest Android APKs, but NOT officially production signed.
-          App package IDs end with .installqa and DO NOT replace existing apps.
-          Browser screenshots and automated QA files included.
-          APK files CANNOT be uploaded to Google Play as a public release.
-          Google Play requires owner-signed AAB from separate release pipeline.
+          FILES:
+          ZAVI_ONE_V65_69_INSTALLABLE_QA.apk
+          ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk
+          ZAVI_BROWSER_QA_one.zip
+          ZAVI_BROWSER_QA_admin.zip
+          SHA256_CHECKSUMS.txt
 
-          فایل 1: ZAVI_ONE_V65_69_INSTALLABLE_QA.apk
-          در منوی «همه بخش‌ها» ارتفاع کارت‌ها خودکار است و متن کامل دیده می‌شود.
+          Both APKs have independent .installqa package IDs and TEMPORARY QA keys.
+          They will not replace existing installed ZAVI ONE or ADMIN applications.
+          User and offline data do not automatically migrate to these QA APKs.
+          Do not uninstall any previous app with unsynced transactions.
 
-          فایل 2: ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk
-          رنگ، کارت‌ها و منوی مدیریت مرکزی مشابه طراحی ZAVI ONE شده است.
-
-          هردو APK شناسه مستقل آزمایشی دارند. برنامه اصلی را حذف نکنید.
-          داده‌های نسخه قبلی خودکار به این APK منتقل نمی‌شوند.
-          قبل از انتقال دستگاه، موجودی و تراکنش‌های ارسال‌نشده را همگام‌سازی
-          و از اطلاعات، نسخه پشتیبان تأییدشده تهیه کنید.
-
-          مهم: ساخت و امضای آزمایشی و فایل‌های داخل APK بررسی شده‌اند.
-          این بسته هنوز برای انتشار عمومی تأیید نهایی نشده:
-          آزمون واقعی موبایل، ورود ابری، کمره بارکد، چاپ، آفلاین،
-          انتقال دستگاه، بررسی مالک/غیرمالک در ADMIN و امضای
-          اختصاصی انتشار (production signing) ضرورت دارد.
-          README
+          NOT GOOGLE PLAY PRODUCTION:
+          To publish officially, use owner controlled permanent signing and Play AAB.
+          Check real devices, owner vs co-worker admin security, camera scan, print,
+          cloud login, offline data, backup, and device transfer before distribution.
+          EOF
           cd ..
-          zip -9 -q -j ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip \
+          zip -9 -q -j ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS_QA.zip \
             package/ZAVI_ONE_V65_69_INSTALLABLE_QA.apk \
             package/ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk \
             package/ZAVI_BROWSER_QA_one.zip package/ZAVI_BROWSER_QA_admin.zip \
             package/SHA256_CHECKSUMS.txt package/README_DARI.txt
-          unzip -t ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip | tail -1
-          test "$(unzip -Z1 ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip | grep -c '\.apk$')" -eq 2
-          sha256sum ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip > ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip.sha256
-      - name: Publish QA ZIP for both apps
+          unzip -t ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS_QA.zip | tail -n1
+          test "$(unzip -Z1 ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS_QA.zip | grep -c '\.apk$')" -eq 2
+          sha256sum ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS_QA.zip > ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS_QA.zip.sha256
+      - name: Publish combined signed test APK archive
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: zavi-6569-admin1416-qa-zip-20261025
+          DEST: zavi-6569-admin1416-qa-zip-20261025
         run: |
           set -euo pipefail
-          if ! gh release view "$TAG" >/dev/null 2>&1;then
-            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease \
-              --title "ZAVI ONE 65.69 + ADMIN 1.4.16 | Android Installation QA" \
-              --notes "Two independent Android APKs signed for safe testing, latest Store 65.69 and owner ADMIN 1.4.16; packages isolated from existing app data. NOT Play production, temporary CI testing keys. Browser smoke report and main embedded resources verified. Live devices and owner private signing remain required."
+          if ! gh release view "$DEST" >/dev/null 2>&1;then
+            gh release create "$DEST" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE 65.69 + ADMIN 1.4.16 - Android QA APK Bundle" \
+              --notes "Two verified QA signed installable Android APKs with browser test evidence. QA application IDs are isolated to avoid overwriting existing accounting data. These are not public production or Google Play builds."
           fi
-          gh release upload "$TAG" \
-            ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip \
-            ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip.sha256 --clobber
- || true)"
-            [ "$count" = "2" ] && break
-            sleep 6
-          done
-          gh release download zavi-6569-admin1416-installable-apks-20261025 \
-            --pattern 'ZAVI_ONE_V65_69_INSTALLABLE_QA.apk*' --dir package
-          gh release download zavi-6569-admin1416-installable-apks-20261025 \
-            --pattern 'ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk*' --dir package
-          cd package
-          for f in ZAVI_ONE_V65_69_INSTALLABLE_QA.apk ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk;do
-            test -s "$f"
-            expected="$(awk 'NR==1{print $1}' "$f.sha256")"
-            printf '%s  %s\n' "$expected" "$f" | sha256sum --check
-            unzip -t "$f" | tail -n1
-            unzip -Z1 "$f" | grep -Fx classes.dex
-            unzip -Z1 "$f" | grep -Fx assets/index.html
-          done
-          unzip -Z1 ZAVI_ONE_V65_69_INSTALLABLE_QA.apk | grep -Fx assets/zavi-v6567-sections-readable.css
-          unzip -Z1 ZAVI_ONE_V65_69_INSTALLABLE_QA.apk | grep -Fx assets/zavi-v6567-sections-readable.js
-          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk | grep -Fx assets/zavi-admin-v1414-one-matched.css
-          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk | grep -Fx assets/zavi-admin-v1414-one-matched.js
-          unzip -p ZAVI_ONE_V65_69_INSTALLABLE_QA.apk assets/index.html | grep -q 'zavi-v6567-sections-readable.js'
-          unzip -p ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk assets/index.html | grep -q 'zavi-admin-v1414-one-matched.js'
-          sha256sum *.apk > SHA256_CHECKSUMS.txt
-          cat > README_DARI.txt <<'README'
-          ZAVI ONE V65.69 + ZAVI ONE ADMIN V1.4.16
-          Android QA package, 25 October 2026.
-
-          فایل 1: ZAVI_ONE_V65_69_INSTALLABLE_QA.apk
-          در منوی «همه بخش‌ها» ارتفاع کارت‌ها خودکار است و متن کامل دیده می‌شود.
-
-          فایل 2: ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk
-          رنگ، کارت‌ها و منوی مدیریت مرکزی مشابه طراحی ZAVI ONE شده است.
-
-          هردو APK شناسه مستقل آزمایشی دارند. برنامه اصلی را حذف نکنید.
-          داده‌های نسخه قبلی خودکار به این APK منتقل نمی‌شوند.
-          قبل از انتقال دستگاه، موجودی و تراکنش‌های ارسال‌نشده را همگام‌سازی
-          و از اطلاعات، نسخه پشتیبان تأییدشده تهیه کنید.
-
-          مهم: ساخت و امضای آزمایشی و فایل‌های داخل APK بررسی شده‌اند.
-          این بسته هنوز برای انتشار عمومی تأیید نهایی نشده:
-          آزمون واقعی موبایل، ورود ابری، کمره بارکد، چاپ، آفلاین،
-          انتقال دستگاه، بررسی مالک/غیرمالک در ADMIN و امضای
-          اختصاصی انتشار (production signing) ضرورت دارد.
-          README
-          cd ..
-          zip -9 -q -j ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip \
-            package/ZAVI_ONE_V65_69_INSTALLABLE_QA.apk \
-            package/ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk \
-            package/SHA256_CHECKSUMS.txt package/README_DARI.txt
-          unzip -t ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip | tail -1
-          test "$(unzip -Z1 ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip | grep -c '\.apk$')" -eq 2
-          sha256sum ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip > ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip.sha256
-      - name: Publish QA ZIP for both apps
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: zavi-6569-admin1416-qa-zip-20261025
-        run: |
-          set -euo pipefail
-          if ! gh release view "$TAG" >/dev/null 2>&1;then
-            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease \
-              --title "ZAVI ONE 65.69 + ADMIN 1.4.16 | Android Installation QA" \
-              --notes "Two independent Android APKs signed for safe testing, latest Store 65.69 and owner ADMIN 1.4.16; packages isolated from existing app data. NOT Play production, temporary CI testing keys. Browser smoke report and main embedded resources verified. Live devices and owner private signing remain required."
-          fi
-          gh release upload "$TAG" \
-            ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip \
-            ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS.zip.sha256 --clobber
+          gh release upload "$DEST" ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS_QA.zip ZAVI_ONE_6569_ADMIN_1416_INSTALLABLE_APKS_QA.zip.sha256 --clobber

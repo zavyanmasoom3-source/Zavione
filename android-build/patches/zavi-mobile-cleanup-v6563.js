@@ -86,6 +86,12 @@ function quickGo(key){
  const fallback={sale:'sales',purchase:'purchases',receive:'money',pay:'money'}[key];
  const nav=$$('[data-go]').find(e=>e.dataset.go===fallback&&!e.closest('.zrf-home,.z63-quick-panel'));
  if(nav)nav.click();
+ if(key==='receive'||key==='pay'){
+  const required=key==='receive'?'customer_payment':'supplier_payment';
+  // Ledger route renders the native form action; trigger its original button.
+  const run=()=>{const c=$('#content');const original=c?.querySelector('[data-action="'+required+'"]');if(original)original.click()};
+  run();requestAnimationFrame(run);
+ }
 }
 let pend=false;
 function schedule(){

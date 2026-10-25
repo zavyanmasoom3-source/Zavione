@@ -151,8 +151,8 @@ jobs:
           s=p.read_text()
           changes=[
             ("admin ? 'com.zavione.one.admin' : 'com.zavione.one'", "admin ? 'com.zavione.one.admin.designpreview' : 'com.zavione.one.designpreview'"),
-            ("versionCode admin ? 4121 : 4111", "versionCode admin ? 4149 : 6558"),
-            ("versionName admin ? '41.2.1' : '41.1.1'", "versionName admin ? '1.4.9-preview' : '65.58-preview'"),
+            ("versionCode admin ? 4127 : 6554", "versionCode admin ? 4149 : 6558"),
+            ("versionName admin ? '1.3.7' : '65.54'", "versionName admin ? '1.4.9-preview' : '65.58-preview'"),
             ("admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'", "admin ? 'ZAVI ADMIN NEW UI' : 'ZAVI ONE NEW UI'")
           ]
           for old,new in changes:

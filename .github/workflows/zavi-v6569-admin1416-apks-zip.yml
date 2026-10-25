@@ -32,7 +32,9 @@ jobs:
           cd package
           for f in ZAVI_ONE_V65_69_INSTALLABLE_QA.apk ZAVI_ONE_ADMIN_V1_4_16_INSTALLABLE_QA.apk;do
             test -s "$f"
-            sha256sum -c "$f.sha256"
+            expected=$(awk 'NR==1{print $1}' "$f.sha256")
+            actual=$(sha256sum "$f" | awk '{print $1}')
+            test "$actual" = "$expected"
             unzip -t "$f" | tail -n 1
             unzip -Z1 "$f" | grep -Fx classes.dex
             unzip -Z1 "$f" | grep -Fx assets/index.html

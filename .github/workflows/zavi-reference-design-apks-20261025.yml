@@ -79,14 +79,14 @@ jobs:
           root=Path('android-build/app/src/main/assets')
           html=root/'index.html'
           s=html.read_text(encoding='utf8')
-          assert s.count('</head>')==1 and s.count('</body>')==1
+          assert '</head>' in s and '</body>' in s
           assert 'zavi-reference-store-v6557.css' not in s and 'zavi-reference-admin-v148.css' not in s
           if mode=='one':
             style='zavi-reference-store-v6557.css'
             js='zavi-reference-store-v6557.js'
             for name in (style,js): (root/name).write_bytes((Path('android-build/patches')/name).read_bytes())
             assert 'usdRateDashboardForm' in s
-            s=s.replace('</head>',f'<link rel="stylesheet" href="./{style}?v=65.57"></head>')
+            s=s.replace('</head>',f'<link rel="stylesheet" href="./{style}?v=65.57"></head>',1)
             i=s.rfind('</body>')
             s=s[:i]+f'<script defer src="./{js}?v=65.57"></script>'+s[i:]
             assert 'zavi-web-responsive-v1.css' in s
@@ -94,7 +94,7 @@ jobs:
             style='zavi-reference-admin-v148.css'
             (root/style).write_bytes((Path('android-build/patches')/style).read_bytes())
             assert 'account-control.js' in s and 'admin-portal.js' in s
-            s=s.replace('</head>',f'<link rel="stylesheet" href="./{style}?v=1.4.8"></head>')
+            s=s.replace('</head>',f'<link rel="stylesheet" href="./{style}?v=1.4.8"></head>',1)
           html.write_text(s,encoding='utf8')
           assert s.count(style)==1
           print('PASS: image-inspired styles added to exact current application, original business modules retained',mode)

@@ -10,7 +10,23 @@ on:
 permissions:
   contents: write
 jobs:
+  prepare:
+    name: Prepare direct GitHub Release (no Actions artifact quota)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Create QA release before independent APK builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-reference-light-dark-apks-20261025
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1;then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE 65.57 and ADMIN 1.4.8 — Light/Dark Reference UI APK QA" \
+              --notes "Preserved current ZAVI ONE 65.54 and ADMIN 1.4.5 business logic, with additive screenshot-inspired dark/light styles. Android real-device QA, exact screenshot parity, production signing and safe data migration are NOT guaranteed."
+          fi
   build:
+    needs: prepare
     name: "Android QA — ${{ matrix.mode }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 75
@@ -155,27 +171,31 @@ jobs:
           cp "$APK" 'dist/${{ matrix.name }}'
           sha256sum 'dist/${{ matrix.name }}' > 'dist/${{ matrix.name }}.sha256'
           echo "PASS: APK assembled, signed, full frontend packaged. This is QA-signed; existing installations may have a different signing identity."
-      - uses: actions/upload-artifact@v4
-        with:
-          name: zavi-visual-reference-${{ matrix.mode }}
-          path: |
-            dist/*.apk
-            dist/*.sha256
-            badging.txt
-            signature.txt
-          if-no-files-found: error
-          retention-days: 30
+      - name: Publish independently verified APK straight to GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-reference-light-dark-apks-20261025
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" "dist/${{ matrix.name }}" "dist/${{ matrix.name }}.sha256" \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          echo "PASS: signed APK directly published to Release"
   release:
     name: Publish both QA APKs for direct download
     needs: build
     if: ${{ success() }}
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: zavi-visual-reference-*
-          merge-multiple: true
-          path: dist
+      - name: Fetch verified binaries from GitHub Release (quota-safe)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-reference-light-dark-apks-20261025
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.apk' --dir dist
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.sha256' --dir dist
       - name: Check APKs, hashes and post release
         shell: bash
         env:

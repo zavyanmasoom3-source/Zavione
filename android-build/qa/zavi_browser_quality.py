@@ -118,10 +118,15 @@ try:
           record('store ephemeral local setup '+suffix,opened,'Screenshot capture requires disposable local PIN setup')
           if opened:
             capture(page,'home-'+suffix)
-            btn=page.locator('[data-zrf-menu]').first
+            # The real customer entry is the "More" item in the fixed bottom navigation.
+            # Clicking an obscured home shortcut with force=True can hit another overlay.
+            btn=page.locator('#mobileBottom [data-go="more"]').first
+            if not btn.count():btn=page.locator('[data-zrf-menu]').first
             if btn.count():
-              btn.click(force=True)
-              page.wait_for_timeout(150)
+              btn.evaluate('(e)=>e.click()')
+              page.wait_for_timeout(250)
+              opened=page.locator('#zrf-all').count()==1
+              record('store native All sections opens '+suffix,opened)
               data=inspect_geometry(page,'#zrf-all .zrf-all-item')
               note=page.locator('#zrf-all .zrf-all-empty')
               valid = (data['elements']>=1 and not data['overshoots'] and not data['collisions']) or (data['elements']==0 and note.count()==1 and len(note.inner_text().strip())>20)

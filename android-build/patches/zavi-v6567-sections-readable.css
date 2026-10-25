@@ -75,3 +75,12 @@ html:not([data-zavi-theme="light"]) #zrf-all{
 @media(prefers-reduced-motion:reduce){
  #zrf-all,.zrf-all-item{animation:none!important;transition:none!important}
 }
+
+#zrf-all .zrf-all-empty{
+  grid-column:1/-1!important;min-height:95px!important;display:flex!important;
+  align-items:center!important;justify-content:center!important;text-align:center!important;
+  padding:15px!important;margin:0!important;border:1px dashed var(--z67-edge)!important;
+  border-radius:15px!important;background:var(--z67-surface)!important;
+  color:var(--z67-ink)!important;font-size:13px!important;line-height:1.7!important;
+  overflow-wrap:anywhere!important
+}

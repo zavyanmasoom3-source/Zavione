@@ -240,3 +240,6 @@ body.zrf-all-open{overflow:hidden!important}
  #content.zrf-dashboard>.zrf-legacy-dashboard{display:block!important}
  .zrf-home{display:none!important}
 }
+
+.zrf-usd-shell[data-zrf-dollar]{width:100%!important;text-align:start!important;cursor:pointer!important;font-family:inherit!important;color:var(--zrf-text)!important}
+.zrf-dollar-chevron{font-size:22px;color:#2487ed;flex:none}

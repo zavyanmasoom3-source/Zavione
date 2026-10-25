@@ -1,0 +1,115 @@
+/* ZAVI ONE ADMIN v1.4.8 — visual alignment with approved reference.
+   Presentation-only: leaves live owner authorization, billing, recovery, devices and data operations intact. */
+html{--zar-blue:#1879ef;--zar-cyan:#23bfdc;--zar-green:#13b996;
+ --zar-radius:15px;--zar-shadow:0 5px 18px rgba(9,34,61,.06)}
+html:not([data-zavi-theme="light"]){
+ color-scheme:dark;--zar-bg:#081522;--zar-panel:#0e2034;
+ --zar-soft:#142942;--zar-sidebar:#091b2d;
+ --zar-text:#ebf5ff;--zar-muted:#abc0d5;--zar-border:#25435f;
+ --zar-shadow:0 6px 20px rgba(0,5,16,.20)
+}
+html[data-zavi-theme="light"]{
+ color-scheme:light;--zar-bg:#f3f7fb;--zar-panel:#fff;
+ --zar-soft:#ecf4fc;--zar-sidebar:#fff;
+ --zar-text:#142b48;--zar-muted:#647a95;--zar-border:#dce6f1;
+ --zar-shadow:0 4px 18px rgba(23,54,90,.055)
+}
+html,html body{max-width:100%;overflow-x:clip}
+html body{background:var(--zar-bg)!important;color:var(--zar-text)!important}
+body #appScreen{background:var(--zar-bg)!important;color:var(--zar-text)!important}
+body #appScreen .sidebar{background:var(--zar-sidebar)!important;color:var(--zar-text)!important;
+ border-inline-end:1px solid var(--zar-border)!important;box-shadow:none!important}
+body #appScreen .sidebar .brand{border-color:var(--zar-border)!important;background:transparent!important}
+body #appScreen .sidebar .brand strong,body #appScreen .sidebar .brand small{color:var(--zar-text)!important}
+body #appScreen .sidebar-caption{color:var(--zar-muted)!important}
+body #appScreen .zavi-v6-menu-scroll{overflow-y:auto!important;overscroll-behavior:contain;scrollbar-width:thin}
+body #appScreen .nav{display:flex;flex-direction:column;gap:4px!important}
+body #appScreen .nav-item{
+ min-height:41px!important;border-radius:11px!important;border:1px solid transparent!important;
+ color:var(--zar-muted)!important;background:transparent!important;
+ font-weight:700!important;box-shadow:none!important;transition:background 140ms ease}
+body #appScreen .nav-item:hover{color:var(--zar-blue)!important;background:var(--zar-soft)!important}
+body #appScreen .nav-item.selected{
+ background:var(--zar-soft)!important;color:var(--zar-blue)!important;
+ border-inline-start:3px solid var(--zar-blue)!important}
+body #appScreen .nav-item span{color:inherit!important;opacity:.86}
+body #appScreen .sidebar-bottom{border-color:var(--zar-border)!important;color:var(--zar-muted)!important}
+body #appScreen .topbar{
+ border-bottom:1px solid var(--zar-border)!important;background:var(--zar-panel)!important;
+ color:var(--zar-text)!important;box-shadow:none!important}
+body #appScreen .breadcrumbs,body #appScreen .top-actions{color:var(--zar-text)!important}
+body #appScreen .live-status{color:var(--zar-green)!important}
+body #appScreen #view{min-width:0!important;max-width:100%;padding:clamp(12px,1.6vw,23px)!important;
+ background:var(--zar-bg)!important;color:var(--zar-text)!important}
+body #appScreen #view .admin-hero{min-height:132px!important;
+ padding:20px 24px!important;margin-bottom:16px!important;border-radius:var(--zar-radius)!important;
+ background:linear-gradient(125deg,var(--zar-panel) 15%,var(--zar-soft) 100%)!important;
+ border:1px solid var(--zar-border)!important;
+ box-shadow:none!important;overflow:hidden}
+body #appScreen #view .admin-hero:before{
+ content:"";position:absolute;inset:auto auto 0 0;width:65%;height:100%;
+ pointer-events:none;z-index:0;opacity:.45;
+ background:radial-gradient(circle at 25% 90%,rgba(43,167,238,.18),transparent 45%)}
+body #appScreen #view .admin-hero :is(h1,h2,h3){color:var(--zar-text)!important}
+body #appScreen #view .admin-hero p,body #appScreen #view .admin-hero-kicker{color:var(--zar-muted)!important}
+body #appScreen #view .admin-hero .admin-hero-art{max-width:170px!important}
+body #appScreen #view .admin-kpis{
+ display:grid!important;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))!important;
+ gap:12px!important;margin:12px 0 16px!important;max-width:100%}
+body #appScreen #view .admin-kpi{
+ min-width:0!important;margin:0!important;min-height:116px!important;
+ padding:16px 17px!important;border-radius:var(--zar-radius)!important;
+ background:var(--zar-panel)!important;border:1px solid var(--zar-border)!important;
+ box-shadow:var(--zar-shadow)!important;color:var(--zar-text)!important}
+body #appScreen #view .admin-kpi strong{color:var(--zar-text)!important;
+ font-variant-numeric:tabular-nums;font-weight:900!important}
+body #appScreen #view .admin-kpi small,body #appScreen #view .admin-kpi .kpi-foot{
+ color:var(--zar-muted)!important}
+body #appScreen #view .admin-analytics,body #appScreen #view .admin-secondary{
+ gap:13px!important;max-width:100%!important}
+body #appScreen #view .panel,body #appScreen #view .admin-analytics-main,
+body #appScreen #view .admin-distribution{
+ min-width:0!important;background:var(--zar-panel)!important;
+ border:1px solid var(--zar-border)!important;
+ color:var(--zar-text)!important;border-radius:var(--zar-radius)!important;
+ box-shadow:var(--zar-shadow)!important}
+body #appScreen #view :is(.panel-heading,h1,h2,h3){color:var(--zar-text)!important}
+body #appScreen #view :is(.admin-muted,.form-helper,.admin-hero p){color:var(--zar-muted)!important}
+body #appScreen #view .admin-list,body #appScreen #view .admin-item{
+ border-color:var(--zar-border)!important;color:var(--zar-text)!important}
+body #appScreen #view .admin-item:hover{background:var(--zar-soft)!important}
+body #appScreen #view .admin-item small{color:var(--zar-muted)!important}
+body #appScreen #view .admin-bar-track{background:var(--zar-soft)!important}
+body #appScreen #view .admin-donut>div{background:var(--zar-panel)!important;color:var(--zar-text)!important}
+body #appScreen #view :is(input,select,textarea){
+ min-width:0;max-width:100%;background:var(--zar-panel)!important;
+ border-color:var(--zar-border)!important;border-radius:10px!important;color:var(--zar-text)!important}
+body #appScreen #view button.button,
+body #appScreen #view button.admin-quick-btn,
+body #appScreen .top-actions button{border-radius:10px!important;box-shadow:none!important}
+body #appScreen #view .button.primary{background:linear-gradient(115deg,#147aef,#278fee)!important;
+ color:#fff!important;border-color:transparent!important}
+body #appScreen #view :is(button,input,select,textarea):focus-visible,
+body #appScreen .nav-item:focus-visible{outline:2px solid var(--zar-blue)!important;outline-offset:2px}
+body #appScreen #view .admin-quick-grid{display:grid!important;
+ grid-template-columns:repeat(auto-fit,minmax(110px,1fr))!important;gap:9px!important}
+body #appScreen #view .admin-quick-grid button{
+ border:1px solid var(--zar-border)!important;border-radius:11px!important;
+ background:var(--zar-soft)!important;color:var(--zar-text)!important}
+body #appScreen #view :is(.table-wrap,table){max-width:100%}
+body #appScreen #view .table-wrap{overflow-x:auto!important}
+body #appScreen #view table th{background:var(--zar-soft)!important;color:var(--zar-muted)!important}
+body #appScreen #view table td{border-color:var(--zar-border)!important;color:var(--zar-text)!important}
+/* No fabricated security percentages, made-up revenue, or device counts. Existing live values retained. */
+@media(max-width:900px){
+ body #appScreen #view{padding:12px!important}
+ body #appScreen #view .admin-hero{padding:17px!important;min-height:112px}
+ body #appScreen #view .admin-hero-art{display:none!important}
+ body #appScreen #view .admin-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ body #appScreen #view :is(.admin-analytics,.admin-secondary){grid-template-columns:minmax(0,1fr)!important}
+ body #appScreen #view .admin-kpi{padding:13px!important;min-height:100px!important}
+ body #appScreen .sidebar{max-width:min(88vw,320px)}
+}
+@media(max-width:380px){body #appScreen #view .admin-kpi strong{font-size:clamp(18px,6vw,25px)!important}}
+@media(prefers-reduced-motion:reduce){body #appScreen .nav-item{transition:none!important}}
+@media print{body #appScreen #view .admin-hero{box-shadow:none!important}}

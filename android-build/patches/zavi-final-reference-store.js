@@ -100,6 +100,18 @@ function openAll(){
   b.dataset.zrfProxy=String(i);b.append(Object.assign(document.createElement('span'),{className:'zrf-all-icon',textContent:original.textContent.trim().startsWith('✦')?'✦':Object.hasOwn(symbols,original.dataset.go)?symbols[original.dataset.go]:'▦'}),Object.assign(document.createElement('span'),{className:'zrf-all-name',textContent:label}),Object.assign(document.createElement('span'),{className:'zrf-all-chevron',textContent:'‹'}));
   b.__original=original;grid.append(b);
  });
+ if(!grid.children.length){
+  // Brand-new offline account can have no enabled sidebar modules yet.
+  // Show a truthful empty state rather than a completely blank panel.
+  const empty=document.createElement('p');empty.className='zrf-all-empty';
+  empty.setAttribute('role','status');
+  empty.textContent=language()==='en'
+   ? 'No modules are available yet. Finish your store setup, then reopen All sections.'
+   : language()==='ps'
+    ? 'لا برخې نه دي چمتو. لومړی د خپل دوکان تنظیمات بشپړ کړئ.'
+    : 'هنوز بخشی فعال نیست. نخست مشخصات فروشگاه را تنظیم کنید و دوباره «همه بخش‌ها» را باز کنید.';
+  grid.append(empty);
+ }
  box.append(heading,hero,grid);overlay.append(box);document.body.append(overlay);document.body.classList.add('zrf-all-open');
  overlay.querySelector('[data-zrf-close]')?.focus();
 }

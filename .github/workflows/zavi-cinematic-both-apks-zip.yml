@@ -1,0 +1,81 @@
+name: ZAVI ONE + ADMIN Cinematic UI — Both APKs ZIP
+on:
+  push:
+    branches: [zavi-cinematic-android-apks-20261025]
+    paths:
+      - ".github/workflows/zavi-cinematic-both-apks-zip.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch signed APKs and verify original release hashes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p installers
+          gh release download zavi-cinematic-ui-apks-20261025 --pattern 'ZAVI_ONE_V65_60_CINEMATIC_UI_QA.apk*' --dir installers
+          gh release download zavi-cinematic-ui-apks-20261025 --pattern 'ZAVI_ONE_ADMIN_V1_4_11_CINEMATIC_UI_QA.apk*' --dir installers
+          cd installers
+          for apk in ZAVI_ONE_V65_60_CINEMATIC_UI_QA.apk ZAVI_ONE_ADMIN_V1_4_11_CINEMATIC_UI_QA.apk; do
+            test -s "$apk"
+            expected="$(awk 'NR==1{print $1}' "$apk.sha256")"
+            echo "$expected  $apk" | sha256sum -c -
+            test "$(stat -c %s "$apk")" -gt 3000000
+            unzip -t "$apk" | tail -n 1
+            unzip -Z1 "$apk" | grep -Fx 'classes.dex'
+            unzip -Z1 "$apk" | grep -Fx 'assets/zavi-cinematic-v2.css'
+            unzip -Z1 "$apk" | grep -Fx 'assets/zavi-cinematic-v2.js'
+          done
+          sha256sum ZAVI_ONE*.apk > SHA256_CHECKSUMS.txt
+          cat > READ_ME_FIRST_DARI.txt <<'README'
+          ZAVI ONE V65.60 + ZAVI ONE ADMIN V1.4.11
+          Cinematic Light/Dark — Android QA preview package, 25 October 2026.
+
+          1. Both APKs in this ZIP are independently built and signed by the QA build.
+          2. Install each APK separately. They have DIFFERENT application IDs from the
+             production versions, and will NOT overwrite installed customer applications.
+          3. Store APK = ZAVI_ONE_V65_60_CINEMATIC_UI_QA.apk
+             Admin APK = ZAVI_ONE_ADMIN_V1_4_11_CINEMATIC_UI_QA.apk
+          4. Central ADMIN is ONLY for the central system owner, never store owners or staff.
+          5. Original accounting logic, login/backend connections, offline workflows,
+             devices, renewal features and all Settings forms were retained by preserving
+             the source and applying a visual layer. This is NOT end-to-end proof.
+          6. Backup/fully synchronize unsent offline transactions in the original
+             app BEFORE attempting device transfer or trying a different package.
+          7. Real-device scanner, printing, cloud sync, offline device transfer,
+             ALL feature paths and exact concept-image similarity require verification.
+          8. QA signature is not a stable production signing certificate; these preview APKs
+             are intended for safe visual review before public/production updates.
+          README
+          cd ..
+          zip -9 -q -j ZAVI_ONE_AND_ADMIN_CINEMATIC_ANDROID_QA_2026_10_25.zip \
+            installers/ZAVI_ONE_V65_60_CINEMATIC_UI_QA.apk \
+            installers/ZAVI_ONE_ADMIN_V1_4_11_CINEMATIC_UI_QA.apk \
+            installers/SHA256_CHECKSUMS.txt \
+            installers/READ_ME_FIRST_DARI.txt
+          unzip -t ZAVI_ONE_AND_ADMIN_CINEMATIC_ANDROID_QA_2026_10_25.zip | tail -n 1
+          test "$(unzip -Z1 ZAVI_ONE_AND_ADMIN_CINEMATIC_ANDROID_QA_2026_10_25.zip | grep -c '\.apk$')" -eq 2
+          sha256sum ZAVI_ONE_AND_ADMIN_CINEMATIC_ANDROID_QA_2026_10_25.zip > ZAVI_ONE_AND_ADMIN_CINEMATIC_ANDROID_QA_2026_10_25.zip.sha256
+          echo "PASS: Both signed QA APKs, hashes, assets, and ZIP integrity verified"
+      - name: Release verified dual-APK ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-cinematic-both-apks-20261025
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1;then
+            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE 65.60 + ADMIN 1.4.11 — Cinematic Android QA bundle" \
+              --notes "Two signed Android QA packages bundled with file hashes and Dari README. Visual changes only, source business logic preserved. QA app IDs separate from customer apps. Physical device, cloud sync, offline transfer, permissions, barcode, print, accessibility and exact mockup parity not yet fully certified."
+          fi
+          gh release upload "$TAG" \
+            ZAVI_ONE_AND_ADMIN_CINEMATIC_ANDROID_QA_2026_10_25.zip \
+            ZAVI_ONE_AND_ADMIN_CINEMATIC_ANDROID_QA_2026_10_25.zip.sha256 --clobber

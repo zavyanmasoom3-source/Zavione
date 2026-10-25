@@ -42,8 +42,12 @@ with tempfile.TemporaryDirectory(prefix='zavi-key-') as tmp:
        '-digestalg','SHA-256','-sigalg','SHA256withRSA',
        '-signedjar',str(signed),str(unsigned),os.environ['ZAVI_UPLOAD_KEY_ALIAS']
     ],check=True,env=environment,stdout=subprocess.DEVNULL)
-    subprocess.run(['jarsigner','-verify','-strict',str(signed)],
-                   check=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+    # Self-signed Play upload certificates are normal; jarsigner -strict would return
+    # a warning exit code even for a cryptographically valid upload signature.
+    verified=subprocess.run(['jarsigner','-verify',str(signed)],
+                   check=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+    if 'jar verified.' not in verified.stdout.lower():
+        raise RuntimeError('Android App Bundle JAR signature verification did not report success')
     (outdir/(name+'_SIGNING_STATUS.txt')).write_text(
       'SIGNED UPLOAD CANDIDATE. Bundle JAR signature verified with the supplied owner-controlled key.\n'
       'Must still be tested in Play Console internal testing. This does not mean Google approval.\n'

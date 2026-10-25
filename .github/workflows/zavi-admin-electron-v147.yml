@@ -1,0 +1,203 @@
+name: ZAVI ONE ADMIN Windows Full Electron Setup V1.4.7
+on:
+  push:
+    branches: [zavi-admin-electron-v147-windows]
+    paths:
+      - ".github/workflows/zavi-admin-electron-v147.yml"
+      - "windows-build/admin-v147-desktop.css"
+      - "windows-build/admin-v147-desktop.js"
+      - "windows-build/admin-v145-responsive-web.zip.base64"
+      - "windows-build/main.cjs"
+      - "windows-build/desktop-server.cjs"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build_admin_windows:
+    runs-on: windows-2022
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore verified complete ZAVI ONE ADMIN 1.4.5 web frontend
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force -Path windows-output/ZAVI_ONE_ADMIN/web | Out-Null
+          $encoded=(Get-Content windows-build/admin-v145-responsive-web.zip.base64 -Raw).Trim()
+          $zipBytes=[Convert]::FromBase64String($encoded)
+          [System.IO.File]::WriteAllBytes((Join-Path (Get-Location) 'ZAVI_ADMIN_SOURCE_WEB.zip'),$zipBytes)
+          $hash=(Get-FileHash ZAVI_ADMIN_SOURCE_WEB.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($hash -ne '06258f551304e7d147022ff4eaa881b99c68670d767f7816d833ccae958e3c03'){throw "ADMIN source changed, refusing packaging: $hash"}
+          Expand-Archive -LiteralPath ZAVI_ADMIN_SOURCE_WEB.zip -DestinationPath windows-output/ZAVI_ONE_ADMIN/web -Force
+          $site='windows-output/ZAVI_ONE_ADMIN/web'
+          $count=(Get-ChildItem $site -Recurse -File).Count
+          if($count -lt 90){throw "Expected full ADMIN site, got $count files"}
+          foreach($name in @('index.html','app.js','account-control.js','admin-portal.js','sw.js','zavi-admin-recovery-v141.js','zavi-admin-service-whatsapp-v139.js','zavi-admin-renewal-hotfix-v144.css','zavi-admin-services-v15.js','zavi-web-responsive-v1.css','icon.png','qa-admin-v1.cjs')){
+            if(!(Test-Path "$site/$name")){throw "Required ADMIN file missing: $name"}
+          }
+          Write-Host "PASS: full verified ADMIN frontend ($count files), original SHA256 $hash"
+      - name: Include desktop visibility & fresh local-cache identity safely
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          Copy-Item windows-build/admin-v147-desktop.css windows-output/ZAVI_ONE_ADMIN/web/
+          Copy-Item windows-build/admin-v147-desktop.js windows-output/ZAVI_ONE_ADMIN/web/
+          node --check windows-output/ZAVI_ONE_ADMIN/web/admin-v147-desktop.js
+          @'
+          const fs=require('node:fs');
+          const path='windows-output/ZAVI_ONE_ADMIN/web/index.html';
+          let h=fs.readFileSync(path,'utf8');
+          if(!h.includes('</head>')||!h.includes('</body>'))throw Error('Admin shell missing');
+          if(h.includes('admin-v147-desktop.css')||h.includes('admin-v147-desktop.js'))throw Error('Desktop patch duplicated');
+          h=h.replace('</head>','<link rel="stylesheet" href="./admin-v147-desktop.css?v=1.4.7"></head>');
+          const at=h.lastIndexOf('</body>');
+          h=h.slice(0,at)+'<script defer src="./admin-v147-desktop.js?v=1.4.7"></script>'+h.slice(at);
+          for(const name of ['zavi-admin-recovery-v141.js','zavi-admin-service-whatsapp-v139.js','zavi-admin-renewal-hotfix-v144.css','account-control.js','admin-portal.js','zavi-web-responsive-v1.css']) {
+            if(!h.includes(name))throw Error('Existing ADMIN feature missing: '+name);
+          }
+          fs.writeFileSync(path,h);
+          const swpath='windows-output/ZAVI_ONE_ADMIN/web/sw.js';
+          let sw=fs.readFileSync(swpath,'utf8');
+          let n=0;
+          sw=sw.replace(/const CACHE_NAME='[^']+';/,()=>{n++;return "const CACHE_NAME='zavi-one-admin-v147-standalone-electron';"});
+          if(n!==1)throw Error('Service worker cache marker changed');
+          if(sw.includes('const CORE=['))sw=sw.replace('const CORE=[','const CORE=["admin-v147-desktop.css","admin-v147-desktop.js",');
+          else throw Error('Service worker precache structure changed');
+          fs.writeFileSync(swpath,sw);
+          console.log('PASS: owner ADMIN features retained; desktop readability applied without modifying customer data');
+          '@ | node
+          if($LASTEXITCODE -ne 0){throw "ADMIN desktop patch invalid"}
+      - name: Verify ADMIN code, simulated overview modules and static asset integrity
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          Push-Location windows-output/ZAVI_ONE_ADMIN/web
+          node qa-admin-v1.cjs
+          if($LASTEXITCODE -ne 0){throw "ADMIN visual smoke QA failed"}
+          $alljs=Get-ChildItem -File -Filter '*.js'
+          foreach($f in $alljs){node --check $f.FullName;if($LASTEXITCODE -ne 0){throw "Invalid JS: $($f.Name)"}}
+          Pop-Location
+          @'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          import re,subprocess
+          root=Path('windows-output/ZAVI_ONE_ADMIN/web')
+          h=(root/'index.html').read_text(encoding='utf8')
+          class Check(HTMLParser):
+            def __init__(self):
+              super().__init__();self.script=False;self.script_has_src=False;self.parts=[];self.buf=[];self.visible_code=[]
+            def handle_starttag(self,t,attrs):
+              if t=='script':self.script=True;self.script_has_src=bool(dict(attrs).get('src'));self.buf=[]
+            def handle_endtag(self,t):
+              if t=='script' and self.script:
+                if not self.script_has_src:self.parts.append(''.join(self.buf))
+                self.script=False
+            def handle_data(self,data):
+              if self.script:self.buf.append(data)
+              elif any(x in data for x in ('function renderOverview(){','const ICON={','db.tx.filter(')):self.visible_code.append(data[:120])
+          c=Check();c.feed(h)
+          if c.visible_code:raise RuntimeError(f'Visible JavaScript leaked: {c.visible_code[:3]}')
+          for script in c.parts:
+            if script.strip():
+              t=subprocess.run(['node','--check','--input-type=commonjs'],input=script,text=True,capture_output=True)
+              if t.returncode:raise RuntimeError(t.stderr[:1500])
+          for fname in ('index.html','offline-status.html'):
+            file=root/fname
+            if not file.is_file():continue
+            for url in re.findall(r'(?:src|href)\s*=\s*["\x27]([^"\x27]+)["\x27]',file.read_text(encoding='utf8')):
+              if url.startswith('./'):
+                target=root/url.split('?',1)[0][2:]
+                if not target.exists():raise RuntimeError(f'Missing source asset {fname}: {url}')
+          assert h.count('admin-v147-desktop.css')==1 and h.count('admin-v147-desktop.js')==1
+          print('PASS: all inline script syntax, all admin resources, no visible JS source, unique desktop assets')
+          '@ | python
+          if($LASTEXITCODE -ne 0){throw "ADMIN HTML safety audit failed"}
+      - name: Stage full standalone Electron app with separate owner-only admin data profile
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          Copy-Item windows-build/main.cjs windows-output/ZAVI_ONE_ADMIN/main.cjs
+          Copy-Item windows-build/desktop-server.cjs windows-output/ZAVI_ONE_ADMIN/desktop-server.cjs
+          $pkg=@{
+            name='zavi-one-admin-desktop';productName='ZAVI ONE ADMIN';version='1.4.7';private=$true
+            description='ZAVI ONE ADMIN 1.4.7 independent Windows x64 Electron management software'
+            main='main.cjs'
+            scripts=@{test='node --check main.cjs && node --check desktop-server.cjs';'dist:win'='electron-builder --win nsis --x64'}
+            devDependencies=@{electron='^38.0.0';'electron-builder'='^26.0.0'}
+            build=@{
+              appId='com.zavione.admin';productName='ZAVI ONE ADMIN';asar=$true
+              directories=@{output='dist'}
+              files=@('main.cjs','desktop-server.cjs','web/**/*','package.json','!**/*.map')
+              win=@{icon='web/icon.png';target=@(@{target='nsis';arch=@('x64')});requestedExecutionLevel='asInvoker'}
+              nsis=@{
+                oneClick=$false;perMachine=$false;allowToChangeInstallationDirectory=$true
+                createDesktopShortcut=$true;createStartMenuShortcut=$true
+                shortcutName='ZAVI ONE ADMIN';deleteAppDataOnUninstall=$false
+                artifactName='Setup_ZAVI_ONE_ADMIN_1_4_7_FULL_ELECTRON_Windows_x64.exe'
+              }
+            }
+          }
+          $pkg|ConvertTo-Json -Depth 20 | Set-Content windows-output/ZAVI_ONE_ADMIN/package.json -Encoding utf8
+          $meta=@{app='ZAVI ONE ADMIN';version='1.4.7';source_sha256='06258f551304e7d147022ff4eaa881b99c68670d767f7816d833ccae958e3c03';web_files='latest ADMIN V1.4.5 responsive';desktop_overlay='V1.4.7';architecture='Windows x64';runtime='Electron';offline_assets=$true;signature='unsigned QA';note='Desktop profile is separate from old Edge/Netlify browser; cloud login and account permissions must be tested on physical Windows. Store staff are not allowed access to central ADMIN.'}
+          $meta|ConvertTo-Json -Depth 7|Set-Content windows-output/ZAVI_ONE_ADMIN/BUILD_SOURCE_REPORT.json -Encoding utf8
+          @'
+          ZAVI ONE ADMIN — Windows x64 FULL ELECTRON Setup v1.4.7
+          1. Download ZIP or EXE. Extract ZIP if necessary.
+          2. Run Setup_ZAVI_ONE_ADMIN_1_4_7_FULL_ELECTRON_Windows_x64.exe and install.
+          3. Launch via Desktop / Start Menu. Microsoft Edge is NOT required.
+          4. Log in only with the central owner's authorized account.
+          5. A NEW Electron install has a SEPARATE local profile. It does not import local browser/old Edge storage automatically.
+          6. Before removing older installs, back up unsynced data and test cloud login,
+             subscription renewal, contacts/WhatsApp and customer recovery in the new app.
+          7. Windows SmartScreen can warn because QA builds have no paid code-signing certificate.
+          8. Physical-Windows end-to-end testing and professional Authenticode signing are still required before public release.
+          No actual customer, subscription or server data were deleted by creating this installer.
+          '@ | Set-Content windows-output/ZAVI_ONE_ADMIN/README_INSTALL_DARI_AND_ENGLISH.txt -Encoding utf8
+      - name: Build standalone Electron + NSIS Windows installer
+        shell: pwsh
+        working-directory: windows-output/ZAVI_ONE_ADMIN
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          $ErrorActionPreference='Stop'
+          npm install --no-audit --no-fund
+          if($LASTEXITCODE -ne 0){throw 'npm install failed'}
+          npm test
+          if($LASTEXITCODE -ne 0){throw 'desktop wrapper parse check failed'}
+          npm run dist:win
+          if($LASTEXITCODE -ne 0){throw 'Electron NSIS build failed'}
+      - name: Verify setup, compute SHA256, create complete ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $dir='windows-output/ZAVI_ONE_ADMIN'
+          $exe="$dir/dist/Setup_ZAVI_ONE_ADMIN_1_4_7_FULL_ELECTRON_Windows_x64.exe"
+          if(!(Test-Path $exe)){throw "Missing full ADMIN setup"}
+          $bytes=(Get-Item $exe).Length
+          if($bytes -lt 50000000){throw "Installer is too small for full Electron: $bytes"}
+          $hash=(Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  Setup_ZAVI_ONE_ADMIN_1_4_7_FULL_ELECTRON_Windows_x64.exe" |Set-Content "$exe.sha256" -Encoding ascii
+          $check=[System.IO.File]::ReadAllBytes((Resolve-Path $exe))
+          if($check[0] -ne 77 -or $check[1] -ne 90){throw 'Not a real Windows MZ executable'}
+          $pack='ZAVI_ONE_ADMIN_V1_4_7_COMPLETE_WINDOWS_SETUP_X64.zip'
+          Compress-Archive -Path @($exe,"$exe.sha256","$dir/BUILD_SOURCE_REPORT.json","$dir/README_INSTALL_DARI_AND_ENGLISH.txt") -DestinationPath $pack -Force -CompressionLevel Optimal
+          $members=(Get-ChildItem $pack).Length
+          if($members -lt 40000000){throw 'Full installer ZIP appears incomplete'}
+          Write-Host "PASS: standalone ADMIN Electron Windows installer ($bytes bytes) SHA256=$hash, ZIP=$members bytes"
+      - name: Publish complete ADMIN Windows setup EXE + ZIP to private GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-admin-windows-v147-full-electron-qa
+        run: |
+          $ErrorActionPreference='Stop'
+          gh release view $env:TAG 2>$null
+          if($LASTEXITCODE -ne 0){
+            gh release create $env:TAG --target "$env:GITHUB_SHA" --prerelease --title "ZAVI ONE ADMIN 1.4.7 — FULL Electron Windows Setup" --notes "Complete standalone Electron/NSIS Windows x64 installer, based on exact verified ZAVI ONE ADMIN 1.4.5 responsive web app plus v1.4.7 Windows readability fixes. All web assets bundled. No Microsoft Edge requirement. Owner-only access must be checked on server. Windows physical-device E2E and Authenticode production signing not yet completed."
+            if($LASTEXITCODE -ne 0){throw 'Failed to create GitHub release'}
+          }
+          gh release upload $env:TAG windows-output/ZAVI_ONE_ADMIN/dist/Setup_ZAVI_ONE_ADMIN_1_4_7_FULL_ELECTRON_Windows_x64.exe windows-output/ZAVI_ONE_ADMIN/dist/Setup_ZAVI_ONE_ADMIN_1_4_7_FULL_ELECTRON_Windows_x64.exe.sha256 ZAVI_ONE_ADMIN_V1_4_7_COMPLETE_WINDOWS_SETUP_X64.zip --clobber
+          if($LASTEXITCODE -ne 0){throw 'Failed to upload installer'}

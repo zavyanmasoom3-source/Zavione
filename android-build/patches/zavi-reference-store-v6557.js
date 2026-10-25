@@ -16,10 +16,20 @@
      '<button type="button" class="btn zrq-stock" data-go="products" title="بارکد و اسکنر در بخش گدام/محصولات">▥ <span>بارکد / گدام</span></button>'
    ].join("");
    const chart=root.querySelector(".layout-2");
-   if(chart)chart.insertAdjacentElement("afterend",section);
+   if(chart)chart.insertAdjacentElement("beforebegin",section);
    else root.querySelector(".stat-grid")?.insertAdjacentElement("afterend",section);
  }
- function start(){
+ function addThemeToolbar(){
+   const actions=document.querySelector(".topbar .topbar-actions");
+   if(!actions||actions.querySelector(".zavi-ref-top-tools"))return;
+   const el=document.createElement("div");
+   el.className="zavi-ref-top-tools";
+   el.setAttribute("aria-label","تغییر ظاهر");
+   el.innerHTML='<button type="button" data-zavi-theme-choice="light" title="حالت روشن">☀️</button>'+
+   '<button type="button" data-zavi-theme-choice="dark" title="حالت تیره">🌙</button>';
+   actions.prepend(el);
+ }
+ function start(){addThemeToolbar();
    const root=getContent();if(!root)return;
    let queued=false;
    const obs=new MutationObserver(()=>{

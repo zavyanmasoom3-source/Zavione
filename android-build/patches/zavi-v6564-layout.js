@@ -105,7 +105,6 @@ function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{
  try{const c=$('#content');if(!c)return;
   organizeSettings(c);
   if(rootDash(c))renderHome(c);
-  else c.classList.remove('z64-settings');
  }catch(err){console.warn('[ZAVI 65.64 layout]',err)}
 })}
 function navHeight(){

@@ -1,0 +1,72 @@
+name: NEW UI visual screenshot verification
+on:
+  push:
+    branches: [zavi-reference-design-apks-20261025]
+    paths: [".github/workflows/zavi-new-ui-visual-qa-20261025.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  appearance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [one, admin]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Stage current full frontend and add actual new UI theme
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p visual site source
+          if [ "${{ matrix.mode }}" = "one" ];then
+            gh release download zavi-web-v6554-responsive-20261024 --pattern 'ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip' --dir source
+            unzip -oq source/ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip -d site
+            cp android-build/patches/zavi-reference-store-v6557.css site/
+            cp android-build/patches/zavi-reference-store-v6557.js site/
+          else
+            base64 -d windows-build/admin-v145-responsive-web.zip.base64 > source/admin.zip
+            echo '06258f551304e7d147022ff4eaa881b99c68670d767f7816d833ccae958e3c03  source/admin.zip' | sha256sum -c -
+            unzip -oq source/admin.zip -d site
+            cp android-build/patches/zavi-reference-admin-v148.css site/
+            cp android-build/patches/zavi-reference-admin-v149.js site/
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          mode='${{ matrix.mode }}'
+          css='zavi-reference-store-v6557.css' if mode=='one' else 'zavi-reference-admin-v148.css'
+          js='zavi-reference-store-v6557.js' if mode=='one' else 'zavi-reference-admin-v149.js'
+          p=Path('site/index.html')
+          s=p.read_text(encoding='utf8')
+          assert '</head>' in s and '</body>' in s
+          s=s.replace('</head>',f'<link rel="stylesheet" href="./{css}?v=new-ui"></head>',1)
+          i=s.rfind('</body>')
+          s=s[:i]+f'<script defer src="./{js}?v=new-ui"></script>'+s[i:]
+          p.write_text(s,encoding='utf8')
+          PY
+      - name: Run actual Chrome dashboards dark/light and capture evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix /tmp/zavi-ui --no-fund --no-audit --no-save playwright-core@1.58.2
+          command -v google-chrome || command -v chromium || command -v chromium-browser
+          python3 -m http.server 18765 --bind 127.0.0.1 --directory site > visual/http.log 2>&1 &
+          SERVER=$!
+          trap 'kill "$SERVER" || true' EXIT
+          sleep 2
+          NODE_PATH=/tmp/zavi-ui/node_modules node android-build/patches/zavi-new-ui-visual-smoke.cjs "${{ matrix.mode }}"
+      - name: Attach screenshot proof to same preview release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-new-ui-preview-apks-20261025
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" visual/*.png --repo "$GITHUB_REPOSITORY" --clobber

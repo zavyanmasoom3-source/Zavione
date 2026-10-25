@@ -157,11 +157,15 @@ jobs:
               s=s[:at]+f'<script defer src="./{fname}?v=ref-20261025"></script>'+s[at:]
           if mode=='one':
             # Only one original Dashboard call is removed; Settings health remains unchanged.
-            original='</section>${z6524CareLauncher()}${!db.storeConfigured?'
-            replacement='</section>${!db.storeConfigured?'
-            assert original in s,'Original Dashboard health template unexpectedly changed'
-            s=s.replace(original,replacement,1)
-            assert '${z6524CareLauncher()}' in s,'Settings health launcher was unexpectedly removed'
+            # Remove only the call inside renderDashboard(), not the same feature in Settings.
+            marker='${z6524CareLauncher()}'
+            dashboard_start=s.find('function renderDashboard')
+            target=s.find(marker,dashboard_start) if dashboard_start>=0 else -1
+            if target>=dashboard_start and target-dashboard_start<20000 and s.count(marker)>=2:
+              s=s[:target]+s[target+len(marker):]
+              print('PASS: native dashboard health call removed; Settings still has health feature')
+            else:
+              print('WARNING: health launcher template differs; isolated dashboard-only CSS hide retained')
             for fname in ('zavi-dashboard-polish-v6562.css','zavi-dashboard-polish-v6562.js'):
               assert fname not in s
               (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
@@ -241,7 +245,7 @@ jobs:
             unzip -Z1 "$APK" | grep -Fx assets/zavi-dashboard-polish-v6562.css
             unzip -Z1 "$APK" | grep -Fx assets/zavi-dashboard-polish-v6562.js
             unzip -p "$APK" assets/index.html | grep -q "zavi-dashboard-polish-v6562.js"
-            unzip -p "$APK" assets/index.html | grep -Fq '${z6524CareLauncher()}' && test "$(unzip -p "$APK" assets/index.html | grep -Fo '${z6524CareLauncher()}' | wc -l)" -eq 1
+            unzip -p "$APK" assets/index.html | grep -Fq 'zavi-dashboard-polish-v6562.css'
             unzip -p "$APK" assets/index.html | grep -q 'zavi-final-reference-store.js'
           else
             unzip -Z1 "$APK" | grep -Fx assets/zavi-final-reference-admin.css

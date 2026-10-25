@@ -23,7 +23,7 @@ function homeMarkup(t){
  '<button type="button" class="zrf-primary zrf-invoice" data-zrf-invoice><span class="zrf-primary-icon">▣</span><span><b>'+t.invoice+'</b><small>'+t.invoiceSub+'</small></span><span class="zrf-forward">‹</span></button>'+
  '<button type="button" class="zrf-primary zrf-contact" data-zrf-go="phonebook"><span class="zrf-primary-icon">☎</span><span><b>'+t.contacts+'</b><small>'+t.contactsSub+'</small></span><span class="zrf-forward">‹</span></button>'+
  '</div>'+
- '<div class="zrf-usd-shell" hidden><div class="zrf-dollar-symbol">$</div><div class="zrf-dollar-copy"><b>'+t.rate+'</b><small>'+t.rateSub+'</small></div><b class="zrf-dollar-current"></b></div>'+
+ '<button type="button" class="zrf-usd-shell" data-zrf-dollar hidden><span class="zrf-dollar-symbol">$</span><span class="zrf-dollar-copy"><b>'+t.rate+'</b><small>'+t.rateSub+'</small></span><b class="zrf-dollar-current"></b><span aria-hidden="true" class="zrf-dollar-chevron">‹</span></button>'+
  '<div class="zrf-section-head"><b>'+t.sections+'</b><button type="button" class="zrf-all-trigger" data-zrf-menu>▦ '+t.all+'</button></div>'+
  '<div class="zrf-tiles">'+
  moduleButton('sales',t.sell,t.sellSub,symbols.sale,'mint')+
@@ -122,6 +122,15 @@ function start(){
   const link=e.target.closest('[data-zrf-go]');if(link){action(link.dataset.zrfGo==='phonebook'&&!has('phonebook')?'contacts':link.dataset.zrfGo);closeAll();return}
   if(e.target.closest('[data-zrf-invoice]')){const native=document.querySelector('[data-action="sale"]');if(native)native.click();else action('sales');return}
   if(e.target.closest('[data-zrf-focus]')){e.target.closest('.zrf-search-wrap')?.querySelector('input')?.focus();return}
+  const dollar=e.target.closest('[data-zrf-dollar]');
+  if(dollar){
+    const c=document.querySelector('#content');c?.classList.add('zrf-details-open');
+    const toggle=c?.querySelector('[data-zrf-details]');
+    if(toggle){toggle.setAttribute('aria-expanded','true');toggle.textContent='▥ '+I[language()].hideDetails}
+    const form=c?.querySelector('#usdRateDashboardForm');
+    if(form){form.scrollIntoView({block:'center',behavior:'smooth'});form.querySelector('input')?.focus({preventScroll:true})}
+    return;
+  }
   const details=e.target.closest('[data-zrf-details]');if(details){
    const c=document.querySelector('#content');const on=c.classList.toggle('zrf-details-open');
    details.setAttribute('aria-expanded',String(on));details.textContent='▥ '+I[language()][on?'hideDetails':'details'];return

@@ -27,8 +27,11 @@ def record(name,passed,detail=''):
     report['checks'].append({'test':name,'pass':bool(passed),'detail':str(detail)[:450]})
 def capture(page,name):
     filename=f'{args.mode}-{name}.png'
-    page.screenshot(path=str(out/filename),full_page=False,animations='disabled')
-    report['screenshots'].append(filename)
+    try:
+        page.screenshot(path=str(out/filename),full_page=False,animations='disabled',timeout=8000)
+        report['screenshots'].append(filename)
+    except Exception as e:
+        report.setdefault('screenshot_warnings',[]).append(name+': '+str(e)[:130])
 def inspect_geometry(page,container):
     return page.evaluate("""(s)=>{
        const r=Array.from(document.querySelectorAll(s));
@@ -56,6 +59,7 @@ try:
       # No live network connection in QA: forbid external origins.
       context.route('**/*',lambda route: route.continue_() if route.request.url.startswith(url.rsplit('/',1)[0]+'/') or route.request.url.startswith('data:') else route.abort())
       page=context.new_page()
+      page.set_default_timeout(6500)
       page.on('pageerror',lambda err: report['runtime_errors'].append(str(err)[:500]))
       page.goto(url,wait_until='domcontentloaded',timeout=40000)
       page.wait_for_timeout(1200)

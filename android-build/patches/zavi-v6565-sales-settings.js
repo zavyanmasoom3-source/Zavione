@@ -5,9 +5,9 @@
 'use strict';
 const q=(s,p=document)=>p.querySelector(s), qa=(s,p=document)=>Array.from(p.querySelectorAll(s));
 const labels={
- fa:{debts:'حساب قرضداران',debtsSub:'طلب و بدهی مشتریان',reports:'راپورها',reportsSub:'گزارش‌های مالی و فروش',inventory:'بررسی موجودی',inventorySub:'کنترول گدام',loading:'دریافت معلومات دستگاه‌ها طول کشیده است. اتصال اینترنت یا ورود ابری را بررسی کنید و «تازه‌سازی دستگاه‌ها» را بزنید.'},
- en:{debts:'Debtors accounts',debtsSub:'Customer balances',reports:'Reports',reportsSub:'Business and financial reports',inventory:'Stock check',inventorySub:'Inventory management',loading:'Device information is taking longer to load. Check your connection, then use Refresh devices.'},
- ps:{debts:'د پور حسابونه',debtsSub:'د پېرودونکو پورونه',reports:'راپورونه',reportsSub:'د کاروبار او مالي چارو راپورونه',inventory:'د ګدام څارنه',inventorySub:'د موجودۍ کنټرول',loading:'د وسایلو معلومات لا نه دي راغلي. انټرنېټ وګورئ او وسایل بیا تازه کړئ.'}
+ fa:{invoice:'ساختن فاکتور',invoiceSub:'فاکتور جدید',debts:'حساب قرضداران',debtsSub:'طلب و بدهی مشتریان',reports:'راپورها',reportsSub:'گزارش‌های مالی و فروش',inventory:'بررسی موجودی',inventorySub:'کنترول گدام',loading:'دریافت معلومات دستگاه‌ها طول کشیده است. اتصال اینترنت یا ورود ابری را بررسی کنید و «تازه‌سازی دستگاه‌ها» را بزنید.'},
+ en:{invoice:'Create invoice',invoiceSub:'New sales invoice',debts:'Debtors accounts',debtsSub:'Customer balances',reports:'Reports',reportsSub:'Business and financial reports',inventory:'Stock check',inventorySub:'Inventory management',loading:'Device information is taking longer to load. Check your connection, then use Refresh devices.'},
+ ps:{invoice:'رسید جوړول',invoiceSub:'د پلور نوی بل',debts:'د پور حسابونه',debtsSub:'د پېرودونکو پورونه',reports:'راپورونه',reportsSub:'د کاروبار او مالي چارو راپورونه',inventory:'د ګدام څارنه',inventorySub:'د موجودۍ کنټرول',loading:'د وسایلو معلومات لا نه دي راغلي. انټرنېټ وګورئ او وسایل بیا تازه کړئ.'}
 };
 function lang(){const v=(q('#zaviTopLanguage')?.value||document.documentElement.lang||'fa').toLowerCase();return v.startsWith('en')?'en':v.startsWith('ps')?'ps':'fa'}
 function keyNative(k){
@@ -38,7 +38,18 @@ function dashboard(content){
  const home=q(':scope > .zrf-home',content);if(!home)return;
  const t=labels[lang()];
  // Only top Welcome/ثبت فروش and bottom navigation/فروش remain as direct sales entry points.
- retitle(q('.zrf-primary.zrf-invoice',home),t.debts,t.debtsSub,'♙','debtors');
+ // This is the original INVOICE button; never relabel it as a second debtor shortcut.
+ const invoice=q('.zrf-primary.zrf-invoice',home);
+ if(invoice){
+   invoice.removeAttribute('data-z65-route');
+   invoice.removeAttribute('data-zrf-go');
+   invoice.setAttribute('data-zrf-invoice','');
+   const name=q('b',invoice),detail=q('small',invoice);
+   if(name)name.textContent=t.invoice;
+   if(detail)detail.textContent=t.invoiceSub;
+   const glyph=q('.zrf-primary-icon',invoice);
+   if(glyph)glyph.textContent='▣';
+ }
  retitle(q('.zrf-primary.zrf-contact',home),t.reports,t.reportsSub,'▤','reports');
  retitle(q('.zrf-tile[data-zrf-go="sales"]',home),t.debts,t.debtsSub,'♙','debtors');
  const quick=q('.z63-quick-tile[data-z63-quick="sale"]',home);
@@ -49,7 +60,7 @@ function dashboard(content){
   const ico=q('.z63-quick-glyph',quick);if(ico)ico.textContent='⬡';
  }
  // Avoid another copy of the duplicated above-the-fold section after product reports.
- qa('.zrf-primary[data-zrf-invoice],.z63-quick-tile[data-z63-quick="sale"],.zrf-tile[data-zrf-go="sales"]',home)
+ qa('.z63-quick-tile[data-z63-quick="sale"],.zrf-tile[data-zrf-go="sales"]',home)
   .forEach(el=>{el.removeAttribute('data-zrf-invoice');el.removeAttribute('data-z63-quick');el.removeAttribute('data-zrf-go')});
 }
 function compactSettings(content){

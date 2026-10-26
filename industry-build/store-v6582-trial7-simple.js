@@ -29,6 +29,21 @@
    const raw=await response.json(),row=Array.isArray(raw)?raw[0]:raw;
    if(ctx().workspace!==ws)return;
    policy=row&&typeof row==='object'?row:null;lastError='';
+   // A renewed seven-day trial must not keep showing an older 180/365-day lease.
+   // Ask the server to replace it with an ES256 lease bounded by the CURRENT policy.
+   // Never change expiry or can_write locally.
+   if(policy?.is_enabled===true&&Number(policy.offline_days)===7){
+    const signed=window.zaviSecureOfflineLicense;
+    const cached=await signed?.cached?.(ws).catch(()=>null);
+    const expiry=Number(cached?.claims?.exp||0)*1000;
+    const limit=Math.min(
+      Number.isFinite(Date.parse(policy.expires_at))?Date.parse(policy.expires_at):Infinity,
+      Date.now()+7*86400000
+    );
+    if(ctx().workspace===ws&&(!expiry||expiry>limit+60000)){
+     await window.ZaviAutoLease?.refresh?.();
+    }
+   }
   }catch(e){lastError=String(e?.message||'UNAVAILABLE');if(policyWs!==ws)policy=null}
   finally{checking=false;schedule()}
  }

@@ -18,6 +18,7 @@
   if(checking||(!force&&ws===policyWs&&now-lastCheck<120000))return;
   const a=window.zaviCloudGetAuthSession?.(),cfg=window.zaviCloudGetPublicConfig?.();
   if(!a?.access_token||!cfg?.url||!cfg?.key)return;
+  if(policyWs!==ws)policy=null;
   policyWs=ws;lastCheck=now;checking=true;
   try{
    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),9000);
@@ -51,10 +52,14 @@
   else parts.push(t.pending);
   if(valid)parts.push(t.end+': '+date(verified.claims.exp));
   // Never call policy status "ready" based on an unverified device or unsigned value.
+  const kind=valid?(fullReady?'ready':'signed'):'pending';
+  const fingerprint=parts.join(' · ');
+  if(line.dataset.text===fingerprint && line.dataset.kind===kind)return;
+  line.dataset.text=fingerprint;
   line.replaceChildren();
   const strong=document.createElement('strong');strong.textContent=parts[0];line.append(strong);
   const small=document.createElement('span');small.textContent=parts.slice(1).join(' · ');line.append(small);
-  line.dataset.kind=valid?(fullReady?'ready':'signed'):'pending';
+  line.dataset.kind=kind;
   // Card labels stay clear even when the subscription plan is semiannual/annual.
  }
  function schedule(){if(paintJob)clearTimeout(paintJob);paintJob=setTimeout(()=>{paintJob=null;paint().catch(()=>{})},160)}

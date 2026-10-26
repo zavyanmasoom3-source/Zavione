@@ -1,0 +1,163 @@
+name: ZAVI ONE V65.79 automatic cloud offline signed lease QA APK
+on:
+  push:
+    branches: [zavi-v6579-auto-cloud-offline-qa]
+    paths:
+      - '.github/workflows/zavi-unified20-qa.yml'
+      - 'industry-build/unified20.js'
+      - 'industry-build/unified20.css'
+      - 'industry-build/prepare_unified_v6579.py'
+      - 'android-build/app/src/main/java/com/zavione/mobile/MainActivity.java'
+      - 'industry-build/store-v6576-settings-profile.js'
+      - 'industry-build/store-v6576-settings-profile.css'
+      - 'industry-build/store-v6577-compact-sales-barcode.css'
+      - 'industry-build/store-v6578-allfix.js'
+      - 'industry-build/store-v6578-allfix.css'
+      - 'industry-build/store-v6579-auto-signed-offline.js'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  unified-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Install Android build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          M="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$M" ];then M="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -1)";fi
+          yes | "$M" --licenses >/dev/null || true
+          "$M" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Extract validated complete master and add twenty dynamic trade profiles
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p staging
+          gh release download zavi-6572-admin1419-trial7-offline-assistant-qa-20261026 --pattern 'ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk*' --dir staging
+          sha="$(awk 'NR==1{print $1}' staging/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk.sha256)"
+          echo "$sha  staging/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk" | sha256sum -c
+          python3 industry-build/prepare_unified_v6579.py --apk staging/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk --web android-build/app/src/main/assets
+          node --check android-build/app/src/main/assets/zavi-unified20.js
+          node --check android-build/app/src/main/assets/zavi-store-v6578-allfix.js
+          node --check industry-build/store-v6578-allfix.js
+          node --check industry-build/store-v6579-auto-signed-offline.js
+          node --check android-build/app/src/main/assets/zavi-store-v6576-settings-profile.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          a=Path('android-build/app/src/main/assets')
+          profiles=json.loads((a/'zavi-unified20-manifest.json').read_text())['profiles']
+          assert len(profiles)==len({x['id'] for x in profiles})==20
+          for page in ('index.html','v25-business.html'):
+              html=(a/page).read_text()
+              assert 'window.ZAVI_UNIFIED_PROFILES=' in html
+              assert 'zavi-unified20.js?v=65.78-qa' in html
+          for asset in ('offline-license-secure.js','zavi-v6572-store-trial7.js','zavi-v6570-store-offline.js','zavi-store-v6576-settings-profile.js','zavi-store-v6576-settings-profile.css'):
+              assert (a/asset).is_file(),asset
+          profile=(a/'zavi-store-v6576-settings-profile.js').read_text()
+          assert 'zaviCloudGetAuthSession' in profile and 'zaviCloudRestoreInfo' in profile
+          assert 'localStorage.setItem(s.key' in profile
+          assert 'z76-settings-groups' in profile and 'z76-dash-profile' in profile
+          assert 'compressImage' in profile
+          assert 'zavi_v6577_local_profile_id' in profile
+          fix=(a/'zavi-store-v6578-allfix.js').read_text()
+          assert 'z78-user' in fix and 'z78-full-menu' in fix and 'z652-card' in fix
+          assert 'Scan or enter a barcode' in fix
+          assert (a/'zavi-store-v6578-allfix.css').is_file()
+          assert 'zavi-store-v6579-auto-signed-offline.js?v=65.79-qa' in (a/'index.html').read_text()
+          assert 'trial' in (a/'offline-license-secure.js').read_text()
+          assert 'signed.request(ws,session,cfg)' in (a/'zavi-store-v6579-auto-signed-offline.js').read_text()
+          assert 'zavi_v26_register_device' in (a/'zavi-store-v6579-auto-signed-offline.js').read_text()
+          assert 'zavi-store-v6578-allfix.js?v=65.78-qa' in (a/'index.html').read_text()
+          assert (a/'zavi-store-v6577-compact-sales-barcode.css').is_file()
+          css=(a/'zavi-store-v6577-compact-sales-barcode.css').read_text()
+          assert '.zavi-barcode-actions' in css and '#overlay .modal' in css
+          assert '<link rel="stylesheet" href="./zavi-store-v6577-compact-sales-barcode.css' in (a/'index.html').read_text()
+          assert (a/'manifest.webmanifest').is_file() and (a/'sw.js').is_file()
+          print('PASS: user/workspace-scoped photo, settings groups and avatar')
+          PY
+      - name: Set isolated QA Android identity and retain original app security
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-build/app/build.gradle')
+          s=p.read_text()
+          pairs={
+              "admin ? 'com.zavione.one.admin' : 'com.zavione.one'":"admin ? 'com.zavione.one.admin' : 'com.zavione.one.unified20.v6579qa'",
+              "versionCode admin ? 4127 : 6554":"versionCode admin ? 4127 : 657900",
+              "versionName admin ? '1.3.7' : '65.54'":"versionName admin ? '1.3.7' : '65.79-auto-cloud-offline-qa'",
+              "admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'":"admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE 20 Businesses QA'"
+          }
+          for old,new in pairs.items():
+              assert s.count(old)==1,old
+              s=s.replace(old,new)
+          assert 'targetSdk 36' in s and 'signingConfig signingConfigs.debug' in s
+          p.write_text(s)
+          PY
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          cp android-build/icons/one.webp android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+      - name: Build and verify one signed APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd android-build && gradle --no-daemon -PzaviApp=one :app:assembleRelease)
+          APK=android-build/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK" | grep -F 'Verified using v2 scheme'
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.zavione.one.unified20.v6579qa'"
+          unzip -t "$APK" | tail -n 1
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-unified20.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-store-v6576-settings-profile.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-store-v6576-settings-profile.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-store-v6577-compact-sales-barcode.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-store-v6578-allfix.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-store-v6578-allfix.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-v6572-store-trial7.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-store-v6579-auto-signed-offline.js
+          mkdir -p industry-delivery
+          cp "$APK" industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_79_AUTO_OFFLINE_QA.apk
+          (cd industry-delivery && sha256sum ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_79_AUTO_OFFLINE_QA.apk > ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_79_AUTO_OFFLINE_QA.apk.sha256)
+          echo 'Android QA APK: 20 businesses, mobile invoice and barcode compact, offline-scoped photo/avatar. Also an iPad PWA web ZIP; host online and Add to Home Screen. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.' > industry-delivery/README_V6579_AUTO_OFFLINE_QA.txt
+      - name: Build web PWA delivery for iPad Safari (not an APK)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          web=Path("android-build/app/src/main/assets")
+          needed=["index.html","manifest.webmanifest","sw.js","zavi-store-v6577-compact-sales-barcode.css"]
+          for file in needed:assert (web/file).is_file(),file
+          out=Path("industry-delivery/ZAVI_ONE_V65_79_IPAD_WEB_PWA_QA.zip")
+          with zipfile.ZipFile(out,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=8) as z:
+              for item in web.rglob("*"):
+                  if item.is_file() and not item.name.startswith("."):
+                      z.write(item,item.relative_to(web).as_posix())
+          with zipfile.ZipFile(out) as z:
+              for file in needed:assert file in z.namelist(),file
+          print("iPad Safari PWA ZIP:",out,out.stat().st_size)
+          PY
+          (cd industry-delivery && sha256sum ZAVI_ONE_V65_79_IPAD_WEB_PWA_QA.zip > ZAVI_ONE_V65_79_IPAD_WEB_PWA_QA.zip.sha256)
+      - name: Publish one QA APK to private branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'ZAVI QA'
+          git config user.email 'zavi-unified20-qa@users.noreply.github.com'
+          git add industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_79_AUTO_OFFLINE_QA.apk industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_79_AUTO_OFFLINE_QA.apk.sha256 industry-delivery/README_V6579_AUTO_OFFLINE_QA.txt industry-delivery/ZAVI_ONE_V65_79_IPAD_WEB_PWA_QA.zip industry-delivery/ZAVI_ONE_V65_79_IPAD_WEB_PWA_QA.zip.sha256
+          git commit -m 'artifact(android): unified 20-business 65.78 combined mobile translations and layout QA APK'
+          git push origin HEAD:zavi-v6579-auto-cloud-offline-qa

@@ -1,1 +1,1 @@
-One QA APK: 20 business choices, compact grouped settings, device-local personal name/photo/avatar, and safe navigation. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.
+Android QA APK: 20 businesses, mobile invoice and barcode compact, offline-scoped photo/avatar. Also an iPad PWA web ZIP; host online and Add to Home Screen. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.

@@ -70,6 +70,9 @@
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)run()});
   window.addEventListener('focus',()=>run());
   document.addEventListener('change',e=>{if(e.target?.id==='zaviTopLanguage')render()});
+  // Reconfirm server entitlements while an owner uses the app for hours; remote
+  // ADMIN renewals should refresh the signed device lease without a manual action.
+  setInterval(()=>{if(!document.hidden&&navigator.onLine!==false&&Date.now()-lastAttempt>45*60*1000)run(true)},10*60*1000);
   render();setTimeout(()=>run(),1250);setTimeout(()=>run(),5000);
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();

@@ -1,0 +1,1 @@
+Android QA APK: one tap transfer only after server verifies prior device zero pending and recent sync; signed auto offline lease after valid cloud owner login. 7-day store licence supported. Keep original app installed; QA signature. iPad ZIP is PWA.

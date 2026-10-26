@@ -33,14 +33,23 @@ arg=argparse.ArgumentParser()
 arg.add_argument('--mode',choices=CONFIG,required=True)
 arg.add_argument('--apk',required=True)
 arg.add_argument('--output',required=True)
+arg.add_argument('--expected-sha',default=None,help='SHA-256 of the newer signed APK, verified by release manifest')
+arg.add_argument('--design-v6584',action='store_true')
 a=arg.parse_args()
-cfg=CONFIG[a.mode]
+cfg=dict(CONFIG[a.mode])
+if a.design_v6584:
+ cfg.update({
+  'version':'65.84.0' if a.mode=='one' else '1.4.30',
+  'exe':'Setup_ZAVI_ONE_V65_84_Design_Windows_x64_QA.exe' if a.mode=='one' else 'Setup_ZAVI_ONE_ADMIN_V1_4_30_Design_Windows_x64_QA.exe',
+  'app_id':'com.zavione.one.windows.v6584designqa' if a.mode=='one' else 'com.zavione.one.admin.windows.v1430designqa',
+  'name':'zavi-one-windows-v6584-design-qa' if a.mode=='one' else 'zavi-one-admin-windows-v1430-design-qa'
+ })
 source=Path(a.apk)
 root=Path(a.output)
 web=root/'web'
 assert source.exists(),source
 sha=hashlib.sha256(source.read_bytes()).hexdigest()
-assert sha==cfg['sha'], "APKs do not match user-provided original SHA-256"
+assert sha==(a.expected_sha or cfg['sha']), "APK SHA-256 does not match expected signed original or GitHub release hash"
 web.mkdir(parents=True,exist_ok=True)
 found=0
 with zipfile.ZipFile(source) as bundle:
@@ -83,13 +92,17 @@ if a.mode=='one':
 else:
     assert (web/'zavi-admin-v1428-offline-seven-days.js').exists()
     assert (web/'zavi-admin-v1423-lifetime.js').exists()
+if a.design_v6584:
+ for skin in ('zavi-unified-v6584.css','zavi-unified-v6584.js'):
+  assert (web/skin).exists(),skin
+ assert 'zavi-unified-v6584.css?v=65.84' in (web/'index.html').read_text(encoding='utf8')
 # Use bundled static server and strict Electron sandbox. Localhost is a secure context
 # allowing Service Workers and camera scanning permission on Windows 10/11.
 shutil.copy2('windows-build/main.cjs',root/'main.cjs')
 shutil.copy2('windows-build/desktop-server.cjs',root/'desktop-server.cjs')
 main=(root/'main.cjs').read_text(encoding='utf8')
 old='IS_ADMIN?"ZAVI_ONE_ADMIN_Desktop":"ZAVI_ONE_Desktop"'
-new='IS_ADMIN?"ZAVI_ONE_ADMIN_V1429_Windows_Desktop":"ZAVI_ONE_V6583_Windows_Desktop"'
+new=('IS_ADMIN?"ZAVI_ONE_ADMIN_V1430_Design_Windows_Desktop":"ZAVI_ONE_V6584_Design_Windows_Desktop"' if a.design_v6584 else 'IS_ADMIN?"ZAVI_ONE_ADMIN_V1429_Windows_Desktop":"ZAVI_ONE_V6583_Windows_Desktop"')
 assert main.count(old)==1
 main=main.replace(old,new)
 (root/'main.cjs').write_text(main,encoding='utf8')
@@ -122,7 +135,7 @@ report={
   "app":cfg["title"],
   "android_sha256":sha,"asset_count":found,
   "verified_local_file_references":references,
-  "source":"The user-uploaded APK and matching GitHub branch binary",
+  "source":"Verified ZAVI ONE 65.84 or ADMIN 1.4.30 re-signed Android QA binary" if a.design_v6584 else "The user-uploaded APK and matching GitHub branch binary",
   "target":"Windows 10/11 x64; Electron+NSIS real Setup EXE",
   "offline":"Bundled web files and localhost service worker; valid server-signed offline permission required for offline transactions",
   "account":"Same ZAVI cloud backend, per-Windows-application local data directory, not automatically copied from phone",

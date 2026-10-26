@@ -1,0 +1,32 @@
+name: Inspect existing signed offline lease API
+on:
+  push:
+    branches: [zavi-v6579-auto-cloud-offline-qa]
+    paths: ['.github/workflows/zavi-v6579-inspect-offline.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read validated web assets and print safe API identifiers (no tokens)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p inspect
+          gh release download zavi-6572-admin1419-trial7-offline-assistant-qa-20261026 --pattern 'ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk*' --dir inspect
+          cd inspect
+          sha256sum -c ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk.sha256
+          unzip -p ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk assets/offline-license-secure.js > secure.js
+          echo '=== EXPORTED SECURE OFFLINE METHODS ==='
+          grep -n -E 'zaviSecureOfflineLicense|requestLease|issue|refresh|fetch|signed|async function|function |offline|lease' secure.js | head -n 140 | cut -c1-235
+          echo '=== AUTO EVENTS AND CLIENT HOOKS ==='
+          for f in cloud-sync.js index.html offline-license-secure.js; do
+            echo "FILE $f"
+            unzip -p ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk "assets/$f" 2>/dev/null | grep -n -E 'zavi-offline-lease-ready|zaviSecureOfflineLicense|zaviOfflineStatus|zaviCloudRestoreInfo|zaviCloud.*Session|offlineLease' | head -n 30 | cut -c1-200 || true
+          done
+          echo '=== END ==='

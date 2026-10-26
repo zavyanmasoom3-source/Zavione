@@ -16,12 +16,19 @@ const t=()=>dict[language()];
 const MAX_INPUT=5*1024*1024;
 const prefix='zavi_v6576_personal_user_profile_';
 const valid=id=>typeof id==='string'&&/^[0-9a-zA-Z_-]{8,128}$/.test(id);
+/* Offline-capable, per-installation profile. Authenticated accounts stay tenant-scoped. */
 const scope=()=>{
  try{
-  const ctx=window.zaviCloudRestoreInfo?.();
-  const uid=window.zaviCloudGetAuthSession?.()?.user?.id;
-  const ws=ctx?.workspace;
-  return valid(uid)&&valid(ws)?{uid,ws,key:prefix+uid+'_'+ws}:null;
+  const ctx=window.zaviCloudRestoreInfo?.()||{};
+  const signed=window.zaviCloudGetAuthSession?.()?.user?.id||'';
+  const ws=ctx.workspace||'';
+  if(valid(signed)&&valid(ws))return {uid:signed,ws,key:prefix+signed+'_'+ws};
+  let device=localStorage.getItem('zavi_v6577_local_profile_id');
+  if(!valid(device)){
+   device='local_'+(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID().replaceAll('-',''):Math.random().toString(36).slice(2)+Date.now().toString(36));
+   localStorage.setItem('zavi_v6577_local_profile_id',device);
+  }
+  return {uid:device,ws:valid(ws)?ws:'device',key:prefix+device+'_'+(valid(ws)?ws:'device')};
  }catch(_){return null}
 };
 const current=()=>{const s=scope();if(!s)return null;try{const x=JSON.parse(localStorage.getItem(s.key)||'null');if(!x||x.version!==1||typeof x.name!=='string'||x.name.length>50||typeof x.photo!=='string'||(x.photo&&!/^data:image\/(?:jpeg|png|webp);base64,[a-zA-Z0-9+/=]+$/.test(x.photo))||x.photo.length>110000)return null;return x}catch(_){return null}};
@@ -38,7 +45,7 @@ function face(name,src,cls){
 function localName(){
  const r=current();
  const user=window.zaviCloudGetAuthSession?.()?.user;
- return safeText(r?.name||user?.user_metadata?.full_name||user?.email?.split('@')[0]||'');
+ return safeText(r?.name||user?.user_metadata?.full_name||user?.email?.split('@')[0]||(language()==='en'?'My profile':language()==='ps'?'زما پروفایل':'پروفایل من'));
 }
 function chip(){
  const r=current(),label=localName();
@@ -132,7 +139,7 @@ const classify=(card)=>{
 const categories=['business','appearance','finance','documents','security','advanced'];
 function reorganize(){
  const content=q('#content');if(!content)return;
- if(!q('#shopForm',content)){q('#z76-profile-card',content)?.remove();return}
+ if(!q('#shopForm',content)&&!q('.settings-card',content)){q('#z76-profile-card',content)?.remove();return}
  let personal=q('#z76-profile-card',content);
  if(!personal){personal=profileCard();
   const lead=q('#z74-workspace',content);
@@ -175,7 +182,7 @@ function reorganize(){
 }
 function sync(){
  const content=q('#content');if(!content)return;
- if(q('#shopForm',content))reorganize();else dashboard();
+ if(q('#shopForm',content)||q('.settings-card',content))reorganize();else dashboard();
 }
 let queued=false;
 function mount(){

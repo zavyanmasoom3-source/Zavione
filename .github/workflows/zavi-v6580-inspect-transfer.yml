@@ -59,3 +59,11 @@ jobs:
                   i=s.find(needle)
                   if i>=0:print('ANCHOR',needle,re.sub(r'\\s+',' ',s[i:i+5800])[:5800])
           PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('/tmp/web/offline-license-secure.js').read_text()
+          print('SECURE CLIENT CODE:',re.sub(r'\\s+',' ',s)[:5700])
+          for p in ['[180,365]','[180, 365]','offline_days','trial','7,180','function verify']:
+              print('SECURE MATCH',p,[m.start() for m in re.finditer(re.escape(p),s)])
+          PY

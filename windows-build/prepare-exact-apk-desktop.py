@@ -101,12 +101,14 @@ server=server.replace(needle,needle+'".webp":"image/webp",".gif":"image/gif",".a
 pkg={
   "name":cfg["name"],"productName":cfg["title"],"version":cfg["version"],
   "private":True,"description":cfg["title"]+" standalone Windows 10/11 x64 from exact signed Android frontend",
+  "repository":{"type":"git","url":"https://github.com/zavyanmasoom6-glitch/Zavione.git"},
   "main":"main.cjs",
   "scripts":{"test":"node --check main.cjs && node --check desktop-server.cjs","dist:win":"electron-builder --win nsis --x64 --publish never"},
   "devDependencies":{"electron":"38.6.0","electron-builder":"26.0.12"},
   "build":{
     "appId":cfg["app_id"],"productName":cfg["title"],"asar":True,
     "directories":{"output":"dist"},
+    "publish":[{"provider":"github","owner":"zavyanmasoom6-glitch","repo":"Zavione","publishAutoUpdate":False}],
     "files":["main.cjs","desktop-server.cjs","web/**/*","package.json","!**/*.map"],
     "win":{"icon":cfg["icon"],"target":[{"target":"nsis","arch":["x64"]}],"requestedExecutionLevel":"asInvoker"},
     "nsis":{"oneClick":False,"perMachine":False,"allowToChangeInstallationDirectory":True,

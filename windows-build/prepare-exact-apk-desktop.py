@@ -102,7 +102,7 @@ pkg={
   "name":cfg["name"],"productName":cfg["title"],"version":cfg["version"],
   "private":True,"description":cfg["title"]+" standalone Windows 10/11 x64 from exact signed Android frontend",
   "main":"main.cjs",
-  "scripts":{"test":"node --check main.cjs && node --check desktop-server.cjs","dist:win":"electron-builder --win nsis --x64"},
+  "scripts":{"test":"node --check main.cjs && node --check desktop-server.cjs","dist:win":"electron-builder --win nsis --x64 --publish never"},
   "devDependencies":{"electron":"38.6.0","electron-builder":"26.0.12"},
   "build":{
     "appId":cfg["app_id"],"productName":cfg["title"],"asar":True,

@@ -1,4 +1,4 @@
-/* ZAVI ONE 65.74 unified 20-trade user experience.
+/* ZAVI ONE 65.75 compact settings and safe return navigation.
  * Only the existing authenticated store profile authorizes trade changes.
  * Never mutates invoices, stock, permissions, cash or offline licences. */
 (()=>{'use strict';
@@ -67,50 +67,102 @@
   return dialog;
  }
  function open(){const d=chooser();q('.z74-dialog-header h2',d).textContent=t().all;q('.z74-close',d).textContent=t().cancel;searchInput.placeholder=t().search;searchInput.value='';buildOptions('');if(typeof d.showModal==='function')d.showModal();else d.setAttribute('open','');searchInput.focus()}
- function card(type,mode){
-  const p=byId[type]||byId.general,box=el('section','z74-workspace');box.dataset.z74Industry=type;
-  const bar=el('div','z74-bar');const left=el('div','z74-heading');
-  left.append(el('small','',t().current));left.append(el('strong','',icons[type]+' '+name(p)));bar.append(left);
-  const choose=el('button','z74-change',t().choose);choose.type='button';choose.addEventListener('click',open);bar.append(choose);box.append(bar);
-  if(mode==='full'){
-   const desc=el('p','z74-focus',p.focus||'');box.append(desc);
-   const tools=el('div','z74-tools');tools.append(el('small','z74-subtitle',t().tools));
-   const links=el('div','z74-link-grid');
-   const xs=window.ZaviIndustryFocus?.plan?.(type)?.primary||fallback[type]||fallback.general;
-   for(const id of [...new Set(xs)]){
-    const b=el('button','z74-action',t()[id]||id);b.type='button';b.setAttribute('data-go',id);links.append(b);
-   }
-   tools.append(links);box.append(tools);
-   const fs=fields(type);if(fs.length){box.append(el('small','z74-subtitle',t().preview));box.append(el('p','z74-fields',fs.join(' · ')));}
-   box.append(el('small','z74-notice',t().check));
-  }
+
+ // Keep the daily dashboard clean; the trade selector belongs ONLY in Settings.
+ function settingsCard(type){
+  const p=byId[type]||byId.general,box=el('section','z74-workspace z74-settings-only');
+  box.id='z74-workspace';box.dataset.z74Industry=type;box.dataset.z74Lang=language();
+  const bar=el('div','z74-bar'),left=el('div','z74-heading');
+  left.append(el('small','',t().current));left.append(el('strong','',icons[type]+' '+name(p)));
+  bar.append(left);
+  const choose=el('button','z74-change',t().choose);choose.type='button';choose.addEventListener('click',open);
+  bar.append(choose);box.append(bar);
   return box;
  }
  let updating=false;
  function sync(){
   const content=q('#content');if(!content)return;
-  const type=current(),lang=language(),old=q('#z74-workspace',content);
-  const dashboard=!!q('.welcome',content)||!!q('.zrf-home',content),settings=!!q('#shopForm',content);
-  const mode=dashboard||settings?'full':'compact';
-  if(old&&old.dataset.z74Industry===type&&old.dataset.z74Lang===lang&&old.dataset.z74Mode===mode)return;
-  const panel=card(type,mode);panel.id='z74-workspace';panel.dataset.z74Lang=lang;panel.dataset.z74Mode=mode;
-  if(old)old.replaceWith(panel);else content.prepend(panel);
-  document.documentElement.dataset.z74CurrentTrade=type;
+  const old=q('#z74-workspace',content);
+  // Settings is rendered as a page of ".settings-card" sections by the original app.
+  const settings=!!q('.settings-card',content);
+  if(!settings){if(old)old.remove();return}
+  const type=current(),lang=language();
+  if(old&&old.dataset.z74Industry===type&&old.dataset.z74Lang===lang)return;
+  const next=settingsCard(type);
+  if(old)old.replaceWith(next);else {
+   const first=q('.settings-card',content);
+   if(first)first.before(next);else content.prepend(next);
+  }
+ }
+ function backToSystem(){
+  // Android WebView: returning through history preserves the already loaded app,
+  // avoiding an unnecessary cold start via service-worker/network resolution.
+  const back=Array.from(document.querySelectorAll('a[href]')).find(a=>{
+   try{const u=new URL(a.getAttribute('href'),location.href);return u.origin===location.origin&&u.pathname.endsWith('/index.html')}catch(_){return false}
+  });
+  if(!back||back.dataset.z74SafeBack)return;
+  back.dataset.z74SafeBack='1';
+  const home=new URL('./index.html',location.href).href;
+  back.href=home;
+  back.addEventListener('click',e=>{
+   e.preventDefault();
+   let previous=false;
+   try{const r=new URL(document.referrer);previous=r.origin===location.origin&&r.pathname.endsWith('/index.html')&&history.length>1}catch(_){}
+   if(previous)history.back();else location.replace(home);
+  });
+ }
+ function compactAdvancedSettings(){
+  const main=q('main');if(!main||q('#z74-advanced-business',main))return;
+  const sections=Array.from(main.querySelectorAll(':scope > section.card'));
+  if(sections.length<2)return;
+  const advanced=el('details','z74-business-advanced');advanced.id='z74-advanced-business';
+  const heading=el('summary','',language()==='en'?'Advanced business settings':language()==='ps'?'نور تنظیمات':'تنظیمات پیشرفته');
+  advanced.append(heading);
+  // A disclosure keeps all original inputs, buttons, event handlers and save flows.
+  sections.slice(1).forEach(sec=>advanced.append(sec));
+  sections[0].after(advanced);
  }
  function enhanceBusinessPage(){
   const select=q('#type'),save=q('#saveProfile');if(!select||!save)return;
+  backToSystem();
+  compactAdvancedSettings();
   const param=new URLSearchParams(location.search).get('zavi_select');
-  if(param&&byId[param]&&select.querySelector('option[value="'+param+'"]')){
-   if(select.value!==param){select.value=param;select.dispatchEvent(new Event('change',{bubbles:true}));}
-   const note=el('p','z74-save-warning',t().warning);save.parentElement?.insertBefore(note,save);
-   save.focus({preventScroll:true});
+  if(!param||!byId[param]||!Array.from(select.options).some(o=>o.value===param))return;
+  let completed=false;
+  function applyAfterRestore(){
+   if(completed)return;
+   const status=q('#status');
+   if(status&&/در حال بارگذاری|loading|بارگذاری تنظیمات|چک کردن/i.test(status.textContent||''))return;
+   completed=true;
+   if(select.value!==param){
+    select.value=param;
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+   }
+   // Recommendations are a draft only, never committed without pressing Save.
+   q('#z645Recommended')?.click();
+   if(!q('#z74-business-confirm')){const note=el('p','z74-save-warning',t().warning);
+    note.id='z74-business-confirm';save.parentElement?.insertBefore(note,save);}
+   try{history.replaceState(history.state,'',location.pathname+location.hash)}catch(_){}
   }
-  document.documentElement.dataset.z74BusinessSettings='true';
+  const status=q('#status');
+  if(status){
+   const observer=new MutationObserver(()=>{
+    if(completed){observer.disconnect();return}
+    applyAfterRestore();if(completed)observer.disconnect();
+   });
+   observer.observe(status,{childList:true,characterData:true,subtree:true});
+  }
+  setTimeout(applyAfterRestore,900);
+  setTimeout(applyAfterRestore,1800);
+  // Do not select the trade on page-load before v47-business.js restores owner settings.
  }
  function run(){
-  if(q('#type')&&q('#saveProfile'))enhanceBusinessPage();
+  if(q('#type')&&q('#saveProfile')){enhanceBusinessPage();return}
   const content=q('#content');if(!content)return;
-  const observer=new MutationObserver(()=>{if(updating)return;updating=true;requestAnimationFrame(()=>{updating=false;sync()})});
+  const observer=new MutationObserver(()=>{
+   if(updating)return;updating=true;
+   requestAnimationFrame(()=>{updating=false;sync()});
+  });
   observer.observe(content,{childList:true});
   window.addEventListener('focus',sync);
   ['zavi-business-updated','zavi-cloud-workspace-selected','zavi-cloud-session-changed'].forEach(ev=>window.addEventListener(ev,sync));

@@ -3,7 +3,7 @@ on:
   push:
     branches: [zavi-v6579-auto-cloud-offline-qa]
     paths:
-      - '.github/workflows/zavi-unified20-qa.yml'
+      - '.github/workflows/zavi-unified20-v6579-qa.yml'
       - 'industry-build/unified20.js'
       - 'industry-build/unified20.css'
       - 'industry-build/prepare_unified_v6579.py'

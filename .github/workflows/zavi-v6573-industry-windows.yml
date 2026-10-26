@@ -1,0 +1,127 @@
+name: ZAVI ONE - 20 distinct industry Windows x64 setup installers
+on:
+  push:
+    branches: [zavi-v6573-industry-editions-20261026]
+    paths:
+      - ".github/workflows/zavi-v6573-industry-windows.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Create QA installer release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-v6573-industry-windows-qa-20261026
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1;then
+            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE - 20 business-specific Windows x64 Setup installers QA" \
+              --notes "Windows 10/11 64-bit Electron/NSIS setups from the exact audited ZAVI ONE V65.72 offline and 7-day-trial source. Edition-specific installed name, unique Electron app id, unique local userData directory and local web port; all share the official ZAVI ONE cloud backend controlled by owner ADMIN. These are UN-CODESIGNED QA builds, not certified public distribution. Verify real business printing/camera/cloud/offline workflows on customer machines."
+          fi
+  windows:
+    needs: prepare
+    runs-on: windows-2022
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        industry:
+          - general
+          - pharmacy
+          - mobile
+          - supermarket
+          - wholesale
+          - clothing
+          - services
+          - construction
+          - company
+          - exchange
+          - contractor
+          - gold
+          - bookstore
+          - footwear
+          - cosmetics
+          - electronics
+          - furniture
+          - hardware
+          - laboratory
+          - distribution
+    name: "Windows business Setup — ${{ matrix.industry }}"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: windows-build/package-lock.json
+        continue-on-error: true
+      - name: Stage complete exact latest app assets from immutable v65.72 QA APK
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Force -Path "staging" | Out-Null
+          gh release download zavi-6572-admin1419-trial7-offline-assistant-qa-20261026 --pattern "ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk*" --dir staging
+          if ($LASTEXITCODE -ne 0) {throw "Original master APK not downloaded"}
+          $apk="staging/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk"
+          $expected=((Get-Content "$apk.sha256" -TotalCount 1).Split(" ",[System.StringSplitOptions]::RemoveEmptyEntries))[0].ToLowerInvariant()
+          $actual=(Get-FileHash "$apk" -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) {throw "Original APK SHA256 mismatch"}
+          $edition="${{ matrix.industry }}"
+          $web="windows-output/ZAVI_ONE_$edition/web"
+          python industry-build/prepare_edition.py --industry "$edition" --apk "$apk" --web "$web" --desktop
+          if ($LASTEXITCODE -ne 0) {throw "Industry stage invalid"}
+          node --check "windows-output/ZAVI_ONE_$edition/main.cjs"
+          node --check "windows-output/ZAVI_ONE_$edition/web/zavi-edition-ui.js"
+          node --check "windows-output/ZAVI_ONE_$edition/web/zavi-v6572-offline-accounting-assistant.js"
+          if ($LASTEXITCODE -ne 0){throw "Script parsing failed"}
+          $manifest=Get-Content "windows-output/ZAVI_ONE_$edition/web/industry-edition.json" -Raw | ConvertFrom-Json
+          if($manifest.edition.id -ne "$edition"){throw "Incorrect industry data"}
+          Write-Host "PASS: $edition master accounting, owner trial 7 days, offline guide and separate installation data."
+      - name: Install desktop runtime and package direct NSIS Setup
+        shell: pwsh
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'false'
+        run: |
+          $ErrorActionPreference='Stop'
+          $dir="windows-output/ZAVI_ONE_${{ matrix.industry }}"
+          Push-Location $dir
+          npm install --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0){throw "Electron install failed"}
+          npm test
+          if ($LASTEXITCODE -ne 0){throw "Electron shell checks failed"}
+          npm run dist:win
+          if ($LASTEXITCODE -ne 0){throw "Windows setup compile failed"}
+          Pop-Location
+      - name: Validate real Windows setup and checksum
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $folder="windows-output/ZAVI_ONE_${{ matrix.industry }}/dist"
+          $name="Setup_ZAVI_ONE_${{ matrix.industry }}_65_73_Windows_x64_QA.exe"
+          $exe=Join-Path $folder $name
+          if (!(Test-Path $exe)){throw "Missing actual EXE"}
+          $bytes=(Get-Item $exe).Length
+          if ($bytes -lt 30000000){throw "Invalid Electron installer size $bytes"}
+          $sha=(Get-FileHash -Path $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$sha  $name" | Set-Content -Path "$exe.sha256" -Encoding ascii
+          Write-Host "PASS Windows Setup size=$bytes bytes, SHA256=$sha"
+      - name: Publish each setup installer to official owner repository release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-v6573-industry-windows-qa-20261026
+        run: |
+          $ErrorActionPreference='Stop'
+          $folder="windows-output/ZAVI_ONE_${{ matrix.industry }}/dist"
+          $exe=Join-Path $folder "Setup_ZAVI_ONE_${{ matrix.industry }}_65_73_Windows_x64_QA.exe"
+          gh release upload "$env:TAG" "$exe" "$exe.sha256" --clobber
+          if ($LASTEXITCODE -ne 0){throw "Could not publish the Windows installer"}
+          Write-Host "PASS: separately installable full Windows industry edition, unsigned QA."

@@ -1,7 +1,7 @@
 name: ZAVI ONE V65.85 Unified Design Android APK and ADMIN 1.4.31 QA
 on:
   push:
-    branches: [zavi-v6585-unified-responsive-design-apk-windows-qa]
+    branches: [zavi-v6585-uniform-grid-portrait-landscape-store-admin-qa]
     paths:
       - '.github/workflows/zavi-uniform-grid-v6585-qa.yml'
       - 'design-system/**'
@@ -127,8 +127,9 @@ jobs:
         with: {node-version: '22'}
       - name: Build full ZAVI ONE and ADMIN Windows desktop from matching updated APKs
         shell: pwsh
-        run: ./windows-build/build-uniform-grid-v6585.ps1
-      - name: Upload Windows QA installer copies
+        run: ./windows-build/build-unified-design-v6585.ps1
+      - name: Upload Windows QA installer copies (optional; release binaries are authoritative)
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: ZAVI_ONE_AND_ADMIN_UNIFORM_GRID_WIN64_QA

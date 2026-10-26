@@ -67,3 +67,16 @@ jobs:
           for p in ['[180,365]','[180, 365]','offline_days','trial','7,180','function verify']:
               print('SECURE MATCH',p,[m.start() for m in re.finditer(re.escape(p),s)])
           PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/web')
+          for name in ('zaviCloudRestoreInfo','zaviCloudGetAuthSession','zaviCloudRefreshAuthSession','zaviCloudGetPublicConfig','zaviCloudDeviceSyncStatus','zaviTenantIsBound'):
+             matches=[]
+             for p in root.glob('*.js'):
+                 body=p.read_text(errors='ignore')
+                 pattern=re.compile(r'window\\.'+name+r'\\s*=')
+                 for m in pattern.finditer(body):
+                     matches.append((p.name,re.sub(r'\\s+',' ',body[max(0,m.start()-55):m.start()+280])))
+             print('CLOUD EXPORT',name,matches[:5])
+          PY

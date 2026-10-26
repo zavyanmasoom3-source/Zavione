@@ -110,3 +110,25 @@ jobs:
           gh release create "$TAG" --target "$GITHUB_SHA" --title "ZAVI ONE V65.84 + ADMIN V1.4.30 Unified Responsive Design QA" --notes-file README_DARI.txt --prerelease || gh release view "$TAG" >/dev/null
           gh release upload "$TAG" ./*.apk ./*.apk.sha256 ./*_IPAD_PWA_QA.zip ./*_IPAD_PWA_QA.zip.sha256 --clobber
           echo "Android published at https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+  windows-both:
+    needs: android-both
+    runs-on: windows-2022
+    timeout-minutes: 100
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build full ZAVI ONE and ADMIN Windows desktop from matching updated APKs
+        shell: pwsh
+        run: ./windows-build/build-unified-design-v6584.ps1
+      - name: Upload Windows QA installer copies
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ONE_AND_ADMIN_UNIFIED_DESIGN_WIN64_QA
+          path: design-windows-delivery/*
+          if-no-files-found: error
+          retention-days: 10

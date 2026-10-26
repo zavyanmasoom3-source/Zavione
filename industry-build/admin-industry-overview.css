@@ -1,0 +1,28 @@
+/* Owner-only ZAVI ONE ADMIN 1.4.20 - 20 editions overview, light/dark readable */
+#appScreen .z73-launch{min-height:38px;max-width:100%;padding:8px 12px;background:linear-gradient(120deg,#2458e8,#03a9d9);color:#fff!important;-webkit-text-fill-color:#fff!important;border:1px solid #3b91e9;border-radius:11px;font-size:12px;font-weight:800;cursor:pointer;white-space:normal}
+#appScreen .z73-overlay{position:fixed;inset:0;z-index:101000;display:flex;align-items:center;justify-content:center;overflow-y:auto;overscroll-behavior:contain;padding:calc(env(safe-area-inset-top,0px) + 9px) 9px calc(env(safe-area-inset-bottom,0px) + 9px);background:rgba(5,14,36,.75);box-sizing:border-box}
+#appScreen .z73-panel{width:min(100%,800px);max-height:calc(100dvh - 28px);overflow:auto;overscroll-behavior:contain;border:1px solid var(--za67-border,#cad8ec);border-radius:20px;padding:14px;box-sizing:border-box;background:var(--za67-surface,#fff);color:var(--za67-text,#193852)!important;direction:rtl;box-shadow:0 19px 65px #07182a55}
+#appScreen .z73-header{display:flex;align-items:center;justify-content:space-between;gap:9px;border-radius:14px;padding:15px;background:linear-gradient(110deg,#2556e3,#08accd);color:#fff}
+#appScreen .z73-header strong{display:block;font-size:20px;line-height:1.4;font-weight:900;color:#fff!important;-webkit-text-fill-color:#fff!important}
+#appScreen .z73-header small{display:block;margin-top:6px;font-size:12px;line-height:1.7;color:#f4faff!important;-webkit-text-fill-color:#f4faff!important}
+#appScreen .z73-close{height:38px;width:38px;min-width:38px;border:1px solid #c0e0ff;border-radius:11px;background:#ffffff22;color:#fff!important;font-size:22px;cursor:pointer}
+#appScreen .z73-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:11px 0}
+#appScreen .z73-actions button{min-height:40px;padding:8px 13px;font-weight:800;font-size:12px;border-radius:10px;background:var(--za67-wash,#eaf3ff);color:var(--za67-text,#173550)!important;-webkit-text-fill-color:var(--za67-text,#173550)!important;border:1px solid var(--za67-border,#c5d9e9);cursor:pointer}
+#appScreen .z73-board{font-size:12px;line-height:1.7;color:var(--za67-text,#173550)!important}
+#appScreen .z73-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#appScreen .z73-stat{display:grid;gap:3px;justify-items:center;text-align:center;background:var(--za67-wash,#eef6ff);border:1px solid var(--za67-border,#d1e0ed);border-radius:13px;padding:13px 7px}
+#appScreen .z73-stat strong{font-size:23px;font-weight:900;color:var(--za67-text,#173550)!important}
+#appScreen .z73-stat span{font-size:11px;color:var(--za67-muted,#526f89)!important}
+#appScreen .z73-section-title{font-size:15px;font-weight:900;color:var(--za67-text,#173550)!important;margin:15px 0 9px}
+#appScreen .z73-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#appScreen .z73-industry{padding:11px;min-width:0;min-height:76px;border:1px solid var(--za67-border,#c9d9ed);background:var(--za67-wash,#f1f8ff);border-radius:12px;overflow-wrap:anywhere}
+#appScreen .z73-industry strong{font-size:12px;line-height:1.55;font-weight:850;color:var(--za67-text,#183853)!important;display:block}
+#appScreen .z73-industry span,#appScreen .z73-industry small{font-size:11px;line-height:1.6;color:var(--za67-muted,#4d6b86)!important;display:block}
+#appScreen .z73-industry small{color:#057b6f!important;font-weight:800}
+#appScreen .z73-note,#appScreen .z73-error{font-size:11px;line-height:1.7;color:var(--za67-muted,#58718a)!important;margin-top:12px}
+#appScreen .z73-error{border:1px solid #dc998f;color:#b44b35!important;border-radius:10px;padding:8px}
+:root[data-zavi-theme="light"] #appScreen .z73-panel{background:#fff!important;color:#153652!important;-webkit-text-fill-color:#153652!important}
+:root[data-zavi-theme="light"] #appScreen .z73-board :is(strong,span,small,h3,p){-webkit-text-fill-color:inherit;opacity:1!important}
+:root[data-zavi-theme="light"] #appScreen .z73-header :is(strong,small){-webkit-text-fill-color:#fff!important;color:#fff!important}
+@media(max-width:620px){#appScreen .z73-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#appScreen .z73-panel{padding:10px}#appScreen .z73-stat strong{font-size:19px}}
+@media(max-width:350px){#appScreen .z73-grid{grid-template-columns:minmax(0,1fr)}}

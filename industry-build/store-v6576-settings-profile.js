@@ -122,7 +122,7 @@ function profileCard(){
 const classify=(card)=>{
  const h=card.querySelector('h3,h2,.settings-card-title')?.textContent?.toLowerCase()||'';
  const s=(h+' '+(card.className||'')).toLowerCase();
- if(/zavi-custom-card|z6515-font|theme|زبان|language|فونت|ظاهر|تم|رنگ|animation|حرکت/.test(s))return 'appearance';
+ if(/z637-customize|شخصی‌سازی|شخصی سازی|zavi-custom-card|z6515-font|theme|زبان|language|فونت|ظاهر|تم|رنگ|animation|حرکت/.test(s))return 'appearance';
  if(/account|usd|دالر|ارز|نقد|بانک|حواله|سرمایه|exchange|currency/.test(s))return 'finance';
  if(/shopform|store|rename|فروشگاه|دوکان|تجارت|مدیریت عمومی|کسب‌وکار|industry|نوع کسب/.test(s)||card.querySelector('#shopForm'))return 'business';
  if(/receipt|print|invoice|فاکتور|رسید|چاپ|csv|excel|پرنتر/.test(s))return 'documents';

@@ -1,0 +1,138 @@
+/* ADMIN V1.4.18 – LIGHT THEME ACCESSIBILITY PATCH
+   Scope: existing shell, customer/subscription controls and offline licence modal.
+   All server permissions, forms and RPC handlers remain unchanged. */
+:root[data-zavi-theme="light"] {
+ --z71-ink:#162f4b;
+ --z71-muted:#445d77;
+ --z71-panel:#ffffff;
+ --z71-soft:#edf5ff;
+ --z71-border:#c6d9ed;
+ --z71-focus:#0574d1;
+}
+/* Strong text contrast with explicit WebKit fill: older visual layers override color. */
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-panel{
+ background:#ffffff!important;border-color:#c5d7e8!important;color:#162f4b!important;
+ -webkit-text-fill-color:#162f4b!important;opacity:1!important;
+ filter:none!important;
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay :is(.z70-label,.z70-toggle,.z70-field,.z70-status,.z70-warning,.z70-note,.z70-muted,.z70-info,.z70-info>div){
+ color:#162f4b!important;-webkit-text-fill-color:#162f4b!important;
+ background-color:transparent;opacity:1!important;text-shadow:none!important
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-label{
+ font-size:13px!important;font-weight:850!important;line-height:1.6!important;gap:6px!important;
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-toggle{
+ background:#eef5ff!important;border:1px solid #c8d9e9!important;
+ min-height:46px!important;padding:10px 11px!important;
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-toggle>span{
+ color:#162f4b!important;-webkit-text-fill-color:#162f4b!important;
+ font-size:13px!important;font-weight:850!important
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay :is(select,input:not([type="checkbox"])){
+ background:#f3f8ff!important;color:#162f4b!important;-webkit-text-fill-color:#162f4b!important;
+ border:1.5px solid #9dbbda!important;opacity:1!important;box-shadow:none!important
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay select:focus{
+ border-color:#1173dc!important;box-shadow:0 0 0 3px rgba(15,116,220,.15)!important
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay select option{
+ background:#fff!important;color:#162f4b!important;-webkit-text-fill-color:#162f4b!important
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-info{
+ background:#f0f6ff!important;border:1px solid #cfdeed!important;
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-info :is(strong,span,p){
+ color:#172f4b!important;-webkit-text-fill-color:#172f4b!important;
+ font-weight:650!important;opacity:1!important;font-size:12px!important
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-info strong{font-weight:900!important}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-status{
+ background:#eaf3ff!important;color:#20476d!important;
+ -webkit-text-fill-color:#20476d!important;
+ border:1px solid #ccdfee!important;border-radius:10px!important;
+ font-size:12px!important;font-weight:730!important;line-height:1.7!important;
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-warning{
+ background:#fff4dc!important;border:1px solid #e6c98a!important;
+ color:#68430e!important;-webkit-text-fill-color:#68430e!important;font-weight:750!important
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-actions .z70-secondary{
+ background:#e8f1fc!important;border:1.5px solid #a5bedb!important;
+ color:#17385b!important;-webkit-text-fill-color:#17385b!important;
+ font-weight:850!important;opacity:1!important;
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-actions .z70-primary{
+ background:linear-gradient(118deg,#2253df,#078dc5)!important;
+ border:1px solid #1760bd!important;
+ color:white!important;-webkit-text-fill-color:white!important;font-weight:900!important;
+ opacity:1;
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-primary:disabled{
+ opacity:.48!important;-webkit-text-fill-color:#fff!important
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-heading{
+ background:linear-gradient(118deg,#2052e5,#0c83d3)!important;
+ border:1px solid #2463de!important;
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-heading :is(h2,p,.z70-close){
+ color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important;
+ text-shadow:none!important
+}
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-close{
+ background:rgba(255,255,255,.17)!important;border:1px solid rgba(255,255,255,.5)!important
+}
+/* On the underlying Administration shell, fix disappearing pale search & filter text. */
+:root[data-zavi-theme="light"] body #appScreen #view :is(input:not([type="checkbox"]),textarea,select){
+ color:#162f4b!important;-webkit-text-fill-color:#162f4b!important;
+ background-color:#f2f7fe!important;border-color:#bcd1e6!important;
+ opacity:1!important
+}
+:root[data-zavi-theme="light"] body #appScreen #view :is(input,textarea)::placeholder{
+ color:#546b82!important;-webkit-text-fill-color:#546b82!important;opacity:1!important
+}
+:root[data-zavi-theme="light"] body #appScreen #view :is(.panel,.admin-kpi,.admin-analytics-main,.admin-distribution,.zavi-clean-settings-hub){
+ color:#162f4b!important;-webkit-text-fill-color:#162f4b!important;
+ background:#ffffff!important;border-color:#cfdfef!important;opacity:1!important
+}
+:root[data-zavi-theme="light"] body #appScreen #view :is(.panel,.admin-kpi,.admin-analytics-main,.admin-distribution,.zavi-clean-settings-hub) :is(h2,h3,h4,b,strong,label,td,th,summary){
+ color:#162f4b!important;-webkit-text-fill-color:#162f4b!important;opacity:1!important
+}
+:root[data-zavi-theme="light"] body #appScreen #view :is(.panel,.admin-kpi,.admin-analytics-main,.admin-distribution,.zavi-clean-settings-hub) :is(p,small,.muted){
+ color:#465e77!important;-webkit-text-fill-color:#465e77!important;opacity:1!important
+}
+/* Preserve intended white type on vibrant hero and on filled CTA. */
+:root[data-zavi-theme="light"] body #appScreen #view .admin-hero :is(h1,h2,h3,p,small,span,b,strong),
+:root[data-zavi-theme="light"] body #appScreen #view :is(.button.primary,button.primary) :is(span,b,small){
+ color:#fff!important;-webkit-text-fill-color:#fff!important
+}
+:root[data-zavi-theme="light"] body #appScreen #view :is(button,select,input):focus-visible,
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay :is(button,select,input):focus-visible{
+ outline:3px solid #0874dc!important;outline-offset:2px!important
+}
+/* A light theme also needs readable quick-entry controls in the topbar. */
+:root[data-zavi-theme="light"] body #appScreen .topbar :is(select,input){
+ color:#173654!important;-webkit-text-fill-color:#173654!important;
+ background:#f0f6fe!important;border:1px solid #bfd4e9!important
+}
+:root[data-zavi-theme="light"] body #appScreen .topbar :is(button:not(.z70-launch):not(.primary)){
+ color:#173654!important;-webkit-text-fill-color:#173654!important;
+ border-color:#d2e1ef!important;opacity:1!important
+}
+/* Do not allow decorative global fading to override widget content. */
+:root[data-zavi-theme="light"] body #appScreen #z70-overlay :is(.z70-heading,.z70-actions,.z70-panel,.z70-info){
+ filter:none!important;visibility:visible!important
+}
+/* Dark mode deliberately inherits its existing navy-and-cyan palette. */
+@media(max-width:520px){
+ :root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-panel{
+  padding:12px!important;gap:10px!important;max-height:calc(100dvh - 22px)!important
+ }
+ :root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-heading{
+  padding:12px!important;border-radius:12px!important
+ }
+ :root[data-zavi-theme="light"] body #appScreen #z70-overlay .z70-actions button{
+  min-height:43px!important;line-height:1.6!important;font-size:12px!important
+ }
+}

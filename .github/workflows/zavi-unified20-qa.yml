@@ -1,12 +1,13 @@
 name: Build unified ZAVI ONE twenty-trade QA APK
 on:
   push:
-    branches: [zavi-v6574-one-app-20-businesses-qa]
+    branches: [zavi-v6575-compact-industry-navigation-fix-qa]
     paths:
       - '.github/workflows/zavi-unified20-qa.yml'
       - 'industry-build/unified20.js'
       - 'industry-build/unified20.css'
       - 'industry-build/prepare_unified.py'
+      - 'android-build/app/src/main/java/com/zavione/mobile/MainActivity.java'
   workflow_dispatch:
 permissions:
   contents: write
@@ -52,7 +53,7 @@ jobs:
           for page in ('index.html','v25-business.html'):
               html=(a/page).read_text()
               assert 'window.ZAVI_UNIFIED_PROFILES=' in html
-              assert 'zavi-unified20.js?v=65.74-qa' in html
+              assert 'zavi-unified20.js?v=65.75-qa' in html
           for asset in ('offline-license-secure.js','zavi-v6572-store-trial7.js','zavi-v6570-store-offline.js'):
               assert (a/asset).is_file(),asset
           PY
@@ -65,9 +66,9 @@ jobs:
           p=Path('android-build/app/build.gradle')
           s=p.read_text()
           pairs={
-              "admin ? 'com.zavione.one.admin' : 'com.zavione.one'":"admin ? 'com.zavione.one.admin' : 'com.zavione.one.unified20.qa'",
-              "versionCode admin ? 4127 : 6554":"versionCode admin ? 4127 : 657400",
-              "versionName admin ? '1.3.7' : '65.54'":"versionName admin ? '1.3.7' : '65.74-unified20-qa'",
+              "admin ? 'com.zavione.one.admin' : 'com.zavione.one'":"admin ? 'com.zavione.one.admin' : 'com.zavione.one.unified20.fixqa'",
+              "versionCode admin ? 4127 : 6554":"versionCode admin ? 4127 : 657500",
+              "versionName admin ? '1.3.7' : '65.54'":"versionName admin ? '1.3.7' : '65.75-unified20-qa'",
               "admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'":"admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE 20 Businesses QA'"
           }
           for old,new in pairs.items():
@@ -86,20 +87,20 @@ jobs:
           APK=android-build/app/build/outputs/apk/release/app-release.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK" | grep -F 'Verified using v2 scheme'
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.zavione.one.unified20.qa'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.zavione.one.unified20.fixqa'"
           unzip -t "$APK" | tail -n 1
           unzip -Z1 "$APK" | grep -Fx assets/zavi-unified20.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-v6572-store-trial7.js
           mkdir -p industry-delivery
-          cp "$APK" industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_74_QA.apk
-          (cd industry-delivery && sha256sum ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_74_QA.apk > ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_74_QA.apk.sha256)
-          echo 'Twenty selectable business types in one QA APK. Save type from authenticated owner settings. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.' > industry-delivery/README_UNIFIED20_QA.txt
+          cp "$APK" industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_75_NAV_FIX_QA.apk
+          (cd industry-delivery && sha256sum ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_75_NAV_FIX_QA.apk > ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_75_NAV_FIX_QA.apk.sha256)
+          echo 'One QA APK: 20 businesses in owner settings, safe navigation and native local-home recovery. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.' > industry-delivery/README_UNIFIED20_QA.txt
       - name: Publish one QA APK to private branch
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'ZAVI QA'
           git config user.email 'zavi-unified20-qa@users.noreply.github.com'
-          git add industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_74_QA.apk industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_74_QA.apk.sha256 industry-delivery/README_UNIFIED20_QA.txt
-          git commit -m 'artifact(android): unified 20-business 65.74 QA APK'
-          git push origin HEAD:zavi-v6574-one-app-20-businesses-qa
+          git add industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_75_NAV_FIX_QA.apk industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_75_NAV_FIX_QA.apk.sha256 industry-delivery/README_UNIFIED20_QA.txt
+          git commit -m 'artifact(android): unified 20-business 65.75 NAV FIX QA APK'
+          git push origin HEAD:zavi-v6575-compact-industry-navigation-fix-qa

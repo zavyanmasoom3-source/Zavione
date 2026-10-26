@@ -20,10 +20,10 @@ jobs:
           mkdir -p inspect
           gh release download zavi-6572-admin1419-trial7-offline-assistant-qa-20261026 --pattern 'ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk*' --dir inspect
           cd inspect
-          sha256sum -c ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk.sha256
+          awk 'NR==1{print $1 "  ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk"}' ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk.sha256 | sha256sum -c -
           unzip -p ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk assets/offline-license-secure.js > secure.js
           echo '=== EXPORTED SECURE OFFLINE METHODS ==='
-          grep -n -E 'zaviSecureOfflineLicense|requestLease|issue|refresh|fetch|signed|async function|function |offline|lease' secure.js | head -n 140 | cut -c1-235
+          grep -n -E 'zaviSecureOfflineLicense|requestLease|issue|refresh|fetch|signed|async function|function |offline|lease' secure.js | head -n 140 | cut -c1-235 || true
           echo '=== AUTO EVENTS AND CLIENT HOOKS ==='
           for f in cloud-sync.js index.html offline-license-secure.js; do
             echo "FILE $f"

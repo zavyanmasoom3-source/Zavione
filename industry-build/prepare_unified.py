@@ -48,8 +48,8 @@ shutil.copy2("industry-build/unified20.js", out/"zavi-unified20.js")
 shutil.copy2("industry-build/unified20.css", out/"zavi-unified20.css")
 payload = json.dumps(profiles, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 identity = '<script>window.ZAVI_UNIFIED_PROFILES=' + payload + ';</script>'
-style = '<link rel="stylesheet" href="./zavi-unified20.css?v=65.75-qa">'
-script = '<script defer src="./zavi-unified20.js?v=65.75-qa"></script>'
+style = '<link rel="stylesheet" href="./zavi-unified20.css?v=65.76-qa">'
+script = '<script defer src="./zavi-unified20.js?v=65.76-qa"></script>'
 for name in ("index.html", "v25-business.html"):
     file = out/name
     html = file.read_text(encoding="utf-8")
@@ -59,11 +59,22 @@ for name in ("index.html", "v25-business.html"):
     idx = html.rfind("</body>")
     html = html[:idx] + script + html[idx:]
     file.write_text(html, encoding="utf-8")
+# Personal preferences are a separate, scoped layer on top of the 20-business accounting core.
+for filename in ("store-v6576-settings-profile.js","store-v6576-settings-profile.css"):
+    shutil.copy2("industry-build/" + filename, out/("zavi-" + filename))
+main_file=out/"index.html"
+main_html=main_file.read_text(encoding="utf-8")
+assert 'zavi-store-v6576-settings-profile.js' not in main_html
+main_html=main_html.replace("</head>", '<link rel="stylesheet" href="./zavi-store-v6576-settings-profile.css?v=65.76-qa"></head>',1)
+close=main_html.rfind("</body>")
+main_html=main_html[:close]+'<script defer src="./zavi-store-v6576-settings-profile.js?v=65.76-qa"></script>'+main_html[close:]
+main_file.write_text(main_html,encoding="utf-8")
 info = {
-    "version": "65.75-unified20-qa",
+    "version": "65.76-unified20-qa",
     "count": 20,
-    "mode": "one-app-saved-tenant-profile",
+    "mode": "one-app-20-industries-and-personal-profile",
     "profiles": [{"id": p["id"], "name": p["name"]} for p in profiles],
+    "personalization": "Display-only user name/photo stored per signed-in user and workspace on this device.",
     "source": "ZAVI ONE V65.72 QA embedded frontend",
     "security": "Original cloud login, store workspace, server-side grants and signed offline lease remain unchanged.",
     "trade_change": "Draft selection from one app, owner confirms on native store settings page.",

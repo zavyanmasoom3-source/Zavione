@@ -80,3 +80,18 @@ jobs:
                      matches.append((p.name,re.sub(r'\\s+',' ',body[max(0,m.start()-55):m.start()+280])))
              print('CLOUD EXPORT',name,matches[:5])
           PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/web')
+          for word in ('zaviCloudRestoreInfo','zaviCloudGetAuthSession','zaviCloudRefreshAuthSession','zaviCloudGetPublicConfig'):
+              print('ALL OCCURRENCES',word)
+              matches=[]
+              for p in root.rglob('*'):
+                  if p.suffix not in ('.js','.html'):continue
+                  try:body=p.read_text()
+                  except:continue
+                  for m in list(re.finditer(re.escape(word),body))[:8]:
+                      matches.append((p.name,re.sub(r'\\s+',' ',body[max(0,m.start()-70):m.start()+95])))
+              print('COUNT',len(matches),'SAMPLES',matches[:13])
+          PY

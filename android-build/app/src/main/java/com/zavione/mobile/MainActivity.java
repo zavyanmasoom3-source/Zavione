@@ -72,6 +72,8 @@ public final class MainActivity extends FragmentActivity {
         + "window.print=function(){if(window.ZaviAndroidPrint)ZaviAndroidPrint.postMessage('print');};"
         + "})();";
     private FrameLayout container;
+    // Prevent a bad internal navigation from trapping the user on a blank WebView.
+    private int localNavigationRecoveryAttempts = 0;
     private WebView webView;
     private WebViewAssetLoader assetLoader;
     private ValueCallback<Uri[]> fileCallback;
@@ -211,11 +213,29 @@ public final class MainActivity extends FragmentActivity {
                 if (url.startsWith(BASE)) w.evaluateJavascript(BRIDGE_SCRIPT, null);
             }
             @Override public void onReceivedError(WebView w, WebResourceRequest req, android.webkit.WebResourceError err) {
-                if (req.isForMainFrame()) runOnUiThread(() -> new AlertDialog.Builder(MainActivity.this)
+                if (!req.isForMainFrame()) return;
+                final boolean embeddedPage = isLocal(req.getUrl());
+                if (embeddedPage && localNavigationRecoveryAttempts < 1) {
+                    localNavigationRecoveryAttempts++;
+                    // This is an embedded asset. It does NOT need internet or a remote server.
+                    runOnUiThread(() -> {
+                        w.stopLoading();
+                        w.loadUrl(BASE + "index.html?zavi_local_recovery=1");
+                    });
+                    return;
+                }
+                final String message = embeddedPage
+                    ? "صفحه داخلی برنامه باز نشد. برای برگشت، صفحه اصلی آفلاین را دوباره باز کنید."
+                    : "صفحه آنلاین باز نشد. اتصال اینترنت خود را بررسی کنید.";
+                runOnUiThread(() -> new AlertDialog.Builder(MainActivity.this)
                   .setTitle("ZAVI ONE")
-                  .setMessage("صفحه برنامه باز نشد. اتصال اینترنت و نسخه برنامه را بررسی کنید.")
-                  .setPositiveButton("تلاش دوباره", (d, which) -> w.reload())
-                  .setNegativeButton("بستن", (d, which) -> finish())
+                  .setMessage(message)
+                  .setPositiveButton("بازکردن صفحه اصلی", (d, which) -> {
+                      localNavigationRecoveryAttempts = 0;
+                      w.stopLoading();
+                      w.loadUrl(BASE + "index.html?zavi_manual_recovery=1");
+                  })
+                  .setNegativeButton("بستن", (d, which) -> d.dismiss())
                   .show());
             }
         });

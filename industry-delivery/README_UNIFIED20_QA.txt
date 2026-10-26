@@ -1,1 +1,1 @@
-Twenty selectable business types in one QA APK. Save type from authenticated owner settings. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.
+One QA APK: 20 businesses in owner settings, safe navigation and native local-home recovery. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.

@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$tag = 'zavi-unified-design-v6585-admin1431-qa-20261026'
+$tag = 'zavi-uniform-grid-v6585-admin1431-qa-20261026'
 New-Item -ItemType Directory -Path desktop-source,design-windows-delivery -Force | Out-Null
 gh release download $tag --pattern '*.apk*' --dir desktop-source
 if ($LASTEXITCODE -ne 0) { throw 'Cannot obtain release APKs for matching desktop skin' }

@@ -18,8 +18,8 @@ jobs:
           TAG: zavi-v6573-industry-android-qa-20261026
         run: |
           set -euo pipefail
-          if ! gh release view "$TAG" >/dev/null 2>&1;then
-            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease \
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1;then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
               --title "ZAVI ONE — 20 specialized business Android QA installers" \
               --notes "20 separate business-specific Android APKs based on ZAVI ONE 65.72 with the full shared accounting, 7-day trial, and bundled offline guide. Distinct package names + human-confirmed original business type settings. All tenant workspaces remain on the ZAVI ONE central backend and owner ADMIN. Separate LOCAL data per edition; migration must be verified. QA signatures only, NOT Google Play or commercially certified."
           fi
@@ -159,5 +159,5 @@ jobs:
           TAG: zavi-v6573-industry-android-qa-20261026
         run: |
           set -euo pipefail
-          gh release upload "$TAG" dist/* --clobber
+          gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber
           echo "PASS: ZAVI ONE ${{ matrix.industry }} Android edition, QA-signed, checksum recorded"

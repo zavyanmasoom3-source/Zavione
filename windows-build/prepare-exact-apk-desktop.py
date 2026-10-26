@@ -65,7 +65,7 @@ missing=[]
 references=0
 for tag in re.findall(r'<(?:script|link)\b[^>]*>',page,re.I):
     if tag.lower().startswith('<link') and not any(v in tag.lower() for v in ('stylesheet','manifest','icon')):continue
-    match=re.search(r'\b(?:src|href)\s*=\s*([\\\'\\\"])(.*?)\\1',tag,re.I)
+    match=re.search(r"""(?:src|href)\s*=\s*(['"])(.*?)\1""",tag,re.I)
     if not match:continue
     target=match.group(2).split('?',1)[0].split('#',1)[0]
     if not target or target.startswith(('https:','http:','data:','//')):continue

@@ -17,6 +17,18 @@ old="try{await window.zaviAutoOffline?.prepare?.();}catch(e)"
 new="try{await window.ZaviAutoLease?.refresh?.();await window.zaviAutoOffline?.prepare?.();}catch(e)"
 assert data.count(old)==1, "Cannot safely replace original retry handler"
 ui.write_text(data.replace(old,new),encoding="utf-8")
+# Keep the simple retry and diagnostics visible to a signed-in owner at all times,
+# including when the 7-day offline licence is active. Technical controls remain nested.
+data=ui.read_text(encoding="utf-8")
+old_visibility="const needHelp=recoveryChoice(output.kind,c);"
+new_visibility="const needHelp=!!(c?.workspace && c.role==='owner');"
+assert data.count(old_visibility)==1,"Cannot locate original recovery visibility safely"
+data=data.replace(old_visibility,new_visibility)
+old_retry="visible(retry,needHelp&&online()&&output.kind!=='action_required');"
+new_retry="visible(retry,needHelp&&online());"
+assert data.count(old_retry)==1,"Cannot locate retry state"
+data=data.replace(old_retry,new_retry)
+ui.write_text(data,encoding="utf-8")
 html=out/"index.html"
 content=html.read_text(encoding="utf-8")
 assert "zavi-store-v6579-auto-signed-offline.js" in content

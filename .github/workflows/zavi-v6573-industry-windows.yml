@@ -100,7 +100,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference='Stop'
-          $industry="__INDUSTRY__"
+          $industry="${{ matrix.industry }}"
           $target="zavi-v6573-windows-$industry-qa"
           $exe="windows-output/ZAVI_ONE_$industry/dist/Setup_ZAVI_ONE_$($industry)_65_73_Windows_x64_QA.exe"
           $bytes=(Get-Item $exe).Length

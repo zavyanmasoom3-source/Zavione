@@ -1,0 +1,37 @@
+name: Inspect ZAVI ONE registered industry ids and Windows packaging
+on:
+  push:
+    branches: [zavi-v6573-industry-editions-20261026]
+    paths: ['.github/workflows/zavi-v6573-inspect-industries.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage exactly the store frontend and inspect local business-selector code
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zavi-industry
+          gh release download zavi-web-v6554-responsive-20261024 \
+            --pattern "ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip" --dir /tmp/zavi-industry
+          unzip -oq /tmp/zavi-industry/ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip -d /tmp/zavi-industry/base
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/zavi-industry/base')
+          terms=('businessType','business_type','industryType','industry','businessKind','storeType','bizType','typeOfBusiness','shopType','نوع کسب','نوع تجارت','سوپرمارکت','زرگری','صرافی','ساختمان')
+          for p in sorted(root.rglob('*')):
+            if not p.is_file() or p.suffix not in ('.js','.html','.json'):continue
+            s=p.read_text(errors='replace')
+            hits=sorted({m.start() for t in terms for m in re.finditer(re.escape(t),s,re.IGNORECASE)})
+            if not hits:continue
+            print('FILE',p.relative_to(root),'CHARS',len(s),'HITS',len(hits))
+            for pos in hits[:32]:
+              piece=s[max(0,pos-130):pos+230].replace('\n',' ')
+              if 'eyJ' in piece or 'http' in piece or 'apikey' in piece.lower():continue
+              print('INDUSTRY',piece[:350])
+          PY

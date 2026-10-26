@@ -4,7 +4,6 @@ on:
     branches: [zavi-v6573-industry-editions-20261026]
     paths:
       - ".github/workflows/zavi-v6573-industry-apks.yml"
-      - "industry-build/**"
   workflow_dispatch:
 permissions:
   contents: write

@@ -1,0 +1,38 @@
+name: ZAVI offline controls safe source integration inspection
+on:
+  push:
+    branches: [zavi-v6570-offline-permission-console-20261026]
+    paths:
+      - ".github/workflows/zavi-offline-integration-inspect.yml"
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect offline and central ADMIN runtime APIs without data or secrets
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zavi-inspect
+          base64 -d windows-build/admin-v145-responsive-web.zip.base64 > /tmp/zavi-inspect/admin.zip
+          unzip -oq /tmp/zavi-inspect/admin.zip -d /tmp/zavi-inspect/app
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/zavi-inspect/app')
+          for file in root.rglob('*'):
+            if not file.is_file() or file.suffix not in ('.js','.html'):continue
+            t=file.read_text(errors='replace')
+            names=re.findall(r'(?:const|let|var)\s+(\w+)\s*=\s*(?:window\.)?(?:supabase\.)?createClient\s*\(',t)
+            names+=re.findall(r'(?:const|let|var)\s+(\w+)\s*=\s*(?:window\.)?(?:supabase\.createClient|createClient)\s*\(',t)
+            relevant=bool(re.search('zavi_admin_list_workspaces|zavi_v269_set_offline_policy|zavi_my_offline_policy|supabase.auth.getSession|db.rpc',t))
+            if names or relevant or file.name in ('app.js','index.html','account-control.js'):
+              print('FILE',str(file.relative_to(root)),'chars',len(t),'client_bindings',list(dict.fromkeys(names)))
+              for pattern in [r'(?m)^.{0,100}(?:const|let|var) (?:sb|supabaseClient|client|supa|supabase|db)\b.{0,130}$',r'(?m)^.{0,90}\.rpc\(["\\x27](?:zavi_admin_list_workspaces|zavi_v269_set_offline_policy|zavi_my_offline_policy|zavi_admin_v241_overview).{0,100}$',r'(?m)^.{0,95}\b(?:getSession|currentSession|isAdmin)\s*\(.{0,80}$']:
+                matches=re.findall(pattern,t)
+                for line in matches[:5]:
+                  if re.search(r'eyJ[A-Za-z0-9._\\-]{30,}|service_role|SUPABASE_ANON_KEY',line,re.I):continue
+                  print('MATCH',line.strip()[:230])
+          PY

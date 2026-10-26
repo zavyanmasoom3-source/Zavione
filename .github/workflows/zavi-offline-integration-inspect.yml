@@ -33,7 +33,7 @@ jobs:
               for pattern in [r'(?m)^.{0,100}(?:const|let|var) (?:sb|supabaseClient|client|supa|supabase|db)\b.{0,130}$',r'(?m)^.{0,90}\.rpc\(["\\x27](?:zavi_admin_list_workspaces|zavi_v269_set_offline_policy|zavi_my_offline_policy|zavi_admin_v241_overview).{0,100}$',r'(?m)^.{0,95}\b(?:getSession|currentSession|isAdmin)\s*\(.{0,80}$']:
                 matches=re.findall(pattern,t)
                 for line in matches[:5]:
-                if any(x in line for x in ('service_role','apikey','anon_key','http://','https://')):continue
+                  if any(x in line for x in ('service_role','apikey','anon_key','http://','https://')):continue
                   print('MATCH',line.strip()[:230])
           print('ADMIN STRUCTURE')
           for fname in ('app.js','account-control.js','index.html'):

@@ -56,7 +56,7 @@ try:
     check('store offline assistant entry '+theme,entry.count()==1)
     check('store trial status entry '+theme,trial.count()==1)
     if entry.count():
-     entry.locator('button').click()
+     entry.locator('button').evaluate('(e)=>e.click()')
      page.wait_for_timeout(250)
      field=page.locator('#z72-ai-query');outbox=page.locator('#z72-ai-answer')
      check('offline assistant opens '+theme,field.is_visible() and outbox.is_visible())

@@ -36,6 +36,21 @@ jobs:
               print('INDUSTRY',piece[:350])
           PY
           python3 - <<'PY'
+          import re
+          from pathlib import Path
+          p=Path('/tmp/zavi-industry/base/v25-business.html');s=p.read_text()
+          print('V25_START',s[:2500].replace(chr(10),' '))
+          for term in ('<select','type="submit"','business','form','save','v25'):
+            found=[m.start() for m in re.finditer(re.escape(term),s,re.I)]
+            print('V25_TERM',term,len(found))
+            for i in found[:5]:
+              z=s[max(0,i-80):i+250].replace(chr(10),' ')
+              print('V25_SNIP',z[:320])
+          t=Path('/tmp/zavi-industry/base/index.html').read_text()
+          marker='function zaviBusinessTypeV638()'
+          i=t.find(marker);print('ACTIVE_TYPE',t[i:i+1350].replace(chr(10),' '))
+          PY
+          python3 - <<'PY'
           from pathlib import Path
           root=Path('/tmp/zavi-industry/base')
           files=['v25-business.html','zavi-industry-focus-v639.js','zavi-smart-business-v642.js','index.html']

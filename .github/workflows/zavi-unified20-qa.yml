@@ -1,7 +1,7 @@
 name: Build unified ZAVI ONE twenty-trade QA APK
 on:
   push:
-    branches: [zavi-v6576-clean-settings-personal-profile-qa]
+    branches: [zavi-v6577-profile-modal-barcode-sales-ipad-qa]
     paths:
       - '.github/workflows/zavi-unified20-qa.yml'
       - 'industry-build/unified20.js'
@@ -10,6 +10,7 @@ on:
       - 'android-build/app/src/main/java/com/zavione/mobile/MainActivity.java'
       - 'industry-build/store-v6576-settings-profile.js'
       - 'industry-build/store-v6576-settings-profile.css'
+      - 'industry-build/store-v6577-compact-sales-barcode.css'
   workflow_dispatch:
 permissions:
   contents: write
@@ -56,7 +57,7 @@ jobs:
           for page in ('index.html','v25-business.html'):
               html=(a/page).read_text()
               assert 'window.ZAVI_UNIFIED_PROFILES=' in html
-              assert 'zavi-unified20.js?v=65.76-qa' in html
+              assert 'zavi-unified20.js?v=65.77-qa' in html
           for asset in ('offline-license-secure.js','zavi-v6572-store-trial7.js','zavi-v6570-store-offline.js','zavi-store-v6576-settings-profile.js','zavi-store-v6576-settings-profile.css'):
               assert (a/asset).is_file(),asset
           profile=(a/'zavi-store-v6576-settings-profile.js').read_text()
@@ -64,6 +65,12 @@ jobs:
           assert 'localStorage.setItem(s.key' in profile
           assert 'z76-settings-groups' in profile and 'z76-dash-profile' in profile
           assert 'compressImage' in profile
+          assert 'zavi_v6577_local_profile_id' in profile
+          assert (a/'zavi-store-v6577-compact-sales-barcode.css').is_file()
+          css=(a/'zavi-store-v6577-compact-sales-barcode.css').read_text()
+          assert '.zavi-barcode-actions' in css and '#overlay .modal' in css
+          assert '<link rel="stylesheet" href="./zavi-store-v6577-compact-sales-barcode.css' in (a/'index.html').read_text()
+          assert (a/'manifest.webmanifest').is_file() and (a/'sw.js').is_file()
           print('PASS: user/workspace-scoped photo, settings groups and avatar')
           PY
       - name: Set isolated QA Android identity and retain original app security
@@ -75,9 +82,9 @@ jobs:
           p=Path('android-build/app/build.gradle')
           s=p.read_text()
           pairs={
-              "admin ? 'com.zavione.one.admin' : 'com.zavione.one'":"admin ? 'com.zavione.one.admin' : 'com.zavione.one.unified20.profileqa'",
-              "versionCode admin ? 4127 : 6554":"versionCode admin ? 4127 : 657600",
-              "versionName admin ? '1.3.7' : '65.54'":"versionName admin ? '1.3.7' : '65.76-profile-qa'",
+              "admin ? 'com.zavione.one.admin' : 'com.zavione.one'":"admin ? 'com.zavione.one.admin' : 'com.zavione.one.unified20.releaseqa'",
+              "versionCode admin ? 4127 : 6554":"versionCode admin ? 4127 : 657700",
+              "versionName admin ? '1.3.7' : '65.54'":"versionName admin ? '1.3.7' : '65.77-profile-ipad-qa'",
               "admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'":"admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE 20 Businesses QA'"
           }
           for old,new in pairs.items():
@@ -96,22 +103,43 @@ jobs:
           APK=android-build/app/build/outputs/apk/release/app-release.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK" | grep -F 'Verified using v2 scheme'
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.zavione.one.unified20.profileqa'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.zavione.one.unified20.releaseqa'"
           unzip -t "$APK" | tail -n 1
           unzip -Z1 "$APK" | grep -Fx assets/zavi-unified20.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-store-v6576-settings-profile.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-store-v6576-settings-profile.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-store-v6577-compact-sales-barcode.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-v6572-store-trial7.js
           mkdir -p industry-delivery
-          cp "$APK" industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_76_PROFILE_QA.apk
-          (cd industry-delivery && sha256sum ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_76_PROFILE_QA.apk > ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_76_PROFILE_QA.apk.sha256)
-          echo 'One QA APK: 20 business choices, compact grouped settings, device-local personal name/photo/avatar, and safe navigation. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.' > industry-delivery/README_UNIFIED20_QA.txt
+          cp "$APK" industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_77_MOBILE_IPAD_QA.apk
+          (cd industry-delivery && sha256sum ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_77_MOBILE_IPAD_QA.apk > ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_77_MOBILE_IPAD_QA.apk.sha256)
+          echo 'Android QA APK: 20 businesses, mobile invoice and barcode compact, offline-scoped photo/avatar. Also an iPad PWA web ZIP; host online and Add to Home Screen. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.' > industry-delivery/README_UNIFIED20_QA.txt
+      - name: Build web PWA delivery for iPad Safari (not an APK)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          web=Path("android-build/app/src/main/assets")
+          needed=["index.html","manifest.webmanifest","sw.js","zavi-store-v6577-compact-sales-barcode.css"]
+          for file in needed:assert (web/file).is_file(),file
+          out=Path("industry-delivery/ZAVI_ONE_V65_77_IPAD_WEB_PWA_QA.zip")
+          with zipfile.ZipFile(out,"w",compression=zipfile.ZIP_DEFLATED,compresslevel=8) as z:
+              for item in web.rglob("*"):
+                  if item.is_file() and not item.name.startswith("."):
+                      z.write(item,item.relative_to(web).as_posix())
+          with zipfile.ZipFile(out) as z:
+              for file in needed:assert file in z.namelist(),file
+          print("iPad Safari PWA ZIP:",out,out.stat().st_size)
+          PY
+          (cd industry-delivery && sha256sum ZAVI_ONE_V65_77_IPAD_WEB_PWA_QA.zip > ZAVI_ONE_V65_77_IPAD_WEB_PWA_QA.zip.sha256)
       - name: Publish one QA APK to private branch
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'ZAVI QA'
           git config user.email 'zavi-unified20-qa@users.noreply.github.com'
-          git add industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_76_PROFILE_QA.apk industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_76_PROFILE_QA.apk.sha256 industry-delivery/README_UNIFIED20_QA.txt
-          git commit -m 'artifact(android): unified 20-business 65.76 PROFILE QA APK'
-          git push origin HEAD:zavi-v6576-clean-settings-personal-profile-qa
+          git add industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_77_MOBILE_IPAD_QA.apk industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_77_MOBILE_IPAD_QA.apk.sha256 industry-delivery/README_UNIFIED20_QA.txt industry-delivery/ZAVI_ONE_V65_77_IPAD_WEB_PWA_QA.zip industry-delivery/ZAVI_ONE_V65_77_IPAD_WEB_PWA_QA.zip.sha256
+          git commit -m 'artifact(android): unified 20-business 65.77 MOBILE AND IPAD QA APK'
+          git push origin HEAD:zavi-v6577-profile-modal-barcode-sales-ipad-qa

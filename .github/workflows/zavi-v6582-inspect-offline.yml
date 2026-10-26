@@ -36,3 +36,13 @@ jobs:
               raw=s[max(0,pos-420):pos+600].replace('\\n',' ')
               print('NEEDLE',key,'CONTEXT',re.sub(r'\\s+',' ',raw)[:960])
           PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re,json
+          root=Path('/tmp/web')
+          for name in ('annual-license.js','offline-ui-v46.js','offline-auto-prepare.js','offline-license-secure.js'):
+            t=(root/name).read_text()
+            for needle in (('zsh-actions','id="zaviDeviceReplace"','تلاش دوباره','بررسی مشکل','گزینه‌های رفع مشکل','function render','prepareOnce(') if name != 'offline-license-secure.js' else ('offline_days','const PREFIX','async function verify','function device')):
+              i=t.find(needle)
+              if i>=0:print('SNIPPET',name,needle,json.dumps(t[max(0,i-320):i+1650],ensure_ascii=False))
+          PY

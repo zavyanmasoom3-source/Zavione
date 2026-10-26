@@ -8,22 +8,7 @@ on:
 permissions:
   contents: write
 jobs:
-  prepare:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Create QA installer release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: zavi-v6573-industry-windows-qa-20261026
-        run: |
-          set -euo pipefail
-          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1;then
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
-              --title "ZAVI ONE - 20 business-specific Windows x64 Setup installers QA" \
-              --notes "Windows 10/11 64-bit Electron/NSIS setups from the exact audited ZAVI ONE V65.72 offline and 7-day-trial source. Edition-specific installed name, unique Electron app id, unique local userData directory and local web port; all share the official ZAVI ONE cloud backend controlled by owner ADMIN. These are UN-CODESIGNED QA builds, not certified public distribution. Verify real business printing/camera/cloud/offline workflows on customer machines."
-          fi
   windows:
-    needs: prepare
     runs-on: windows-2022
     timeout-minutes: 100
     strategy:
@@ -57,9 +42,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-          cache-dependency-path: windows-build/package-lock.json
-        continue-on-error: true
+
       - name: Stage complete exact latest app assets from immutable v65.72 QA APK
         shell: pwsh
         env:
@@ -113,15 +96,12 @@ jobs:
           $sha=(Get-FileHash -Path $exe -Algorithm SHA256).Hash.ToLowerInvariant()
           "$sha  $name" | Set-Content -Path "$exe.sha256" -Encoding ascii
           Write-Host "PASS Windows Setup size=$bytes bytes, SHA256=$sha"
-      - name: Publish each setup installer to official owner repository release
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: zavi-v6573-industry-windows-qa-20261026
-        run: |
-          $ErrorActionPreference='Stop'
-          $folder="windows-output/ZAVI_ONE_${{ matrix.industry }}/dist"
-          $exe=Join-Path $folder "Setup_ZAVI_ONE_${{ matrix.industry }}_65_73_Windows_x64_QA.exe"
-          gh release upload "$env:TAG" "$exe" "$exe.sha256" --repo "$env:GITHUB_REPOSITORY" --clobber
-          if ($LASTEXITCODE -ne 0){throw "Could not publish the Windows installer"}
-          Write-Host "PASS: separately installable full Windows industry edition, unsigned QA."
+      - name: Upload unique installable Windows x64 Setup and integrity checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ONE_${{ matrix.industry }}_Windows_Setup_QA
+          path: |
+            windows-output/ZAVI_ONE_${{ matrix.industry }}/dist/Setup_*.exe
+            windows-output/ZAVI_ONE_${{ matrix.industry }}/dist/Setup_*.exe.sha256
+          if-no-files-found: error
+          retention-days: 30

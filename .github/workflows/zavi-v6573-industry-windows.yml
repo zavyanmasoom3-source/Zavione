@@ -96,12 +96,24 @@ jobs:
           $sha=(Get-FileHash -Path $exe -Algorithm SHA256).Hash.ToLowerInvariant()
           "$sha  $name" | Set-Content -Path "$exe.sha256" -Encoding ascii
           Write-Host "PASS Windows Setup size=$bytes bytes, SHA256=$sha"
-      - name: Upload unique installable Windows x64 Setup and integrity checksum
-        uses: actions/upload-artifact@v4
-        with:
-          name: ZAVI_ONE_${{ matrix.industry }}_Windows_Setup_QA
-          path: |
-            windows-output/ZAVI_ONE_${{ matrix.industry }}/dist/Setup_*.exe
-            windows-output/ZAVI_ONE_${{ matrix.industry }}/dist/Setup_*.exe.sha256
-          if-no-files-found: error
-          retention-days: 30
+      - name: Deliver each full Windows Setup through an isolated private Git download branch
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $industry="__INDUSTRY__"
+          $target="zavi-v6573-windows-$industry-qa"
+          $exe="windows-output/ZAVI_ONE_$industry/dist/Setup_ZAVI_ONE_$industry_65_73_Windows_x64_QA.exe"
+          $bytes=(Get-Item $exe).Length
+          if($bytes -ge 104857600) {throw "EXE exceeds GitHub's maximum 100 MiB Git blob size; use alternative storage."}
+          New-Item -ItemType Directory -Force -Path "industry-delivery" | Out-Null
+          Copy-Item $exe -Destination industry-delivery/
+          Copy-Item "$exe.sha256" -Destination industry-delivery/
+          git config user.name 'ZAVI Windows Edition QA CI'
+          git config user.email 'zavi-windows-ci@users.noreply.github.com'
+          git checkout -B "$target"
+          git add -f "industry-delivery"
+          git commit -m "artifact(windows): direct setup for $industry Windows x64 QA and SHA256"
+          if ($LASTEXITCODE -ne 0){throw "Failed to save staged setup"}
+          git push origin "HEAD:refs/heads/$target"
+          if ($LASTEXITCODE -ne 0){throw "Cannot push Windows Setup delivery branch"}
+          Write-Host "VERIFIED DOWNLOAD: https://github.com/$env:GITHUB_REPOSITORY/raw/refs/heads/$target/industry-delivery/Setup_ZAVI_ONE_$industry_65_73_Windows_x64_QA.exe"

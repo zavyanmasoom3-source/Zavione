@@ -22,7 +22,7 @@ jobs:
           set -euo pipefail
           mkdir -p package
           for attempt in $(seq 1 40);do
-            count=$(gh release view "$SOURCE" --json assets --jq '.assets[].name' | grep -Ec '^ZAVI_ONE_(V65_70_OFFLINE_LICENSE_QA|ADMIN_V1_4_17_OFFLINE_LICENSE_QA)\.apk$' || true)
+            count=$(gh release view "$SOURCE" --json assets --jq '.assets[].name' | grep -Ec '^ZAVI_ONE_(V65_71_COMPACT_DEVICES_QA|ADMIN_V1_4_18_LIGHT_MODE_QA)\.apk$' || true)
             if [ "$count" -eq 2 ];then break;fi
             sleep 6
           done

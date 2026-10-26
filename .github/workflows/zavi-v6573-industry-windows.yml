@@ -17,8 +17,8 @@ jobs:
           TAG: zavi-v6573-industry-windows-qa-20261026
         run: |
           set -euo pipefail
-          if ! gh release view "$TAG" >/dev/null 2>&1;then
-            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease \
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1;then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
               --title "ZAVI ONE - 20 business-specific Windows x64 Setup installers QA" \
               --notes "Windows 10/11 64-bit Electron/NSIS setups from the exact audited ZAVI ONE V65.72 offline and 7-day-trial source. Edition-specific installed name, unique Electron app id, unique local userData directory and local web port; all share the official ZAVI ONE cloud backend controlled by owner ADMIN. These are UN-CODESIGNED QA builds, not certified public distribution. Verify real business printing/camera/cloud/offline workflows on customer machines."
           fi
@@ -122,6 +122,6 @@ jobs:
           $ErrorActionPreference='Stop'
           $folder="windows-output/ZAVI_ONE_${{ matrix.industry }}/dist"
           $exe=Join-Path $folder "Setup_ZAVI_ONE_${{ matrix.industry }}_65_73_Windows_x64_QA.exe"
-          gh release upload "$env:TAG" "$exe" "$exe.sha256" --clobber
+          gh release upload "$env:TAG" "$exe" "$exe.sha256" --repo "$env:GITHUB_REPOSITORY" --clobber
           if ($LASTEXITCODE -ne 0){throw "Could not publish the Windows installer"}
           Write-Host "PASS: separately installable full Windows industry edition, unsigned QA."

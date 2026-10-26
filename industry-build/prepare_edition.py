@@ -23,6 +23,9 @@ with zipfile.ZipFile(args.apk) as bundle:
         if not x.filename.startswith('assets/') or x.is_dir():continue
         path=Path(x.filename).relative_to('assets')
         if not path.parts or '..' in path.parts or path.is_absolute():raise RuntimeError('unsafe APK entry')
+        # Android Packaging injects dexopt/baseline.prof automatically at build time.
+        # It is not a web app asset. Extracting it back causes duplicate APK ZIP entries.
+        if path.parts[0] in ('dexopt','META-INF'):continue
         target=out/path;target.parent.mkdir(parents=True,exist_ok=True)
         target.write_bytes(bundle.read(x.filename))
         found+=1

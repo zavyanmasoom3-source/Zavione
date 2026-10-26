@@ -1,1 +1,1 @@
-One QA APK: 20 businesses in owner settings, safe navigation and native local-home recovery. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.
+One QA APK: 20 business choices, compact grouped settings, device-local personal name/photo/avatar, and safe navigation. Prior app data does not migrate automatically. Do not uninstall old app; QA signature is temporary.

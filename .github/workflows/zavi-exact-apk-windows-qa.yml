@@ -1,0 +1,33 @@
+name: Build two Windows x64 ZAVI ONE desktop Setup installers
+on:
+  push:
+    branches: [zavi-v6583-admin1429-windows-setups-qa]
+    paths:
+      - '.github/workflows/zavi-exact-apk-windows-qa.yml'
+      - 'windows-build/build-exact-two-setups.ps1'
+      - 'windows-build/prepare-exact-apk-desktop.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  two-setups:
+    runs-on: windows-2022
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build installable Windows ZAVI ONE and ADMIN from SHA-matched APK assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'false'
+        run: ./windows-build/build-exact-two-setups.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ONE_V6583_ADMIN1429_WINDOWS_QA
+          path: windows-delivery/*
+          if-no-files-found: error
+          retention-days: 30

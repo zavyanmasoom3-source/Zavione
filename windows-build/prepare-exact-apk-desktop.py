@@ -77,8 +77,8 @@ if a.mode=='one':
     import json
     profiles=json.loads((web/'zavi-unified20-manifest.json').read_text(encoding='utf8')).get('profiles',[])
     assert len(profiles)==20,"20 trade editions must all be included"
-    assert 'annual-license.js' in (web/'index.html').read_text()
-    assert "['annual','semiannual','trial'].includes(entitlement.plan)" in (web/'annual-license.js').read_text()
+    assert 'annual-license.js' in (web/'index.html').read_text(encoding='utf8')
+    assert "['annual','semiannual','trial'].includes(entitlement.plan)" in (web/'annual-license.js').read_text(encoding='utf8')
     assert (web/'zavi-store-v6582-trial7-simple.js').exists()
 else:
     assert (web/'zavi-admin-v1428-offline-seven-days.js').exists()

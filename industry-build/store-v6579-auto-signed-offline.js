@@ -40,6 +40,17 @@
    const cfg=window.zaviCloudGetPublicConfig?.();
    if(!session?.access_token||!cfg?.url||!cfg?.key||uid!==authenticated()||ws!==info().workspace)return;
    render();
+   // The FIRST device can register automatically under its cloud-owner identity.
+   // If another device is active, do NOT replace or revoke it; unsynced sales stay safe.
+   const activation=await fetch(cfg.url.replace(/\/$/,'')+'/rest/v1/rpc/zavi_v26_register_device',{
+    method:'POST',
+    headers:{'content-type':'application/json','apikey':cfg.key,'authorization':'Bearer '+session.access_token},
+    body:JSON.stringify({p_workspace_id:ws,p_device_id:signed.device(),p_device_name:'ZAVI ONE Android'})
+   });
+   if(!activation.ok)throw Error('DEVICE_REGISTRATION_REJECTED_'+activation.status);
+   const deviceState=await activation.json();
+   if(deviceState==='ANOTHER_DEVICE_ACTIVE')throw Error('ANOTHER_DEVICE_ACTIVE');
+   if(!['DEVICE_ACTIVATED','DEVICE_ALREADY_ACTIVE'].includes(deviceState))throw Error('DEVICE_NOT_AUTHORISED');
    // Server signs only after checking owner, subscription validity and active registered device.
    const lease=await signed.request(ws,session,cfg);
    if(serial!==generation||uid!==authenticated()||ws!==info().workspace)return;

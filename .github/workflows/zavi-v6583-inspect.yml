@@ -37,3 +37,13 @@ jobs:
                 i=s.find(key)
                 if i>=0:print('FOUND',key,'AT',i,'CONTEXT',re.sub(r'\\s+',' ',s[max(0,i-450):i+2000])[:2450])
           PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          d=Path('/tmp/web/annual-license.js').read_text()
+          for key in ('function validSubscription(){','function allowed(){','function verify(','function restoreSecureLease(){','async function verify(','function subscriptionView(){',"'zavi-offline-lease-ready'"):
+             i=d.find(key)
+             if i>=0:print('CHECKBLOCK',key,'SEGMENT',re.sub(r'\\s+',' ',d[i:i+4650])[:4650])
+          for tok in ('semiannual','trial','detail?.workspace','detail?.workspace_id'):
+             print('TERM',tok,'COUNT',len(list(re.finditer(re.escape(tok),d))))
+          PY

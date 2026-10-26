@@ -22,7 +22,7 @@ jobs:
           set -euo pipefail
           mkdir -p package
           for attempt in $(seq 1 40);do
-            count=$(gh release view "$SOURCE" --json assets --jq '.assets[].name' | grep -Ec '^ZAVI_ONE_(V65_69_INSTALLABLE_QA|ADMIN_V1_4_16_INSTALLABLE_QA)\.apk$' || true)
+            count=$(gh release view "$SOURCE" --json assets --jq '.assets[].name' | grep -Ec '^ZAVI_ONE_(V65_70_OFFLINE_LICENSE_QA|ADMIN_V1_4_17_OFFLINE_LICENSE_QA)\.apk$' || true)
             if [ "$count" -eq 2 ];then break;fi
             sleep 6
           done
@@ -51,7 +51,7 @@ jobs:
           sha256sum *.apk > SHA256_CHECKSUMS.txt
           cat > README_DARI.txt <<'EOF'
           ZAVI ONE V65.70 and ZAVI ONE ADMIN V1.4.17
-          Android installable QA previews from 25 October 2026.
+          Android installable QA previews from 26 October 2026.
 
           FILES:
           ZAVI_ONE_V65_70_OFFLINE_LICENSE_QA.apk

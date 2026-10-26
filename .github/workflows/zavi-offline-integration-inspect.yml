@@ -35,6 +35,20 @@ jobs:
                 for line in matches[:5]:
                   if any(x in line for x in ('service_role','apikey','anon_key','http://','https://')):continue
                   print('MATCH',line.strip()[:230])
+          for fname in ('app.js','account-control.js','admin-portal.js','index.html'):
+            file=root/fname
+            if not file.exists():continue
+            t=file.read_text(errors='replace')
+            print('CLIENT STRUCTURE',fname)
+            for pat in (r'supabase\\.createClient',r'createClient\\(',r'\\brpc\\(',r'getSession\\(',r'\\bconst\\s+sb\\b',r'\\blet\\s+sb\\b',r'window\\.[A-Za-z_$][A-Za-z0-9_$]{0,30}'):
+              results=list(re.finditer(pat,t,re.I))
+              print('PATTERN',pat,'occurrences',len(results))
+              for m in results[:5]:
+                sample=t[max(0,m.start()-75):m.end()+90].replace(chr(10),' ')
+                sample=re.sub(r'eyJ[A-Za-z0-9_.-]+','[TOKEN]',sample)
+                sample=re.sub(r'https?://[^\\s\\"\']+','[URL]',sample)
+                if len(sample)>240:sample=sample[:240]
+                print('CONTEXT',sample)
           print('ADMIN STRUCTURE')
           for fname in ('app.js','account-control.js','index.html'):
             f=root/fname

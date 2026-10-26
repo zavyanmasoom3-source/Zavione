@@ -35,3 +35,20 @@ jobs:
               if 'eyJ' in piece or 'http' in piece or 'apikey' in piece.lower():continue
               print('INDUSTRY',piece[:350])
           PY
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          root=Path('/tmp/zavi-industry/base')
+          for name in ('v25-business.html','zavi-industry-forms-v6529.js','zavi-trade-plus-v6530.js','zavi-business-profile-v638.js','zavi-industry-focus-v639.js'):
+            p=root/name
+            if not p.exists():continue
+            t=p.read_text(errors='replace')
+            print('TARGET_FILE',name,'length',len(t))
+            for reg in [r'<option[^>]{0,140}>[^<]{0,100}</option>',r'businessType.{0,220}',r'const BUSINESS_TYPES.{0,250}',r'ZAVI_BUSINESS_TYPES.{0,200}',r'\bexchange\b.{0,110}',r'\bconstruction\b.{0,110}']:
+              matches=list(re.finditer(reg,t,re.I))
+              print('TARGET_PATTERN',reg,'matches',len(matches))
+              for m in matches[:32]:
+                snippet=m.group(0).replace(chr(10),' ')[:235]
+                if any(x in snippet for x in ('http','eyJ')):continue
+                print('VALUE',snippet)
+          PY

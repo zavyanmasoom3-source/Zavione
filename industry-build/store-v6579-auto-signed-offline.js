@@ -57,6 +57,8 @@
    doneExp=(Number(lease?.claims?.exp)||0)*1000;
    failCode='';render();
    window.dispatchEvent(new CustomEvent('zavi-offline-lease-ready',{detail:{workspace_id:ws,expires_at:new Date(doneExp).toISOString()}}));
+   // A signed permit is not enough for offline work: cache the application files too.
+   void Promise.resolve(window.zaviAutoOffline?.prepare?.()).catch(()=>{});
   }catch(e){failCode=String(e?.code||e?.message||'UNAVAILABLE').slice(0,100);doneExp=0;render()}
   finally{working=false}
  }
@@ -75,5 +77,7 @@
   setInterval(()=>{if(!document.hidden&&navigator.onLine!==false&&Date.now()-lastAttempt>45*60*1000)run(true)},10*60*1000);
   render();setTimeout(()=>run(),1250);setTimeout(()=>run(),5000);
  }
+ // Public method only requests a server-signed owner lease. It never grants access locally.
+ window.ZaviAutoLease=Object.freeze({refresh:()=>run(true)});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

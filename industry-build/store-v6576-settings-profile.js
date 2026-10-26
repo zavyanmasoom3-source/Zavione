@@ -141,9 +141,9 @@ function reorganize(){
     if(first)first.before(personal);else content.prepend(personal);
   }
  }
- const cards=Array.from(content.children).filter(x=>x.matches?.('section.settings-card,div.settings-card'));
- if(!cards.length)return;
+ const cards=Array.from(content.children).filter(x=>x.matches?.('section.settings-card,div.settings-card,section.z6524-launch'));
  let groups=q('#z76-settings-groups',content);
+ if(!cards.length&&!groups)return;
  if(!groups){groups=mk('div','z76-settings-groups');groups.id='z76-settings-groups';
   const anchor=q('#z74-workspace',content)||personal;anchor.after(groups);
  }
@@ -164,6 +164,13 @@ function reorganize(){
   const body=q('.z76-group-body',group);
   grouped[id].forEach(card=>body.append(card));
   q('.z76-group-count',group).textContent=String(body.children.length);
+ }
+ // The industry picker belongs with shop settings rather than on top of all settings.
+ const industry=q('#z74-workspace',content);
+ const shopBody=q('[data-z76-group="business"] .z76-group-body',groups);
+ if(industry&&shopBody){shopBody.prepend(industry);
+  const g=q('[data-z76-group="business"] .z76-group-count',groups);
+  if(g)g.textContent=String(shopBody.children.length);
  }
 }
 function sync(){

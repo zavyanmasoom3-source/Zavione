@@ -1,0 +1,38 @@
+name: Inspect offline controls for simple trial7 UI
+on:
+  push:
+    branches: [zavi-v6582-trial7-auto-offline-simple-qa]
+    paths: ['.github/workflows/zavi-v6582-inspect-offline.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract signed prior QA assets and locate offline controls
+        env: {GH_TOKEN: '${{ github.token }}'}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/base /tmp/web
+          gh release download zavi-6572-admin1419-trial7-offline-assistant-qa-20261026 --pattern 'ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk*' --dir /tmp/base
+          sha="$(awk 'NR==1{print $1}' /tmp/base/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk.sha256)"
+          echo "$sha  /tmp/base/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk" | sha256sum -c
+          python3 industry-build/prepare_unified_v6581.py --apk /tmp/base/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk --web /tmp/web
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/web')
+          needles=('تلاش دوباره','بررسی مشکل','گزینه‌های رفع مشکل','گزینه های رفع مشکل','دریافت و آماده','آفلاین آماده','offline_ready','offline-license','zavi-auto-offline')
+          for p in root.rglob('*'):
+            if p.suffix not in ('.js','.html','.css'):continue
+            s=p.read_text(errors='replace')
+            hits=[(key,m.start()) for key in needles for m in list(re.finditer(re.escape(key),s))[:2]]
+            if not hits:continue
+            print('FILE',p.name,'bytes',len(s),'hits',len(hits))
+            for key,pos in hits[:14]:
+              raw=s[max(0,pos-420):pos+600].replace('\\n',' ')
+              print('NEEDLE',key,'CONTEXT',re.sub(r'\\s+',' ',raw)[:960])
+          PY

@@ -44,3 +44,18 @@ jobs:
                   idx=s.find(pattern)
                   if idx>=0:print('HOOK',pattern,re.sub(r'\s+',' ',s[max(0,idx-160):idx+470])[:620])
           PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/web')
+          for filename,starts in [
+           ('device-activation.js',['async function replacePrimary','async function prepare(']),
+           ('zavi-devices-v652.js',['async function safeToTransfer','async function allowTransfer','window.zaviOwnerDevices']),
+           ('offline-auto-prepare.js',['async function prepareOnce','window.zaviAutoOffline']),
+           ('annual-license.js',['zaviDeviceReplace','addEventListener'])]:
+              s=(root/filename).read_text()
+              print('CODE FILE:',filename)
+              for needle in starts:
+                  i=s.find(needle)
+                  if i>=0:print('ANCHOR',needle,re.sub(r'\\s+',' ',s[i:i+5800])[:5800])
+          PY

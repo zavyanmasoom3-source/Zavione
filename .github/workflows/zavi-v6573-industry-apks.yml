@@ -137,10 +137,20 @@ jobs:
           cp "$APK" "dist/$filename"
           (cd dist && sha256sum "$filename" > "$filename.sha256")
           echo 'Installable QA only. This package has separate local storage and a temporary QA signing key. Do NOT uninstall a previous ZAVI ONE app with pending unsynced transactions. The original account owner confirms the business type and grants from central ADMIN.' > "dist/README_${{ matrix.industry }}.txt"
-      - name: Upload installable APK, integrity checksum and guide
-        uses: actions/upload-artifact@v4
-        with:
-          name: ZAVI_ONE_${{ matrix.industry }}_Android_APK_QA
-          path: dist/*
-          if-no-files-found: error
-          retention-days: 30
+      - name: Save this independently signed industry APK to a distinct private download branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="zavi-v6573-apk-${{ matrix.industry }}-qa"
+          mkdir -p industry-delivery
+          cp dist/* industry-delivery/
+          file="industry-delivery/ZAVI_ONE_${{ matrix.industry }}_V65_73_QA.apk"
+          test -s "$file"
+          test "$(stat -c %s "$file")" -gt 2500000
+          git config user.name 'ZAVI Android Edition QA CI'
+          git config user.email 'zavi-android-ci@users.noreply.github.com'
+          git checkout -B "$target"
+          git add -f industry-delivery/
+          git commit -m "artifact(android): tested ZAVI ONE ${{ matrix.industry }} V65.73 QA APK + SHA256"
+          git push origin HEAD:"refs/heads/$target"
+          echo "VERIFIED DOWNLOAD: https://github.com/$GITHUB_REPOSITORY/raw/refs/heads/$target/industry-delivery/ZAVI_ONE_${{ matrix.industry }}_V65_73_QA.apk"

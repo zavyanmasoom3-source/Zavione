@@ -36,6 +36,27 @@ jobs:
               print('INDUSTRY',piece[:350])
           PY
           python3 - <<'PY'
+          from pathlib import Path
+          root=Path('/tmp/zavi-industry/base')
+          files=['v25-business.html','zavi-industry-focus-v639.js','zavi-smart-business-v642.js','index.html']
+          import re
+          for fname in files:
+            p=root/fname
+            if not p.exists():continue
+            t=p.read_text(errors='replace')
+            print('CONFIG_FILE',fname)
+            pats=(r'.{0,130}(?:businessType|business_type|industryType|selectedType|typeSelect|business-select|typeSelect|v25Business|zaviBusinessTypeV638).{0,200}',r'.{0,130}(?:sessionStorage|localStorage|saveBiz|saveBusiness|settings\.type|\.business_type).{0,190}')
+            seen=0
+            for pat in pats:
+              for m in re.finditer(pat,t,re.I):
+                snippet=m.group(0).replace(chr(10),' ')[:380]
+                if any(x in snippet for x in ('apikey','http','eyJ')):continue
+                print('CONFIG',snippet)
+                seen+=1
+                if seen>=42:break
+              if seen>=42:break
+          PY
+          python3 - <<'PY'
           import re
           from pathlib import Path
           root=Path('/tmp/zavi-industry/base')

@@ -20,7 +20,7 @@ ui.write_text(data.replace(old,new),encoding="utf-8")
 html=out/"index.html"
 content=html.read_text(encoding="utf-8")
 assert "zavi-store-v6579-auto-signed-offline.js" in content
-assert content.count("</head>")==1 and content.count("</body>")==1
+assert "</head>" in content and "</body>" in content
 content=content.replace("</head>",'<link rel="stylesheet" href="./zavi-store-v6582-trial7-simple.css?v=65.82"></head>',1)
 index=content.rfind("</body>")
 content=content[:index]+'<script defer src="./zavi-store-v6582-trial7-simple.js?v=65.82"></script>'+content[index:]

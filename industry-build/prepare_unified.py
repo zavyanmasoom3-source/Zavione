@@ -48,8 +48,8 @@ shutil.copy2("industry-build/unified20.js", out/"zavi-unified20.js")
 shutil.copy2("industry-build/unified20.css", out/"zavi-unified20.css")
 payload = json.dumps(profiles, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 identity = '<script>window.ZAVI_UNIFIED_PROFILES=' + payload + ';</script>'
-style = '<link rel="stylesheet" href="./zavi-unified20.css?v=65.76-qa">'
-script = '<script defer src="./zavi-unified20.js?v=65.76-qa"></script>'
+style = '<link rel="stylesheet" href="./zavi-unified20.css?v=65.77-qa">'
+script = '<script defer src="./zavi-unified20.js?v=65.77-qa"></script>'
 for name in ("index.html", "v25-business.html"):
     file = out/name
     html = file.read_text(encoding="utf-8")
@@ -65,14 +65,18 @@ for filename in ("store-v6576-settings-profile.js","store-v6576-settings-profile
 main_file=out/"index.html"
 main_html=main_file.read_text(encoding="utf-8")
 assert 'zavi-store-v6576-settings-profile.js' not in main_html
-main_html=main_html.replace("</head>", '<link rel="stylesheet" href="./zavi-store-v6576-settings-profile.css?v=65.76-qa"></head>',1)
+main_html=main_html.replace("</head>", '<link rel="stylesheet" href="./zavi-store-v6576-settings-profile.css?v=65.77-qa"></head>',1)
 close=main_html.rfind("</body>")
-main_html=main_html[:close]+'<script defer src="./zavi-store-v6576-settings-profile.js?v=65.76-qa"></script>'+main_html[close:]
+main_html=main_html[:close]+'<script defer src="./zavi-store-v6576-settings-profile.js?v=65.77-qa"></script>'+main_html[close:]
+# Add non-invasive mobile, sales and barcode layout last to override legacy styles.
+shutil.copy2("industry-build/store-v6577-compact-sales-barcode.css",out/"zavi-store-v6577-compact-sales-barcode.css")
+main_html=main_html.replace("</head>",'<link rel="stylesheet" href="./zavi-store-v6577-compact-sales-barcode.css?v=65.77-qa"></head>',1)
 main_file.write_text(main_html,encoding="utf-8")
 info = {
-    "version": "65.76-unified20-qa",
+    "version": "65.77-unified20-ipad-qa",
     "count": 20,
-    "mode": "one-app-20-industries-and-personal-profile",
+    "mode": "one-app-20-industries-offline-profile-modern-sales",
+    "ipad": "Static PWA files in Netlify-ready ZIP; APK is Android-only.",
     "profiles": [{"id": p["id"], "name": p["name"]} for p in profiles],
     "personalization": "Display-only user name/photo stored per signed-in user and workspace on this device.",
     "source": "ZAVI ONE V65.72 QA embedded frontend",

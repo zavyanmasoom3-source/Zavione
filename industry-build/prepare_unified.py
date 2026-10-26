@@ -48,8 +48,8 @@ shutil.copy2("industry-build/unified20.js", out/"zavi-unified20.js")
 shutil.copy2("industry-build/unified20.css", out/"zavi-unified20.css")
 payload = json.dumps(profiles, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 identity = '<script>window.ZAVI_UNIFIED_PROFILES=' + payload + ';</script>'
-style = '<link rel="stylesheet" href="./zavi-unified20.css?v=65.74-qa">'
-script = '<script defer src="./zavi-unified20.js?v=65.74-qa"></script>'
+style = '<link rel="stylesheet" href="./zavi-unified20.css?v=65.75-qa">'
+script = '<script defer src="./zavi-unified20.js?v=65.75-qa"></script>'
 for name in ("index.html", "v25-business.html"):
     file = out/name
     html = file.read_text(encoding="utf-8")
@@ -60,7 +60,7 @@ for name in ("index.html", "v25-business.html"):
     html = html[:idx] + script + html[idx:]
     file.write_text(html, encoding="utf-8")
 info = {
-    "version": "65.74-unified20-qa",
+    "version": "65.75-unified20-qa",
     "count": 20,
     "mode": "one-app-saved-tenant-profile",
     "profiles": [{"id": p["id"], "name": p["name"]} for p in profiles],

@@ -1,0 +1,99 @@
+name: ZAVI ONE 65.71 + ADMIN 1.4.18 - Light Theme and Compact Devices APK Bundle
+on:
+  push:
+    branches: [zavi-v6571-light-admin-compact-store-devices-20261026]
+    paths:
+      - ".github/workflows/zavi-v6571-light-compact-both-apks-zip-20261026.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify both APK signatures, SHA256 and browser test results
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE: zavi-6571-admin1418-light-compact-qa-20261026
+        run: |
+          set -euo pipefail
+          mkdir -p package
+          for attempt in $(seq 1 40);do
+            count=$(gh release view "$SOURCE" --json assets --jq '.assets[].name' | grep -Ec '^ZAVI_ONE_(V65_70_OFFLINE_LICENSE_QA|ADMIN_V1_4_17_OFFLINE_LICENSE_QA)\.apk$' || true)
+            if [ "$count" -eq 2 ];then break;fi
+            sleep 6
+          done
+          gh release download "$SOURCE" --pattern "ZAVI_ONE_V65_71_COMPACT_DEVICES_QA.apk*" --dir package
+          gh release download "$SOURCE" --pattern "ZAVI_ONE_ADMIN_V1_4_18_LIGHT_MODE_QA.apk*" --dir package
+          gh release download "$SOURCE" --pattern "ZAVI_BROWSER_QA_*.zip" --dir package
+          cd package
+          for f in ZAVI_ONE_V65_71_COMPACT_DEVICES_QA.apk ZAVI_ONE_ADMIN_V1_4_18_LIGHT_MODE_QA.apk;do
+            test -s "$f"
+            expected=$(awk 'NR==1{print $1}' "$f.sha256")
+            actual=$(sha256sum "$f" | awk '{print $1}')
+            test "$actual" = "$expected"
+            unzip -t "$f" | tail -n 1
+            unzip -Z1 "$f" | grep -Fx classes.dex
+            unzip -Z1 "$f" | grep -Fx assets/index.html
+          done
+          unzip -Z1 ZAVI_ONE_V65_71_COMPACT_DEVICES_QA.apk | grep -Fx assets/zavi-v6567-sections-readable.js
+          unzip -Z1 ZAVI_ONE_V65_71_COMPACT_DEVICES_QA.apk | grep -Fx assets/zavi-v6570-store-offline.js
+          unzip -Z1 ZAVI_ONE_V65_71_COMPACT_DEVICES_QA.apk | grep -Fx assets/zavi-v6571-store-settings-devices.css
+          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_18_LIGHT_MODE_QA.apk | grep -Fx assets/zavi-admin-v1414-one-matched.js
+          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_18_LIGHT_MODE_QA.apk | grep -Fx assets/zavi-v6570-admin-offline.js
+          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_18_LIGHT_MODE_QA.apk | grep -Fx assets/zavi-v6571-admin-light-readable.css
+          for mode in one admin;do
+            file="ZAVI_BROWSER_QA_$mode.zip"
+            unzip -t "$file" | tail -n1
+            unzip -p "$file" qa.json | python3 -c 'import sys,json; a=json.load(sys.stdin); assert a["fail_count"]==0 and a["pass_count"]>10; print("Browser:",a["mode"],a["pass_count"],"passed")'
+          done
+          sha256sum *.apk > SHA256_CHECKSUMS.txt
+          cat > README_DARI.txt <<'EOF'
+          ZAVI ONE V65.70 and ZAVI ONE ADMIN V1.4.17
+          Android installable QA previews from 26 October 2026.
+
+          FILES:
+          ZAVI_ONE_V65_71_COMPACT_DEVICES_QA.apk
+          ZAVI_ONE_ADMIN_V1_4_18_LIGHT_MODE_QA.apk
+          ZAVI_BROWSER_QA_one.zip
+          ZAVI_BROWSER_QA_admin.zip
+          SHA256_CHECKSUMS.txt
+
+          Both APKs have independent .lightqa package IDs and TEMPORARY QA keys.
+          ADMIN allows 180/365 day server-authorised offline permissions for shops.
+          ADMIN light mode now has readable dark text and visible buttons; store device tiles are compact.
+          Store Settings shows signed licence expiry, days left and subscription status.
+          They will not replace existing installed ZAVI ONE or ADMIN applications.
+          User and offline data do not automatically migrate to these QA APKs.
+          Do not uninstall any previous app with unsynced transactions.
+
+          NOT GOOGLE PLAY PRODUCTION:
+          To publish officially, use owner controlled permanent signing and Play AAB.
+          Check real devices, owner vs co-worker admin security, camera scan, print,
+          cloud login, offline data, backup, and device transfer before distribution.
+          EOF
+          cd ..
+          zip -9 -q -j ZAVI_ONE_6571_ADMIN_1418_LIGHT_COMPACT_QA.zip \
+            package/ZAVI_ONE_V65_71_COMPACT_DEVICES_QA.apk \
+            package/ZAVI_ONE_ADMIN_V1_4_18_LIGHT_MODE_QA.apk \
+            package/ZAVI_BROWSER_QA_one.zip package/ZAVI_BROWSER_QA_admin.zip \
+            package/SHA256_CHECKSUMS.txt package/README_DARI.txt
+          unzip -t ZAVI_ONE_6571_ADMIN_1418_LIGHT_COMPACT_QA.zip | tail -n1
+          test "$(unzip -Z1 ZAVI_ONE_6571_ADMIN_1418_LIGHT_COMPACT_QA.zip | grep -c '\.apk$')" -eq 2
+          sha256sum ZAVI_ONE_6571_ADMIN_1418_LIGHT_COMPACT_QA.zip > ZAVI_ONE_6571_ADMIN_1418_LIGHT_COMPACT_QA.zip.sha256
+      - name: Publish combined signed test APK archive
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEST: zavi-6571-admin1418-light-compact-qa-bundle-20261026
+        run: |
+          set -euo pipefail
+          if ! gh release view "$DEST" >/dev/null 2>&1;then
+            gh release create "$DEST" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE 65.71 + ADMIN 1.4.18 - Light Contrast and Device Tiles QA Bundle" \
+              --notes "ADMIN V1.4.18 fixes pale light-theme texts, dropdowns, and disabled/read-only licence controls while keeping dark mode. Store V65.71 shrinks native My Account Devices and Settings cards, preserving secure transfers. Two independently browser-tested QA-signed APKs with checksums; customer release requires real phone validation and permanent key."
+          fi
+          gh release upload "$DEST" ZAVI_ONE_6571_ADMIN_1418_LIGHT_COMPACT_QA.zip ZAVI_ONE_6571_ADMIN_1418_LIGHT_COMPACT_QA.zip.sha256 --clobber

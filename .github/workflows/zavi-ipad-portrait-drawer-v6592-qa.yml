@@ -203,6 +203,8 @@ jobs:
           assert h.count('zavi-admin-ipad-v1438.css?v=1.4.38')==1
           assert h.count('zavi-admin-ipad-v1438.js?v=1.4.38')==1
           assert 'app-shell' in style and 'mobile-drawer' in style and 'grid-column:1/-1' in style
+          assert '#appScreen.app-shell[hidden]{display:none!important' in style
+          assert 'app-shell:not([hidden])' in style
           assert 'min-width:1200px' in style and 'max-width:1199px' in style
           assert 'zavi-admin-ipad-v1438.css' in (a/'sw.js').read_text()
           assert (a/'zavi-admin-v1428-offline-seven-days.js').is_file()
@@ -310,7 +312,7 @@ jobs:
           iPads use hosted Safari PWA ZIP; Android APK cannot install on an iPad.
           QA only: user testing, real hardware tests, stable Android signing, and signed Windows packages are still pending.
           EOF
-          TAG=zavi-v6592-admin1438-ipad-drawer-qa-20261027
+          TAG=zavi-v6592-admin1438-ipad-authsafe-qa-20261027
           gh release create "$TAG" --target "$GITHUB_SHA" --title "ZAVI ONE V65.92 + ADMIN V1.4.38 Unified Responsive Design QA" --notes-file README_DARI.txt --prerelease || gh release view "$TAG" >/dev/null
           gh release upload "$TAG" ./*.apk ./*.apk.sha256 ./*_IPAD_PWA_QA.zip ./*_IPAD_PWA_QA.zip.sha256 --clobber
           echo "Android published at https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"

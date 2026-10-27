@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$tag = 'zavi-v6592-admin1438-ipad-drawer-qa-20261027'
+$tag = 'zavi-v6592-admin1438-ipad-authsafe-qa-20261027'
 New-Item -ItemType Directory -Path desktop-source,design-windows-delivery -Force | Out-Null
 gh release download $tag --pattern '*.apk*' --dir desktop-source
 if ($LASTEXITCODE -ne 0) { throw 'Cannot obtain release APKs for matching desktop skin' }

@@ -33,7 +33,8 @@ if a.app=='admin':
         src=sw.read_text(encoding='utf8')
         assert 'const CORE=[' in src
         src=src.replace('const CORE=[','const CORE=["zavi-admin-ipad-v1438.css","zavi-admin-ipad-v1438.js",',1)
-        src=re.sub(r"(const CACHE_NAME\\s*=\\s*['\\"])[^'\\"]+(['\\"])",r"\\1zavi-admin-v1438-ipad\\2",src,count=1)
+        assert "zavi-admin-v1437-design" in src
+        src=src.replace("zavi-admin-v1437-design","zavi-admin-v1438-ipad")
         assert 'zavi-admin-ipad-v1438.css' in src
         sw.write_text(src,encoding='utf8')
     assert (web/'zavi-admin-v1428-offline-seven-days.js').exists()

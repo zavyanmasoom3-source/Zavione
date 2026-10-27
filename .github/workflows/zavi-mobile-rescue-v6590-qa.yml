@@ -1,0 +1,270 @@
+name: ZAVI ONE V65.90 + ADMIN 1.4.36 Mobile Visual Rescue QA
+on:
+  push:
+    branches: [zavi-v6590-admin1436-mobile-visual-rescue-qa]
+    paths:
+      - '.github/workflows/zavi-mobile-rescue-v6590-qa.yml'
+      - 'design-system/**'
+      - 'windows-build/build-unified-design-v6590.ps1'
+      - 'windows-build/prepare-v6590-desktop.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  android-both:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.13'}
+      - name: Install Android tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          M="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$M" ];then M="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -1)";fi
+          yes | "$M" --licenses >/dev/null || true
+          "$M" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Obtain original SHA-verified ZAVI ONE 65.83 and owner ADMIN 1.4.29 binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p design-staging design-delivery
+          cp industry-delivery/ZAVI_ONE_UNIFIED_20_BUSINESSES_V65_83_TRIAL7_REAL_OFFLINE_QA.apk design-staging/one.apk
+          sha256sum design-staging/one.apk
+          echo 'fee4ae8ec59a8d433f95c631fe26dfd46fcb8d4916aca01ed5b3090cf5a4d018  design-staging/one.apk' | sha256sum -c
+          git fetch --no-tags --depth=1 origin zavi-admin-v1429-seven-day-store-offline-qa
+          git show FETCH_HEAD:industry-delivery/ZAVI_ONE_ADMIN_V1_4_29_STORE_OFFLINE_7D_QA.apk > design-staging/admin.apk
+          echo '4d06d6e76f6e7238ea01b4759f617087c195741267f191d89e0a865aff3f1eea  design-staging/admin.apk' | sha256sum -c
+      - name: Package ZAVI ONE design APK and iPad Safari web PWA
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 design-system/build_android_v6590.py --app one --apk design-staging/one.apk --expected-sha fee4ae8ec59a8d433f95c631fe26dfd46fcb8d4916aca01ed5b3090cf5a4d018
+          node --check android-build/app/src/main/assets/zavi-unified-v6584.js
+          test -s android-build/app/src/main/assets/zavi-real-viewport-v6586.css
+          test -s android-build/app/src/main/assets/zavi-three-sizes-v6588.css
+          node --check android-build/app/src/main/assets/zavi-three-sizes-v6588.js
+          test -s android-build/app/src/main/assets/zavi-landscape-v6589.css
+          node --check android-build/app/src/main/assets/zavi-landscape-v6589.js
+          test -s android-build/app/src/main/assets/zavi-mobile-rescue-v6590.css
+          node --check android-build/app/src/main/assets/zavi-mobile-rescue-v6590.js
+          python3 - <<'PY90'
+          from pathlib import Path
+          r=Path('android-build/app/src/main/assets')
+          h=(r/'index.html').read_text()
+          c=(r/'zavi-mobile-rescue-v6590.css').read_text()
+          s=(r/'zavi-mobile-rescue-v6590.js').read_text()
+          assert 'zavi-mobile-rescue-v6590.css?v=65.90' in h
+          assert 'zavi-mobile-rescue-v6590.js?v=65.90' in h
+          assert h.index('zavi-landscape-v6589.css') < h.index('zavi-mobile-rescue-v6590.css')
+          assert 'z637AiPanel' in c and 'z637-ai-messages' in c
+          assert 'max-height:var(--z90-vh)' in c
+          assert 'zavi:visual-viewport' in s and 'location.reload(' not in s
+          assert 'zavi-three-sizes-v6588.js?v=65.88' in h
+          print('PASS latest full layout, AI overlay and independent sliders on both systems')
+          PY90
+          grep -Fq 'android:screenOrientation="fullSensor"' android-build/app/src/main/AndroidManifest.xml
+          grep -Fq 'orientation|screenSize|smallestScreenSize|keyboardHidden' android-build/app/src/main/AndroidManifest.xml
+          grep -Fq 'onConfigurationChanged(Configuration config)' android-build/app/src/main/java/com/zavione/mobile/MainActivity.java
+          python3 - <<'PY89'
+          from pathlib import Path
+          p=Path('android-build/app/src/main/assets')
+          index=(p/'index.html').read_text(encoding='utf8')
+          css=(p/'zavi-landscape-v6589.css').read_text(encoding='utf8')
+          js=(p/'zavi-landscape-v6589.js').read_text(encoding='utf8')
+          assert 'zavi-landscape-v6589.css?v=65.89' in index
+          assert 'zavi-landscape-v6589.js?v=65.89' in index
+          assert 'orientation:landscape' in css and 'max-height:650px' in css
+          assert 'zavi:native-configurationchange' in js
+          assert 'location.reload(' not in js and 'localStorage.clear(' not in js
+          assert 'zavi-three-sizes-v6588.js?v=65.88' in index
+          print('PASS landscape/portrait, preserve ledger/lease, independent sliders')
+          PY89
+          python3 - <<'PY3'
+          from pathlib import Path
+          js=Path('android-build/app/src/main/assets/zavi-three-sizes-v6588.js').read_text()
+          css=Path('android-build/app/src/main/assets/zavi-three-sizes-v6588.css').read_text()
+          html=Path('android-build/app/src/main/assets/index.html').read_text()
+          assert all(s in js for s in ("'text','system','icons'","z88-size-settings","MAX=150","--z87-icon-scale","data-step-key"))
+          assert all(s in js for s in ('fa:{','ps:{','en:{'))
+          assert "data-zavi-app" in html and "zavi-three-sizes-v6588.js?v=65.88" in html
+          assert 'src="./zavi-three-sizes-v6587.js' not in html
+          assert "#z88-size-settings" in css and "#zavi-display-settings-v6545{display:none!important}" in css
+          assert 'document.documentElement.style.zoom=String(' not in js
+          print('PASS three independent sliders, localization, old panel hidden, and viewport intact')
+          PY3
+          test -s android-build/app/src/main/assets/zavi-unified-navigation-v6585.css
+          node --check android-build/app/src/main/assets/annual-license.js
+          node --check android-build/app/src/main/assets/zavi-display-settings-v6545.js
+          ! grep -Fq 'document.documentElement.style.zoom=String(percent/100)' android-build/app/src/main/assets/zavi-display-settings-v6545.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile,json
+          a=Path('android-build/app/src/main/assets')
+          assert len(json.loads((a/'zavi-unified20-manifest.json').read_text())['profiles'])==20
+          assert 'zavi-three-sizes-v6588.css?v=65.88' in (a/'index.html').read_text()
+          assert 'zavi-three-sizes-v6588.js?v=65.88' in (a/'index.html').read_text()
+          assert "['annual','semiannual','trial'].includes(entitlement.plan)" in (a/'annual-license.js').read_text()
+          with zipfile.ZipFile('design-delivery/ZAVI_ONE_V65_90_IPAD_PWA_QA.zip','w',compression=zipfile.ZIP_DEFLATED) as z:
+           for f in a.rglob('*'):
+            if f.is_file():z.write(f,f.relative_to(a).as_posix())
+          PY
+          (cd android-build && gradle --no-daemon -PzaviApp=one :app:assembleRelease)
+          APK=android-build/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK" | grep 'Verified using v2 scheme'
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "com.zavione.one.unified20.v6590visualqa"
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-unified-navigation-v6585.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-real-viewport-v6586.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-three-sizes-v6588.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-three-sizes-v6588.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-landscape-v6589.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-landscape-v6589.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-mobile-rescue-v6590.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-mobile-rescue-v6590.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-unified-v6584.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-unified-v6584.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-real-viewport-v6586.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-three-sizes-v6588.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-three-sizes-v6588.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-landscape-v6589.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-landscape-v6589.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-mobile-rescue-v6590.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-mobile-rescue-v6590.js
+          cp "$APK" design-delivery/ZAVI_ONE_20_BUSINESSES_V65_90_UNIFIED_DESIGN_QA.apk
+          (cd design-delivery && sha256sum ZAVI_ONE_20_BUSINESSES_V65_90_UNIFIED_DESIGN_QA.apk > ZAVI_ONE_20_BUSINESSES_V65_90_UNIFIED_DESIGN_QA.apk.sha256)
+      - name: Package ZAVI ONE ADMIN design APK and iPad Safari web
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 design-system/build_android_v6590.py --app admin --apk design-staging/admin.apk --expected-sha 4d06d6e76f6e7238ea01b4759f617087c195741267f191d89e0a865aff3f1eea
+          node --check android-build/app/src/main/assets/zavi-unified-v6584.js
+          test -s android-build/app/src/main/assets/zavi-unified-navigation-v6585.css
+          node --check android-build/app/src/main/assets/zavi-admin-v1428-offline-seven-days.js
+          node --check android-build/app/src/main/assets/zavi-admin-v1424-allfix.js
+          node --check android-build/app/src/main/assets/zavi-three-sizes-v6588.js
+          test -s android-build/app/src/main/assets/zavi-landscape-v6589.css
+          node --check android-build/app/src/main/assets/zavi-landscape-v6589.js
+          test -s android-build/app/src/main/assets/zavi-mobile-rescue-v6590.css
+          node --check android-build/app/src/main/assets/zavi-mobile-rescue-v6590.js
+          python3 - <<'PY90'
+          from pathlib import Path
+          r=Path('android-build/app/src/main/assets')
+          h=(r/'index.html').read_text()
+          c=(r/'zavi-mobile-rescue-v6590.css').read_text()
+          s=(r/'zavi-mobile-rescue-v6590.js').read_text()
+          assert 'zavi-mobile-rescue-v6590.css?v=65.90' in h
+          assert 'zavi-mobile-rescue-v6590.js?v=65.90' in h
+          assert h.index('zavi-landscape-v6589.css') < h.index('zavi-mobile-rescue-v6590.css')
+          assert 'z637AiPanel' in c and 'z637-ai-messages' in c
+          assert 'max-height:var(--z90-vh)' in c
+          assert 'zavi:visual-viewport' in s and 'location.reload(' not in s
+          assert 'zavi-three-sizes-v6588.js?v=65.88' in h
+          print('PASS latest full layout, AI overlay and independent sliders on both systems')
+          PY90
+          grep -Fq 'android:screenOrientation="fullSensor"' android-build/app/src/main/AndroidManifest.xml
+          grep -Fq 'orientation|screenSize|smallestScreenSize|keyboardHidden' android-build/app/src/main/AndroidManifest.xml
+          grep -Fq 'onConfigurationChanged(Configuration config)' android-build/app/src/main/java/com/zavione/mobile/MainActivity.java
+          python3 - <<'PY89'
+          from pathlib import Path
+          p=Path('android-build/app/src/main/assets')
+          index=(p/'index.html').read_text(encoding='utf8')
+          css=(p/'zavi-landscape-v6589.css').read_text(encoding='utf8')
+          js=(p/'zavi-landscape-v6589.js').read_text(encoding='utf8')
+          assert 'zavi-landscape-v6589.css?v=65.89' in index
+          assert 'zavi-landscape-v6589.js?v=65.89' in index
+          assert 'orientation:landscape' in css and 'max-height:650px' in css
+          assert 'zavi:native-configurationchange' in js
+          assert 'location.reload(' not in js and 'localStorage.clear(' not in js
+          assert 'zavi-three-sizes-v6588.js?v=65.88' in index
+          print('PASS landscape/portrait, preserve ledger/lease, independent sliders')
+          PY89
+          python3 - <<'PY3'
+          from pathlib import Path
+          js=Path('android-build/app/src/main/assets/zavi-three-sizes-v6588.js').read_text()
+          css=Path('android-build/app/src/main/assets/zavi-three-sizes-v6588.css').read_text()
+          html=Path('android-build/app/src/main/assets/index.html').read_text()
+          assert all(s in js for s in ("'text','system','icons'","z88-size-settings","MAX=150","--z87-icon-scale","data-step-key"))
+          assert all(s in js for s in ('fa:{','ps:{','en:{'))
+          assert "data-zavi-app" in html and "zavi-three-sizes-v6588.js?v=65.88" in html
+          assert 'src="./zavi-three-sizes-v6587.js' not in html
+          assert "#z88-size-settings" in css and "#zavi-display-settings-v6545{display:none!important}" in css
+          assert 'document.documentElement.style.zoom=String(' not in js
+          print('PASS three independent sliders, localization, old panel hidden, and viewport intact')
+          PY3
+          node --check android-build/app/src/main/assets/zavi-admin-v140-ui-fixes.js
+          ! grep -Fq 'document.documentElement.style.zoom=String(size/100)' android-build/app/src/main/assets/zavi-admin-v140-ui-fixes.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          a=Path('android-build/app/src/main/assets')
+          assert 'zavi-three-sizes-v6588.css?v=65.88' in (a/'index.html').read_text()
+          assert 'zavi-three-sizes-v6588.js?v=65.88' in (a/'index.html').read_text()
+          assert (a/'zavi-admin-v1423-lifetime.js').is_file()
+          assert (a/'zavi-admin-v1428-offline-seven-days.js').is_file()
+          with zipfile.ZipFile('design-delivery/ZAVI_ONE_ADMIN_V1_4_36_IPAD_PWA_QA.zip','w',compression=zipfile.ZIP_DEFLATED) as z:
+           for f in a.rglob('*'):
+            if f.is_file():z.write(f,f.relative_to(a).as_posix())
+          PY
+          (cd android-build && gradle --no-daemon -PzaviApp=admin :app:assembleRelease)
+          APK=android-build/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK" | grep 'Verified using v2 scheme'
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F 'com.zavione.one.admin.visual1436qa'
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-unified-v6584.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-unified-v6584.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-real-viewport-v6586.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-three-sizes-v6588.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-three-sizes-v6588.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-landscape-v6589.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-landscape-v6589.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-mobile-rescue-v6590.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-mobile-rescue-v6590.js
+          cp "$APK" design-delivery/ZAVI_ONE_ADMIN_V1_4_36_UNIFIED_DESIGN_QA.apk
+          (cd design-delivery && sha256sum ZAVI_ONE_ADMIN_V1_4_36_UNIFIED_DESIGN_QA.apk > ZAVI_ONE_ADMIN_V1_4_36_UNIFIED_DESIGN_QA.apk.sha256)
+      - name: Publish verified APKs and iPad Safari files
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd design-delivery
+          for file in *_IPAD_PWA_QA.zip;do sha256sum "$file" > "$file.sha256";done
+          cat > README_DARI.txt <<'EOF'
+          ZAVI ONE 65.90 and ADMIN 1.4.36 – mobile overlay, viewport and scrolling fixes.
+          Three separate local Settings sliders — text, full system density and icons — each 50%-150%; viewport and sidebar remain intact.
+          The original finance, 20 trade editions, owner-only ADMIN, 7-day subscriptions and ES256 offline enforcement remain unchanged.
+          iPads use hosted Safari PWA ZIP; Android APK cannot install on an iPad.
+          QA only: user testing, real hardware tests, stable Android signing, and signed Windows packages are still pending.
+          EOF
+          TAG=zavi-mobile-rescue-v6590-admin1436-qa-20261027
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "ZAVI ONE V65.90 + ADMIN V1.4.36 Unified Responsive Design QA" --notes-file README_DARI.txt --prerelease || gh release view "$TAG" >/dev/null
+          gh release upload "$TAG" ./*.apk ./*.apk.sha256 ./*_IPAD_PWA_QA.zip ./*_IPAD_PWA_QA.zip.sha256 --clobber
+          echo "Android published at https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+  windows-both:
+    needs: android-both
+    runs-on: windows-2022
+    timeout-minutes: 100
+    env:
+      GH_TOKEN: ${{ github.token }}
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build full ZAVI ONE and ADMIN Windows desktop from matching updated APKs
+        shell: pwsh
+        run: ./windows-build/build-unified-design-v6590.ps1
+      - name: Upload Windows QA installer copies (optional; release binaries are authoritative)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ONE_AND_ADMIN_UNIFORM_GRID_WIN64_QA
+          path: design-windows-delivery/*
+          if-no-files-found: error
+          retention-days: 10

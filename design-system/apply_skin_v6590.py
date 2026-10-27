@@ -19,7 +19,8 @@ assert "</head>" in html and "</body>" in html
 assert html.count("zavi-landscape-v6589.css") == 1
 assert "zavi-mobile-rescue-v6590." not in html
 html=html.replace("</head>",'<link rel="stylesheet" href="./zavi-mobile-rescue-v6590.css?v=65.90"></head>',1)
-html=html.replace("</body>",'<script src="./zavi-mobile-rescue-v6590.js?v=65.90"></script></body>',1)
+assert html.rfind("</body>") > html.find("</head>"), "Missing actual closing body boundary"
+html=html[:html.rfind("</body>")]+'<script src="./zavi-mobile-rescue-v6590.js?v=65.90"></script></body>'+html[html.rfind("</body>")+len("</body>"):]
 assert html.count('zavi-mobile-rescue-v6590.css')==1
 assert html.count('zavi-mobile-rescue-v6590.js')==1
 assert html.index('zavi-landscape-v6589.css')<html.index('zavi-mobile-rescue-v6590.css')

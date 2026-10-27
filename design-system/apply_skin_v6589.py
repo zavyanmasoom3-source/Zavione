@@ -19,7 +19,8 @@ assert "</head>" in s and "</body>" in s
 assert "zavi-three-sizes-v6588.js?v=65.88" in s
 assert "zavi-landscape-v6589." not in s
 s=s.replace("</head>",'<link rel="stylesheet" href="./zavi-landscape-v6589.css?v=65.89"></head>',1)
-s=s.replace("</body>",'<script src="./zavi-landscape-v6589.js?v=65.89"></script></body>',1)
+assert s.rfind("</body>") > s.find("</head>"), "Missing actual closing body boundary"
+s=s[:s.rfind("</body>")]+'<script src="./zavi-landscape-v6589.js?v=65.89"></script></body>'+s[s.rfind("</body>")+len("</body>"):]
 assert s.count("zavi-landscape-v6589.css")==1 and s.count("zavi-landscape-v6589.js")==1
 assert s.index("zavi-three-sizes-v6588.css")<s.index("zavi-landscape-v6589.css")
 index.write_text(s,encoding="utf8")

@@ -21,7 +21,8 @@ assert s.count(old) == 1, "Old triple slider script must occur exactly once"
 s = s.replace(old,"")
 assert "</head>" in s and "</body>" in s
 s = s.replace("</head>",'<link rel="stylesheet" href="./zavi-three-sizes-v6588.css?v=65.88"></head>',1)
-s = s.replace("</body>",'<script data-zavi-app="' + a.app + '" src="./zavi-three-sizes-v6588.js?v=65.88"></script></body>',1)
+assert s.rfind("</body>") > s.find("</head>"), "Missing actual closing body boundary"
+s=s[:s.rfind("</body>")]+'<script data-zavi-app="' + a.app + '" src="./zavi-three-sizes-v6588.js?v=65.88"></script></body>'+s[s.rfind("</body>")+len("</body>"):]
 assert s.count('zavi-three-sizes-v6588.js') == 1
 assert s.count('zavi-three-sizes-v6588.css') == 1
 assert 'src="./zavi-three-sizes-v6587.js' not in s

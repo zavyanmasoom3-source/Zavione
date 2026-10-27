@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat;
 import android.app.AlertDialog;
 import android.Manifest;
 import android.content.ClipData;
+import android.content.res.Configuration;
 import android.content.pm.PackageManager;
 import android.provider.MediaStore;
 import android.webkit.PermissionRequest;
@@ -463,6 +464,28 @@ public final class MainActivity extends FragmentActivity {
         lastBackPress=System.currentTimeMillis();
         toast("Press back again to exit / برای خروج دوباره بزنید");
     }
+    /**
+     * Keep the same WebView instance when the device rotates. Recreating it would
+     * discard in-flight UI edits and could interrupt an unsent offline invoice.
+     * This only refreshes viewport measurements; it never reloads the page.
+     */
+    @Override public void onConfigurationChanged(Configuration config) {
+        super.onConfigurationChanged(config);
+        if (container != null) container.requestLayout();
+        if (webView != null) {
+            webView.requestLayout();
+            webView.post(() -> {
+                if (webView != null) {
+                    webView.evaluateJavascript(
+                        "window.dispatchEvent(new Event('resize'));" +
+                        "window.dispatchEvent(new Event('orientationchange'));" +
+                        "window.dispatchEvent(new Event('zavi:native-configurationchange'));",
+                        null);
+                }
+            });
+        }
+    }
+
     @Override protected void onPause(){super.onPause();if(webView!=null)webView.onPause();}
     @Override protected void onResume(){super.onResume();if(webView!=null)webView.onResume();}
     @Override protected void onDestroy(){

@@ -27,6 +27,15 @@ if a.app=='admin':
     h=h[:i]+'<script src="./zavi-admin-ipad-v1438.js?v=1.4.38" defer></script>'+h[i:]
     assert h.count('zavi-admin-ipad-v1438.css')==1 and h.count('zavi-admin-ipad-v1438.js')==1
     assert h.index('zavi-camera-menu-v6591.css')<h.index('zavi-admin-ipad-v1438.css')
+    sw=web/'sw.js'
+    if sw.exists():
+        import re
+        src=sw.read_text(encoding='utf8')
+        assert 'const CORE=[' in src
+        src=src.replace('const CORE=[','const CORE=["zavi-admin-ipad-v1438.css","zavi-admin-ipad-v1438.js",',1)
+        src=re.sub(r"(const CACHE_NAME\\s*=\\s*['\\"])[^'\\"]+(['\\"])",r"\\1zavi-admin-v1438-ipad\\2",src,count=1)
+        assert 'zavi-admin-ipad-v1438.css' in src
+        sw.write_text(src,encoding='utf8')
     assert (web/'zavi-admin-v1428-offline-seven-days.js').exists()
     assert (web/'zavi-admin-v1423-lifetime.js').exists()
 else:

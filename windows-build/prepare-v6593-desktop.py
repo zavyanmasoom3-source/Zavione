@@ -156,7 +156,7 @@ if a.design_v6593 and a.mode=='admin':
   assert (web/'zavi-admin-ipad-v1438.css').is_file()
   assert (web/'zavi-admin-ipad-v1438.js').is_file()
   assert "max-width:1199px" in (web/'zavi-admin-v1426-drawer.js').read_text(encoding='utf8')
-  assert 'zavi-admin-ipad-v1438.css?v=1.4.39' in (web/'index.html').read_text(encoding='utf8')
+  assert 'zavi-admin-ipad-v1438.css?v=1.4.38' in (web/'index.html').read_text(encoding='utf8')
 if a.design_v6593:
   assert (web/'zavi-premium-renewal-v6593.css').is_file()
   assert 'zavi-premium-renewal-v6593.css?v=65.93' in (web/'index.html').read_text(encoding='utf8')

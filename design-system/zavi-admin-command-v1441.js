@@ -83,8 +83,12 @@ function messageUI(body){
    if(!state.opened||!state.confirmed)return;
    const key=[rec.workspace_id,state.template,new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kabul'})].join('|');
    if(state.log.some(x=>x.key===key))return msgStatus(w.duplicate);
-   state.log.unshift({key,when:new Date().toISOString(),workspace:rec.workspace_name,workspace_id:rec.workspace_id,kind:state.template,status:'manually-confirmed-in-session'});
-   state.opened=false;state.confirmed=false;msgStatus(w.logSaved);render()
+   const log={key,when:new Date().toISOString(),workspace:rec.workspace_name,workspace_id:rec.workspace_id,kind:state.template,status:'manually-confirmed-in-session'};
+   state.log.unshift(log);state.opened=false;state.confirmed=false;render();msgStatus(w.logSaved+' · '+w.session);
+   // Backend logging is optional until the staged, owner-checked migration is installed.
+   portalRpc('zavi_admin_message_mark_v6595',{p_workspace_id:rec.workspace_id,p_template_key:state.template,p_state:'owner_confirmed_sent',p_note:''}).then(res=>{
+     if(res?.recorded){log.status='owner-confirmed-on-server';msgStatus(w.logSaved)}
+   }).catch(()=>msgStatus(w.logSaved+' · '+w.session));
  },'',!state.opened));
  actions.append(makeButton(w.export,()=>csv('ZAVI_ADMIN_MESSAGE_SESSION.csv',[['date','workspace','template','status'],...state.log.map(x=>[x.when,x.workspace,x.kind,x.status])]),'',!state.log.length));
  const warning=mk('p','z141-warning',!rec?w.select:!p?w.noContact:!guardNumber()?w.marketing:w.validation);
@@ -136,7 +140,26 @@ function overviewUI(body,mode){
   body.append(audit);
   portalRpc('zavi_admin_v241_audit',{p_limit:40}).then(items=>{if(!body.isConnected||state.tab!=='audit')return;audit.replaceChildren();(Array.isArray(items)?items:[]).forEach(x=>audit.append(mk('div','z141-item',(x.action||x.event_type||'Event')+' · '+(x.occurred_at||x.created_at||''))));if(!audit.childElementCount)audit.append(mk('p','',w.empty))}).catch(()=>audit.append(mk('p','',w.error)));
  }else if(mode==='health'){
-  body.append(mk('p','z141-tip',w.safe));
+  const selector=mk('select');selector.append(new Option(w.select,''));
+  state.customers.forEach(x=>selector.append(new Option(x.workspace_name||x.owner_email,x.workspace_id)));
+  const detail=mk('article','z141-item',w.sync+' · '+w.unknown);
+  selector.addEventListener('change',async()=>{
+    if(!selector.value)return;
+    detail.textContent=w.loading;
+    try{
+      const stat=await portalRpc('zavi_admin_v6570_offline_status',{p_workspace_id:selector.value});
+      // Print only primitive, known explanatory indicators returned by the existing server function.
+      const out=mk('div');
+      for(const key of ['workspace_id','offline_allowed','unsent_count','pending_operations','last_sync_at','device_count']){
+        if(stat && Object.prototype.hasOwnProperty.call(stat,key)){
+          const v=stat[key];if(['string','number','boolean'].includes(typeof v))out.append(mk('p','',key+': '+String(v)))
+        }
+      }
+      detail.replaceChildren(out);
+      if(!out.childElementCount)detail.append(mk('p','',w.unknown));
+    }catch(_){detail.textContent=w.error}
+  });
+  body.append(selector,detail,mk('p','z141-tip',w.safe));
  }
 }
 function releaseUI(body){

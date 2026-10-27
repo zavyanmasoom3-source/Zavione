@@ -3,7 +3,7 @@
  * Last stylesheet by design. Never change data, sign-in or stored layout sizes.
  */
 :root {--z1438-admin-break:1199px;--z1438-drawer:clamp(274px,32vw,354px)}
-html.zavi-design-84 body #appScreen.app-shell{
+html.zavi-design-84 body #appScreen.app-shell:not([hidden]){
  max-width:100%!important;min-width:0!important;box-sizing:border-box!important;
 }
 html.zavi-design-84 body #appScreen #view :is(.panel,.card,.admin-hero,.admin-kpi-grid,.zavi-clean-settings-hub,.z87-panel,.z88-panel){
@@ -13,7 +13,7 @@ html.zavi-design-84 body #appScreen #view :is(h1,h2,h3,p,button,span,label){
  overflow-wrap:anywhere;
 }
 @media(min-width:1200px){
- html.zavi-design-84 body #appScreen.app-shell{
+ html.zavi-design-84 body #appScreen.app-shell:not([hidden]){
    display:flex!important;flex-direction:row!important;min-height:100dvh!important;
  }
  html.zavi-design-84 body #appScreen .sidebar{
@@ -32,7 +32,7 @@ html.zavi-design-84 body #appScreen #view :is(h1,h2,h3,p,button,span,label){
  html.zavi-design-84 body #appScreen #view{width:100%!important}
 }
 @media(max-width:1199px){
- html.zavi-design-84 body #appScreen.app-shell{
+ html.zavi-design-84 body #appScreen.app-shell:not([hidden]){
    display:block!important;grid-template-columns:unset!important;
    position:relative!important;width:100%!important;max-width:100%!important;
    min-width:0!important;margin:0!important;padding:0!important;
@@ -137,3 +137,6 @@ html.zavi-design-84 body #appScreen #mobileMenu:focus-visible{
 @media(prefers-reduced-motion:reduce){
  html.zavi-design-84 body #appScreen .sidebar{transition:none!important}
 }
+
+/* Respect the auth gate even when vendor CSS defines a forced app-shell display. */
+html.zavi-design-84 body #appScreen.app-shell[hidden]{display:none!important;visibility:hidden!important;pointer-events:none!important}

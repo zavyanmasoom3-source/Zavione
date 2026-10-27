@@ -88,8 +88,8 @@ function open(card){
  Promise.resolve(api.request('/rest/v1/rpc/zavi_admin_registration_contacts',{method:'POST',body:{}})).then(rows=>{
   if(stamp!==contactReq||active!==row||layer.hidden||!isOwner())return;
   const found=Array.isArray(rows)?rows.find(x=>x.contact_opt_in===true&&String(x.account_email||'').trim().toLowerCase()===String(row.owner_email||'').trim().toLowerCase()):null;
-  const phone=String(found?.whatsapp_e164||found?.phone_e164||'').trim().replace(/[\\s().-]/g,'');
-  approvedPhone=/^\\+[1-9][0-9]{5,14}$/.test(phone)?phone:null;
+  const phone=String(found?.whatsapp_e164||found?.phone_e164||'').trim().split(' ').join('').split('(').join('').split(')').join('').split('-').join('');
+  approvedPhone=phone.startsWith('+')&&/^[1-9][0-9]{5,14}$/.test(phone.slice(1))?phone:null;
   info(approvedPhone?'':t().optin);render();
  }).catch(()=>{if(stamp===contactReq){approvedPhone=null;info(t().error);render()}});
 }

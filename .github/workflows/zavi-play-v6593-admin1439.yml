@@ -1,0 +1,109 @@
+name: ZAVI ONE 65.93 and ADMIN 1.4.39 Google Play AAB Prepublication
+on:
+  push:
+    branches: [zavi-v6593-admin1439-renewal-whatsapp-play-candidate]
+    paths:
+      - '.github/workflows/zavi-play-v6593-admin1439.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  play-aab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 85
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: one
+            apk: ZAVI_ONE_20_BUSINESSES_V65_93_UNIFIED_DESIGN_QA.apk
+          - mode: admin
+            apk: ZAVI_ONE_ADMIN_V1_4_39_UNIFIED_DESIGN_QA.apk
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: zavi-v6593-admin1439-renewal-whatsapp-qa-20261027
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.13'}
+      - name: Install Android 16 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          M="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$M" ];then M="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n1)";fi
+          yes | "$M" --licenses >/dev/null || true
+          "$M" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Fetch exact QA-tested GUI bundle (no production accounts)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p play-source android-build/app/src/main/assets
+          for i in $(seq 1 45);do
+            if gh release download "$TAG" --pattern "${{ matrix.apk }}" --dir play-source --clobber >/dev/null 2>&1;then break;fi
+            sleep 6
+          done
+          test -s "play-source/${{ matrix.apk }}"
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          archive=Path('play-source/${{ matrix.apk }}')
+          with ZipFile(archive) as z:
+            assert z.testzip() is None
+            root=Path('android-build/app/src/main/assets')
+            for name in z.namelist():
+              if not name.startswith('assets/') or name.endswith('/'):continue
+              path=Path(name).relative_to('assets')
+              assert not path.is_absolute() and '..' not in path.parts
+              out=root/path
+              out.parent.mkdir(parents=True,exist_ok=True)
+              out.write_bytes(z.read(name))
+          assert (root/'zavi-premium-renewal-v6593.css').is_file()
+          if '${{ matrix.mode }}'=='admin':
+            assert (root/'zavi-admin-renewal-v1439.js').is_file()
+            assert (root/'zavi-admin-v1428-offline-seven-days.js').is_file()
+          else:
+            assert (root/'zavi-zxing-bundle-v6591.js').stat().st_size>80000
+          print('PASS: production package uses exactly the QA release assets')
+          PY
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          cp "android-build/icons/${{ matrix.mode }}.webp" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+      - name: Apply canonical Play package and remove unsafe debug signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 android-build/release/prepare_play_gradle_v6593.py --mode "${{ matrix.mode }}"
+          grep -Fq 'targetSdk 36' android-build/app/build.gradle
+          grep -Fq 'signingConfig null' android-build/app/build.gradle
+          grep -Fq 'versionCode admin ? 4390 : 6593' android-build/app/build.gradle
+      - name: Build real App Bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd android-build && gradle --no-daemon -PzaviApp=${{ matrix.mode }} :app:bundleRelease)
+          B="$(find android-build/app/build/outputs/bundle/release -maxdepth 1 -name '*.aab' | head -n1)"
+          test -s "$B"
+          unzip -t "$B" | tail -n1
+          unzip -Z1 "$B" | grep -Fx base/manifest/AndroidManifest.xml
+          unzip -Z1 "$B" | grep -Fx base/assets/zavi-premium-renewal-v6593.css
+          if [ "${{ matrix.mode }}" = "admin" ];then unzip -Z1 "$B" | grep -Fx base/assets/zavi-admin-renewal-v1439.js;fi
+      - name: Owner-only keystore signing; unsigned if secrets not set
+        shell: bash
+        env:
+          ZAVI_UPLOAD_KEYSTORE_B64: ${{ matrix.mode == 'one' && secrets.ZAVI_ONE_UPLOAD_KEYSTORE_B64 || secrets.ZAVI_ADMIN_UPLOAD_KEYSTORE_B64 }}
+          ZAVI_UPLOAD_STORE_PASSWORD: ${{ matrix.mode == 'one' && secrets.ZAVI_ONE_UPLOAD_STORE_PASSWORD || secrets.ZAVI_ADMIN_UPLOAD_STORE_PASSWORD }}
+          ZAVI_UPLOAD_KEY_ALIAS: ${{ matrix.mode == 'one' && secrets.ZAVI_ONE_UPLOAD_KEY_ALIAS || secrets.ZAVI_ADMIN_UPLOAD_KEY_ALIAS }}
+          ZAVI_UPLOAD_KEY_PASSWORD: ${{ matrix.mode == 'one' && secrets.ZAVI_ONE_UPLOAD_KEY_PASSWORD || secrets.ZAVI_ADMIN_UPLOAD_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          B="$(find android-build/app/build/outputs/bundle/release -maxdepth 1 -name '*.aab' | head -n1)"
+          python3 android-build/release/sign_bundle_v6593.py "${{ matrix.mode }}" "$B" play-delivery
+          sha256sum play-delivery/*.aab > play-delivery/AAB_SHA256_${{ matrix.mode }}.txt
+      - name: Publish clearly labeled AAB candidate to QA release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" play-delivery/* --clobber
+          echo 'This is a candidate only. AAB file marked UNSIGNED is NOT accepted for Google Play.'

@@ -13,7 +13,7 @@ const lang=()=>{const v=String($('#zaviAdminLanguage')?.value||document.document
 const t=()=>txt[lang()];
 const nd=(x)=>lang()==='fa'?String(x).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[+d]):String(x);
 const isOwner=()=>window.ZaviAdminAPI?.getMode?.()==='live' && !!$('#appScreen') && !$('#appScreen').hidden;
-let active=null,layer=null,busy=false;
+let active=null,layer=null,busy=false,approvedPhone=null,contactReq=0;
 function e(tag,cls,label){const n=document.createElement(tag);if(cls)n.className=cls;if(label!==undefined)n.textContent=label;return n}
 function getRow(card){
  const name=card.querySelector('.z139-identity strong')?.textContent?.trim();
@@ -27,7 +27,8 @@ function message(){
  w.headline.replace('{days}',nd(days)),w.wish,w.thanks,'',w.signature].join('\n');
 }
 function info(msg){const n=$('#z140-info');if(n){n.textContent=msg;n.hidden=!msg}}
-function canSend(){return !!$('#z140-confirm')?.checked&&isOwner()&&!busy}
+function canCopy(){return !!$('#z140-confirm')?.checked&&isOwner()&&!busy}
+function canSend(){return canCopy()&&!!approvedPhone}
 function render(){
  if(!layer||layer.hidden||!active)return;
  const w=t(),m=message();
@@ -44,9 +45,9 @@ function render(){
  $('#z140-close').textContent=w.cancel;
  $('#z140-note').textContent=w.note;
  $('#z140-send').disabled=!canSend();
- $('#z140-copy').disabled=!canSend();
+ $('#z140-copy').disabled=!canCopy();
 }
-function close(){if(layer){layer.hidden=true;active=null;$('#z140-confirm').checked=false;$('#z140-msg').value='';info('')}}
+function close(){if(layer){contactReq++;approvedPhone=null;layer.hidden=true;active=null;$('#z140-confirm').checked=false;$('#z140-msg').value='';info('')}}
 function make(){
  if(layer)return;
  layer=e('div','z140-backdrop');layer.id='z140-modal';layer.hidden=true;
@@ -58,42 +59,41 @@ function make(){
  $('#z140-confirm').addEventListener('change',render);
  $('#z140-duration').addEventListener('change',render);
  $('#z140-copy').addEventListener('click',async()=>{
-  if(!canSend())return info(t().need);
+  if(!canCopy())return info(t().need);
   try{await navigator.clipboard.writeText($('#z140-msg').value);info(t().copyOK)}catch(_){info(t().error)}
  });
  $('#z140-send').addEventListener('click',send);
 }
-async function send(){
- if(!active||!canSend())return info(t().need);
- const selected=active;
- const days=Number($('#z140-duration').value);
- if(![7,180,365].includes(days))return;
- // No client-side renewal mutation. Re-fetch owner-only consent contacts upon deliberate click.
- const api=window.ZaviAdminAPI;
- busy=true;render();info(t().loading);
- try{
-  const rows=await api.request('/rest/v1/rpc/zavi_admin_registration_contacts',{method:'POST',body:{}});
-  if(!Array.isArray(rows)||!isOwner()||active!==selected||!$('#z140-confirm').checked)return info(t().locked);
-  const person=rows.find(r=>r.contact_opt_in===true&&String(r.account_email||'').trim().toLowerCase()===String(selected.owner_email||'').trim().toLowerCase());
-  const phone=String(person?.whatsapp_e164||person?.phone_e164||'').trim().replace(/[\s().-]/g,'');
-  if(!/^\+[1-9][0-9]{5,14}$/.test(phone))return info(t().optin);
-  const outbound=$('#z140-msg').value.trim();
-  if(!outbound||outbound.length>1400)return;
-  const url='https://wa.me/'+phone.slice(1)+'?text='+encodeURIComponent(outbound);
-  // Trigger remains explicitly user-authorised. Browser may require tap again if popup blocked.
-  const win=window.open(url,'_blank','noopener,noreferrer');
-  if(!win)window.location.href=url;
-  info(t().sent);
- }catch(_){info(t().error)}
- finally{busy=false;render()}
+function send(){
+ if(!active||!canSend())return info(approvedPhone?t().need:t().optin);
+ const outbound=$('#z140-msg').value.trim();
+ if(!outbound||outbound.length>1400)return;
+ // Contact already fetched via owner-only RPC while dialog was opened.
+ // Opening wa.me happens synchronously from this real user click.
+ const url='https://wa.me/'+approvedPhone.slice(1)+'?text='+encodeURIComponent(outbound);
+ const win=window.open(url,'_blank','noopener,noreferrer');
+ if(!win)location.href=url;
+ info(t().sent);
 }
+
 function open(card){
  if(!isOwner())return;
  const row=getRow(card);
  if(!row)return;
- make();active=row;layer.hidden=false;$('#z140-duration').value='365';$('#z140-confirm').checked=false;info('');render();
+ make();active=row;approvedPhone=null;const stamp=++contactReq;
+ layer.hidden=false;$('#z140-duration').value='365';$('#z140-confirm').checked=false;info(t().loading);render();
  $('#z140-duration').focus({preventScroll:true});
+ // Prefetch contact, but never send until owner checks the box and clicks.
+ const api=window.ZaviAdminAPI;
+ Promise.resolve(api.request('/rest/v1/rpc/zavi_admin_registration_contacts',{method:'POST',body:{}})).then(rows=>{
+  if(stamp!==contactReq||active!==row||layer.hidden||!isOwner())return;
+  const found=Array.isArray(rows)?rows.find(x=>x.contact_opt_in===true&&String(x.account_email||'').trim().toLowerCase()===String(row.owner_email||'').trim().toLowerCase()):null;
+  const phone=String(found?.whatsapp_e164||found?.phone_e164||'').trim().replace(/[\\s().-]/g,'');
+  approvedPhone=/^\\+[1-9][0-9]{5,14}$/.test(phone)?phone:null;
+  info(approvedPhone?'':t().optin);render();
+ }).catch(()=>{if(stamp===contactReq){approvedPhone=null;info(t().error);render()}});
 }
+
 function attach(){
  const list=$('#z139-list');
  if(!list||!isOwner())return;

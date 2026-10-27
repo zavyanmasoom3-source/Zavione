@@ -84,7 +84,7 @@ jobs:
           assert 'navigator.mediaDevices.getUserMedia' in script
           assert 'zaviBarcodeScan' in script and 'zaviWarehouseScan' in script and 'fld_sku' in script
           assert 'zavi-zxing-bundle-v6591.js' in sw
-          assert 'zavi-store-v6591-camera' in sw
+          assert 'zavi-store-v6593-premium' in sw
           print('PASS iPad camera, Windows camera, mobile offline decoder and current 20 business workflows')
           PY91
           python3 design-system/test_html_integrity_v6590.py --web android-build/app/src/main/assets --app one

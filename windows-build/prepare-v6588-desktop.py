@@ -61,7 +61,7 @@ if a.design_v6586:
   "app_id":"com.zavione.one.windows.v6586viewportqa" if a.mode=="one" else "com.zavione.one.admin.windows.v1432viewportqa",
   "name":"zavi-one-windows-v6586-viewport-qa" if a.mode=="one" else "zavi-one-admin-windows-v1432-viewport-qa"
  })
-if a.design_v6587:
+if a.design_v6588:
  cfg.update({
   "version":"65.88.0" if a.mode=="one" else "1.4.34",
   "exe":"Setup_ZAVI_ONE_V65_88_Text_System_Icons_Windows_x64_QA.exe" if a.mode=="one" else "Setup_ZAVI_ONE_ADMIN_V1_4_34_Text_System_Icons_Windows_x64_QA.exe",
@@ -116,11 +116,11 @@ if a.mode=='one':
 else:
     assert (web/'zavi-admin-v1428-offline-seven-days.js').exists()
     assert (web/'zavi-admin-v1423-lifetime.js').exists()
-if a.design_v6584 or a.design_v6585 or a.design_v6586 or a.design_v6587:
+if a.design_v6584 or a.design_v6585 or a.design_v6586 or a.design_v6588:
  for skin in ('zavi-unified-v6584.css','zavi-unified-v6584.js'):
   assert (web/skin).exists(),skin
  assert 'zavi-unified-v6584.css?v=65.84' in (web/'index.html').read_text(encoding='utf8')
-if a.design_v6585 or a.design_v6586 or a.design_v6587:
+if a.design_v6585 or a.design_v6586 or a.design_v6588:
  assert (web/'zavi-unified-navigation-v6585.css').is_file()
  assert 'zavi-unified-navigation-v6585.css?v=65.85' in (web/'index.html').read_text(encoding='utf8')
 # Use bundled static server and strict Electron sandbox. Localhost is a secure context
@@ -129,16 +129,16 @@ shutil.copy2('windows-build/main.cjs',root/'main.cjs')
 shutil.copy2('windows-build/desktop-server.cjs',root/'desktop-server.cjs')
 main=(root/'main.cjs').read_text(encoding='utf8')
 old='IS_ADMIN?"ZAVI_ONE_ADMIN_Desktop":"ZAVI_ONE_Desktop"'
-if a.design_v6586 or a.design_v6587:
+if a.design_v6586 or a.design_v6588:
   assert (web/'zavi-real-viewport-v6586.css').is_file()
   assert 'zavi-real-viewport-v6586.css?v=65.86' in (web/'index.html').read_text(encoding='utf8')
-if a.design_v6587:
+if a.design_v6588:
   assert (web/'zavi-three-sizes-v6588.css').is_file()
   assert (web/'zavi-three-sizes-v6588.js').is_file()
   assert 'zavi-three-sizes-v6588.css?v=65.88' in (web/'index.html').read_text(encoding='utf8')
   assert 'zavi-three-sizes-v6588.js?v=65.88' in (web/'index.html').read_text(encoding='utf8')
 new=('IS_ADMIN?"ZAVI_ONE_ADMIN_V1430_Design_Windows_Desktop":"ZAVI_ONE_V6584_Design_Windows_Desktop"' if a.design_v6584 else 'IS_ADMIN?"ZAVI_ONE_ADMIN_V1429_Windows_Desktop":"ZAVI_ONE_V6583_Windows_Desktop"')
-if a.design_v6587:
+if a.design_v6588:
  new='IS_ADMIN?"ZAVI_ONE_ADMIN_V1434_Text_System_Icons_Windows_Desktop":"ZAVI_ONE_V6588_Text_System_Icons_Windows_Desktop"'
 elif a.design_v6586:
  new='IS_ADMIN?"ZAVI_ONE_ADMIN_V1432_Responsive_Windows_Desktop":"ZAVI_ONE_V6586_Responsive_Windows_Desktop"'
@@ -176,7 +176,7 @@ report={
   "app":cfg["title"],
   "android_sha256":sha,"asset_count":found,
   "verified_local_file_references":references,
-  "source":"Verified ZAVI ONE 65.88 or ADMIN 1.4.34 three-independent-size QA binary" if a.design_v6587 else "Verified ZAVI ONE 65.86 or ADMIN 1.4.32 real-viewport QA binary" if a.design_v6586 else "Verified ZAVI ONE 65.85 or ADMIN 1.4.31 screenshot-unified QA binary" if a.design_v6585 else "Verified ZAVI ONE 65.84 or ADMIN 1.4.30 re-signed Android QA binary" if a.design_v6584 else "The user-uploaded APK and matching GitHub branch binary",
+  "source":"Verified ZAVI ONE 65.88 or ADMIN 1.4.34 three-independent-size QA binary" if a.design_v6588 else "Verified ZAVI ONE 65.86 or ADMIN 1.4.32 real-viewport QA binary" if a.design_v6586 else "Verified ZAVI ONE 65.85 or ADMIN 1.4.31 screenshot-unified QA binary" if a.design_v6585 else "Verified ZAVI ONE 65.84 or ADMIN 1.4.30 re-signed Android QA binary" if a.design_v6584 else "The user-uploaded APK and matching GitHub branch binary",
   "target":"Windows 10/11 x64; Electron+NSIS real Setup EXE",
   "offline":"Bundled web files and localhost service worker; valid server-signed offline permission required for offline transactions",
   "account":"Same ZAVI cloud backend, per-Windows-application local data directory, not automatically copied from phone",

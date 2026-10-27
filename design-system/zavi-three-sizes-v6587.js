@@ -3,7 +3,7 @@
    No page zoom / transform: CSS viewport stays faithful at 50–115%. */
 (()=>{'use strict';
 const root=document.documentElement;
-const APP=(root.querySelector?null:null)||(/zavi-admin-v|admin/i.test([...document.scripts].map(x=>x.src||'').join(' ').slice(-16000))?'admin':'one');
+const APP=document.currentScript?.getAttribute('data-zavi-app')==='admin'?'admin':'one';
 const KEY='zavi_'+APP+'_three_sizes_v6587';
 const MIN=50, MAX=115, STEP=5;
 const sanitize=n=>Number.isFinite(Number(n))?Math.min(MAX,Math.max(MIN,Math.round(Number(n)/STEP)*STEP)):100;

@@ -54,6 +54,7 @@ jobs:
           node --check android-build/app/src/main/assets/zavi-landscape-v6589.js
           test -s android-build/app/src/main/assets/zavi-mobile-rescue-v6590.css
           node --check android-build/app/src/main/assets/zavi-mobile-rescue-v6590.js
+          python3 design-system/test_html_integrity_v6590.py --web android-build/app/src/main/assets --app one
           python3 - <<'PY90'
           from pathlib import Path
           r=Path('android-build/app/src/main/assets')
@@ -153,6 +154,7 @@ jobs:
           node --check android-build/app/src/main/assets/zavi-landscape-v6589.js
           test -s android-build/app/src/main/assets/zavi-mobile-rescue-v6590.css
           node --check android-build/app/src/main/assets/zavi-mobile-rescue-v6590.js
+          python3 design-system/test_html_integrity_v6590.py --web android-build/app/src/main/assets --app admin
           python3 - <<'PY90'
           from pathlib import Path
           r=Path('android-build/app/src/main/assets')

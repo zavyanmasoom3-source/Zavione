@@ -183,8 +183,6 @@ jobs:
           unzip -Z1 "$APK" | grep -Fx assets/zavi-mobile-rescue-v6590.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-camera-menu-v6591.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-premium-renewal-v6593.css
-          unzip -Z1 "$APK" | grep -Fx assets/zavi-admin-theme-congrats-v1440.css
-          unzip -Z1 "$APK" | grep -Fx assets/zavi-admin-congratulations-v1440.js
           cp "$APK" design-delivery/ZAVI_ONE_20_BUSINESSES_V65_94_UNIFIED_DESIGN_QA.apk
           (cd design-delivery && sha256sum ZAVI_ONE_20_BUSINESSES_V65_94_UNIFIED_DESIGN_QA.apk > ZAVI_ONE_20_BUSINESSES_V65_94_UNIFIED_DESIGN_QA.apk.sha256)
       - name: Package ZAVI ONE ADMIN design APK and iPad Safari web
@@ -345,6 +343,8 @@ jobs:
           unzip -Z1 "$APK" | grep -Fx assets/zavi-admin-ipad-v1438.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-admin-ipad-v1438.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-admin-renewal-v1439.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-admin-theme-congrats-v1440.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-admin-congratulations-v1440.js
           cp "$APK" design-delivery/ZAVI_ONE_ADMIN_V1_4_40_UNIFIED_DESIGN_QA.apk
           (cd design-delivery && sha256sum ZAVI_ONE_ADMIN_V1_4_40_UNIFIED_DESIGN_QA.apk > ZAVI_ONE_ADMIN_V1_4_40_UNIFIED_DESIGN_QA.apk.sha256)
       - name: Publish verified APKs and iPad Safari files

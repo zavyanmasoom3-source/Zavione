@@ -28,7 +28,7 @@ thanks:{fa:'سلام {name}، از اعتماد شما به ZAVI ONE سپاسگ�
 marketing:{fa:'سلام {name}، خبر ویژه از ZAVI ONE: [متن پیشنهاد را با اطلاعات تأییدشده تکمیل کنید].',ps:'سلام {name}، له ZAVI ONE څخه ځانګړی خبر: [تایید شوی متن].',en:'Hello {name}, news from ZAVI ONE: [enter verified offer details].'}
 };
 const tname={fa:{welcome:'خوشامدگویی',expiry:'یادآوری تمدید',expired:'اعتبار تمام‌شده',congrats7:'تبریکی ۷ روزه',congrats180:'تبریکی ۱۸۰ روزه',congrats365:'تبریکی ۳۶۵ روزه',receipt:'رسید پرداخت',update:'اطلاعیه آپدیت',support:'دریافت پشتیبانی',followup:'پیگیری مشکل',security:'هشدار امنیت',thanks:'تشکر از مشتری',marketing:'پیشنهاد تبلیغاتی'},ps:{welcome:'ښه راغلاست',expiry:'د نوي کولو یادونه',expired:'ختم شوی ګډون',congrats7:'۷ ورځو مبارکي',congrats180:'۱۸۰ ورځو مبارکي',congrats365:'۳۶۵ ورځو مبارکي',receipt:'د تادیې رسید',update:'د اپډېټ خبر',support:'ملاتړ',followup:'تعقیب',security:'امنیت',thanks:'مننه',marketing:'اعلان'},en:{welcome:'Welcome',expiry:'Renewal reminder',expired:'Expired',congrats7:'7-day congratulations',congrats180:'180-day congratulations',congrats365:'365-day congratulations',receipt:'Payment receipt',update:'Update notice',support:'Support received',followup:'Support follow-up',security:'Security reminder',thanks:'Thank you',marketing:'Marketing offer'}};
-const state={root:null,tab:'messages',customers:[],contacts:[],selected:null,template:'expiry',text:'',search:'',confirmed:false,opened:false,log:[],tickets:[],lastError:'',busy:false};
+const state={root:null,tab:'messages',customers:[],contacts:[],selected:null,template:'expiry',text:'',search:'',confirmed:false,opened:false,log:[],serverHistory:[],tickets:[],lastError:'',busy:false};
 const isOwner=()=>window.ZaviAdminAPI?.getMode?.()==='live'&&$('#appScreen')&&!$('#appScreen').hidden;
 function portalRpc(name,body={}){if(!isOwner())return Promise.reject(Error(t().owner));return window.ZaviAdminAPI.request('/rest/v1/rpc/'+name,{method:'POST',body})}
 function expiry(r){if(!r?.expires_at)return null;const d=new Date(r.expires_at);return Number.isFinite(d.getTime())?d:null}
@@ -45,10 +45,15 @@ async function refresh(){
  if(!isOwner())return msgStatus(t().owner);
  state.busy=true;render();
  try{
-  const [contacts,tickets]=await Promise.allSettled([portalRpc('zavi_admin_registration_contacts'),portalRpc('zavi_admin_support_list')]);
+  const [contacts,tickets,history]=await Promise.allSettled([
+   portalRpc('zavi_admin_registration_contacts'),
+   portalRpc('zavi_admin_support_list'),
+   portalRpc('zavi_admin_message_history_v6595',{p_limit:75})
+  ]);
   state.customers=readCustomerRows();
   state.contacts=contacts.status==='fulfilled'&&Array.isArray(contacts.value)?contacts.value.filter(c=>c.contact_opt_in===true):[];
   state.tickets=tickets.status==='fulfilled'&&Array.isArray(tickets.value)?tickets.value:[];
+  state.serverHistory=history.status==='fulfilled'&&Array.isArray(history.value)?history.value:[];
   state.lastError=contacts.status==='rejected'?t().error:'';
  }catch(e){state.lastError=t().error}
  finally{state.busy=false;render()}
@@ -95,7 +100,9 @@ function messageUI(body){
  form.append(row,desc,textArea,ack,warning,actions);
  const history=mk('div','z141-history');
  history.append(mk('h3','',w.manual+' · '+w.total+': '+state.log.length));
- if(!state.log.length)history.append(mk('p','',w.noRecords));else state.log.slice(0,12).forEach(x=>history.append(mk('div','z141-logrow',x.workspace+' • '+(tname[locale()][x.kind]||x.kind)+' • '+new Date(x.when).toLocaleString())));
+ if(!state.log.length && !state.serverHistory.length)history.append(mk('p','',w.noRecords));
+ state.log.slice(0,12).forEach(x=>history.append(mk('div','z141-logrow',x.workspace+' • '+(tname[locale()][x.kind]||x.kind)+' • '+new Date(x.when).toLocaleString())));
+ state.serverHistory.slice(0,45).forEach(x=>history.append(mk('div','z141-logrow',(x.workspace_name||'—')+' • '+(tname[locale()][x.template_key]||x.template_key)+' • '+(x.state||'')+' • '+(x.occurred_at||'')))););
  body.replaceChildren(form,history);
 }
 async function supportUI(body){
@@ -135,10 +142,22 @@ function overviewUI(body,mode){
   const receipt=mk('div','z141-cards');
   select.addEventListener('change',async()=>{receipt.replaceChildren(mk('p','',w.loading));try{const res=await portalRpc('zavi_admin_receipts',{p_workspace_id:select.value});receipt.replaceChildren();(Array.isArray(res)?res:[]).forEach(x=>{const card=mk('div','z141-item');card.append(mk('strong','',x.receipt_number||w.receipts),mk('p','',String(x.paid_amount??'')+' '+String(x.currency||'')),mk('small','',String(x.paid_at||'')));receipt.append(card)});if(!receipt.childElementCount)receipt.append(mk('p','',w.empty))}catch(_){receipt.replaceChildren(mk('p','',w.error))}});
   body.append(select,receipt);
+  const live=mk('div','z141-cards');live.append(mk('p','',w.loading));body.append(live);
+  portalRpc('zavi_admin_finance_snapshot').then(snap=>{
+    if(!live.isConnected||state.tab!=='billing')return;
+    live.replaceChildren();
+    // Explicit allow-list prevents leaking unexpected PII returned in nested server objects.
+    for(const k of ['total_revenue','active_customers','expired_customers','collected_afn','collected_usd','subscriptions_count']){
+      if(typeof snap?.[k]==='number' || typeof snap?.[k]==='string'){
+        const p=mk('article','z141-item');p.append(mk('small','',k.replaceAll('_',' ')),mk('strong','z141-value',snap[k]));live.append(p)
+      }
+    }
+    if(!live.childElementCount)live.append(mk('p','z141-tip',w.unaudited))
+  }).catch(()=>live.replaceChildren(mk('p','z141-tip',w.unaudited)));
  }else if(mode==='audit'){
   const audit=mk('div','z141-cards');
   body.append(audit);
-  portalRpc('zavi_admin_v241_audit',{p_limit:40}).then(items=>{if(!body.isConnected||state.tab!=='audit')return;audit.replaceChildren();(Array.isArray(items)?items:[]).forEach(x=>audit.append(mk('div','z141-item',(x.action||x.event_type||'Event')+' · '+(x.occurred_at||x.created_at||''))));if(!audit.childElementCount)audit.append(mk('p','',w.empty))}).catch(()=>audit.append(mk('p','',w.error)));
+  portalRpc('zavi_admin_v241_audit',{p_limit:40}).then(items=>{if(!body.isConnected||state.tab!=='audit')return;audit.replaceChildren();const list=Array.isArray(items)?items:Array.isArray(items?.events)?items.events:[];list.forEach(x=>audit.append(mk('div','z141-item',(x.action||x.event_type||'Event')+' · '+(x.occurred_at||x.created_at||''))));if(!audit.childElementCount)audit.append(mk('p','',w.empty))}).catch(()=>audit.append(mk('p','',w.error)));
  }else if(mode==='health'){
   const selector=mk('select');selector.append(new Option(w.select,''));
   state.customers.forEach(x=>selector.append(new Option(x.workspace_name||x.owner_email,x.workspace_id)));

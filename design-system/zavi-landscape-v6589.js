@@ -7,7 +7,7 @@ function measure(){
  const viewport=window.visualViewport;
  const width=Math.max(240,Math.round(viewport?.width||window.innerWidth||document.documentElement.clientWidth||360));
  const height=Math.max(200,Math.round(viewport?.height||window.innerHeight||document.documentElement.clientHeight||600));
- const landscape=width>height;
+ const landscape=window.matchMedia?.('(orientation: landscape)').matches??(window.innerWidth>window.innerHeight);
  root.style.setProperty('--z89-viewport-width',width+'px');
  root.style.setProperty('--z89-viewport-height',height+'px');
  root.dataset.zaviOrientation=landscape?'landscape':'portrait';

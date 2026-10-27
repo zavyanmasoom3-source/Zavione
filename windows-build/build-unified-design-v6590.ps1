@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$tag = 'zavi-mobile-rescue-v6590-admin1436-qa-20261027'
+$tag = 'zavi-v6590-admin1436-bodyfix-verified-qa-20261027'
 New-Item -ItemType Directory -Path desktop-source,design-windows-delivery -Force | Out-Null
 gh release download $tag --pattern '*.apk*' --dir desktop-source
 if ($LASTEXITCODE -ne 0) { throw 'Cannot obtain release APKs for matching desktop skin' }

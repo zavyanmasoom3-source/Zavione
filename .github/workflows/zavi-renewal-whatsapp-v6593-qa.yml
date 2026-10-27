@@ -211,7 +211,7 @@ jobs:
           test -s android-build/app/src/main/assets/zavi-admin-ipad-v1438.css
           node --check android-build/app/src/main/assets/zavi-admin-ipad-v1438.js
           grep -Fq "max-width:1199px" android-build/app/src/main/assets/zavi-admin-v1426-drawer.js
-          grep -Fq 'zavi-admin-v1438-ipad' android-build/app/src/main/assets/sw.js
+          grep -Fq 'zavi-admin-v1439-renewal' android-build/app/src/main/assets/sw.js
           python3 - <<'PY1438'
           from pathlib import Path
           a=Path('android-build/app/src/main/assets')

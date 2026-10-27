@@ -66,9 +66,8 @@ function markup(s){
  const footer=document.createElement('small');footer.className='zavi-camera-footer';footer.textContent=l.hint;
  panel.append(header,area,status,footer);
  s.video=video;s.panel=panel;
- s.input.closest('.zavi-barcode-box')?.append(panel)||
- s.input.closest('.field')?.append(panel)||
- s.input.parentElement.append(panel);
+ const host=s.input.closest('.zavi-barcode-box')||s.input.closest('.field')||s.input.parentElement;
+ host.append(panel);
 }
 async function start(id='zaviBarcodeScan'){
  if(!targetIds.has(id))return;

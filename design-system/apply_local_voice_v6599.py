@@ -37,6 +37,10 @@ s=s.replace('const CORE=[','const CORE=["zavi-voice-local-v6599.js","zavi-voice-
 sw.write_text(s,encoding='utf8')
 java=root/'java/com/zavione/mobile/MainActivity.java'
 c=java.read_text(encoding='utf8')
+# Allow bundled offline MP3 responses after an STT callback (not a user gesture).
+playback_anchor='        settings.setJavaScriptEnabled(true);'
+assert c.count(playback_anchor)==1
+c=c.replace(playback_anchor,playback_anchor+'\n        settings.setMediaPlaybackRequiresUserGesture(false);',1)
 # Hard-disable BOTH previous Android recognition API entry points. An old restored
 # preference or a legacy button must never be allowed to invoke the Google/system UI.
 for method in ('startZaviVoiceRecognition(String message)','handleHandsfreeMessage(String input)'):
@@ -116,14 +120,14 @@ g=g.replace(needle,'''    ndkVersion '27.2.12479018'
 # Preserve original admin vs store package distinct, and isolate QA edition from production.
 if a.app=='one':
     previous='com.zavione.one.unified20.v6598easyqa'
-    nextid='com.zavione.one.unified20.v6601qa'
+    nextid='com.zavione.one.unified20.v6602qa'
     oldcode='versionCode admin ? 4127 : 659800'
-    newcode='versionCode admin ? 4127 : 660100'
+    newcode='versionCode admin ? 4127 : 660200'
 else:
     previous='com.zavione.one.admin.easy1444qa'
-    nextid='com.zavione.one.admin.v1447qa'
+    nextid='com.zavione.one.admin.v1448qa'
     oldcode='versionCode admin ? 144400 : 6554'
-    newcode='versionCode admin ? 144700 : 6554'
+    newcode='versionCode admin ? 144800 : 6554'
 assert previous in g and oldcode in g,(previous,oldcode)
 g=g.replace(previous,nextid,1).replace(oldcode,newcode,1)
 g=g.replace('65.98-handsfree-qa','66.00-voice-qa').replace('1.4.44-handsfree-qa','1.4.46-voice-qa')

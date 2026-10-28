@@ -21,8 +21,11 @@ for name in names:
  if name.endswith('.css'):
   html=html.replace('</head>','<link rel="stylesheet" href="./'+name+'?v=65.97"></head>',1)
  else:
-  assert '</body>' in html
-  html=html.replace('</body>','<script src="./'+name+'?v=65.97" defer></script></body>',1)
+  # IMPORTANT: index.html embeds several complete invoice HTML templates as JS strings.
+  # Inserting before the FIRST </body> would corrupt the original 286KB inline ledger logic.
+  pos=html.rfind('</body>')
+  assert pos>html.rfind('</head>') and pos>0
+  html=html[:pos]+'<script src="./'+name+'?v=65.97" defer></script>'+html[pos:]
  assert html.count(name)==1
 if a.app=='one':
  manifest=root/'zavi-unified20-manifest.json'

@@ -110,7 +110,7 @@
    const aliases=[key,...labels].map(cleanLabel).filter(x=>x.length>=3);
    for(const word of aliases){
     if(normalized===word||hasNavVerb&&(normalized===word||normalized.includes(' '+word+' ')||normalized.startsWith(word+' ')||normalized.endsWith(' '+word))){
-     matches.push({key,score:word.length+100});break;
+     matches.push({key,score:word.length+100+(word===key?50:0)});break;
     }
     if(hasNavVerb&&word.length>=5){
       const tokens=normalized.split(' ').filter(Boolean);

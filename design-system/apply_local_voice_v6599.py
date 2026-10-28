@@ -9,6 +9,9 @@ p=argparse.ArgumentParser();p.add_argument('--app',choices=['one','admin'],requi
 a=p.parse_args()
 root=Path('android-build/app/src/main')
 assets=root/'assets';page=assets/'index.html'
+models=assets/'models';models.mkdir(exist_ok=True)
+shutil.copy2('design-model/ggml-tiny-q5_1.bin',models/'ggml-tiny-q5_1.bin')
+assert (models/'ggml-tiny-q5_1.bin').stat().st_size==32152673
 html=page.read_text(encoding='utf8')
 for name in ('zavi-voice-local-v6599.css','zavi-voice-local-v6599.js'):
     assert name not in html

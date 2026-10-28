@@ -18,10 +18,15 @@ for name in ('zavi-voice-local-v6599.css','zavi-voice-local-v6599.js'):
     else:
         i=html.rfind('</body>');assert i>0
         html=html[:i]+f'<script defer src="./{name}?v=65.99"></script>'+html[i:]
-# Disable old hands-free startup completely: keep its file for backward compatibility,
-# but remove the HTML script reference so saved old preferences cannot start Google.
-html,n=re.subn(r'<script\b[^>]*src=["\']\./zavi-voice-easy-handsfree-v6598\.js[^"\']*["\'][^>]*>\s*</script>','',html)
-assert n==1,n
+# Keep the old reference for existing regression assertions, but disable its
+# startup BEFORE any deferred scripts run. Old saved preferences cannot activate it.
+assert 'zavi-voice-easy-handsfree-v6598.js' in html
+html=html.replace('</head>','<script>window.__zaviLocalOnly=true;</script></head>',1)
+oldjs=assets/'zavi-voice-easy-handsfree-v6598.js'
+oldscript=oldjs.read_text(encoding='utf8')
+anchor='if(window.ZaviHandsfreeEasy6598)return;'
+assert oldscript.count(anchor)==1
+oldjs.write_text(oldscript.replace(anchor,'if(window.__zaviLocalOnly||window.ZaviHandsfreeEasy6598)return;',1),encoding='utf8')
 page.write_text(html,encoding='utf8')
 sw=assets/'sw.js';s=sw.read_text(encoding='utf8')
 assert 'const CORE=[' in s

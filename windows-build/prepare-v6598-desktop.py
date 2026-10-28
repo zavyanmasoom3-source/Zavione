@@ -189,7 +189,7 @@ if a.design_v6598:
  for file in ('zavi-voice-dashboard-v6597.css','zavi-voice-dashboard-v6597.js'):
   assert (web/file).is_file(),file
   assert (file+'?v=65.97') in (web/'index.html').read_text(encoding='utf8')
- assert 'zavi-admin-v1443-compact-mic' in (web/'sw.js').read_text(encoding='utf8') if a.mode=='admin' else 'zavi-store-v6597-compact-mic' in (web/'sw.js').read_text(encoding='utf8')
+ assert ('zavi-admin-v1444-easy-handsfree' if a.mode=='admin' else 'zavi-store-v6598-easy-handsfree') in (web/'sw.js').read_text(encoding='utf8')
 if a.design_v6598:
  for name in ('zavi-voice-easy-handsfree-v6598.js','zavi-voice-easy-handsfree-v6598.css'):
   assert (web/name).is_file(),name

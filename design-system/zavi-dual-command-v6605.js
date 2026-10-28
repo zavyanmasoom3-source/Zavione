@@ -49,7 +49,7 @@ const sections=ADMIN?{
 const commands=Object.entries(sections).map(([key,labels])=>({key,aliases:[key,...labels].map(norm)}));
 const NA=/\b(?:حذف|پاک|نابود|مسح|reset|delete|remove|erase|drop|wipe|ړنګ|لرې)\b/u;
 const DANGEROUS=/(حذف|پاک\s*کن|پاک\s*کړه|نابود|مسح|reset|delete|remove|erase|drop|wipe|ړنګ|لرې\s*کړه|غیرفعال کردن امنیت|تغییر مجوز|grant access)/iu;
-const NAV=/\b(?:باز|بکن|بکو|وا|برو|بیار|بگذار|ببین|نمایش|نشان|بخش|صفحه|منو|داشبورد|خلاص|پرانی|پراني|وښیه|ورشه|open|show|go|navigate|display|view|launch)\b/iu;
+const NAV=/(?:^|\s)(?:باز|بکن|بکو|وا|برو|بیار|بگذار|ببین|نمایش|نشان|بخش|صفحه|منو|داشبورد|خلاص|پرانی|پراني|وښیه|ورشه|open|show|go|navigate|display|view|launch)(?:\s|$)/iu;
 function parseCommand(raw){
  const n=norm(raw);
  if(!n||n.length>280)return {kind:'unknown',reason:'empty'};
@@ -69,7 +69,7 @@ function parseCommand(raw){
  const distinct=[...new Set(matches.map(x=>x.key))];
  if(matches.length&&!(matches.length>1&&matches[0].score===matches.find(x=>x.key!==matches[0].key)?.score)){
   // An instruction containing quantities/customers is not simply page navigation.
-  const quantity=/\b(?:\d+|یک|دو|سه|پنځه|پنج|کیلو|عدد|بسته|گرام|kg|pcs)\b/iu;
+  const quantity=/(?:^|\s)(?:\d+|یک|دو|سه|پنځه|پنج|کیلو|عدد|بسته|گرام|kg|pcs)(?:\s|$)/iu;
   const explicit=/(باز|خلاص|open|show|نمایش|نشان|ورشه|پراني|صفحه|بخش|go)/iu.test(n2);
   if(explicit||!quantity.test(n2)&&n2.split(' ').length<=3)return {kind:'navigate',key:matches[0].key,normalized:n2,score:matches[0].score};
  }

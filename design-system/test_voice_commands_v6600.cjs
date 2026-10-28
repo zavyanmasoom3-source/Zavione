@@ -10,14 +10,19 @@ const bridge=fs.readFileSync('design-system/apply_local_voice_v6599.py','utf8');
 assert(!src.includes("el('textarea'"),'Voice UI must contain NO typing fields');
 assert(!src.includes("el('details'"),'No hidden type-a-command panel');
 assert(!src.includes('webkitSpeechRecognition'),'Native offline only');
-assert(java.includes('silentFrames>=4'),'Use silence detection instead of fixed 4 second audio batches');
+assert(java.includes('Math.sqrt(power/Math.max(n,1))'),'Capture actual PCM amplitude');
+assert(java.includes('emit("no_audio"'),'Report silence instead of fake listening');
+assert(java.includes('emit("heard"'),'Report genuine detected speech');
+assert(java.includes('MediaRecorder.AudioSource.MIC'),'Use local microphone');
+assert(!src.includes('z199-privacy'),'Privacy footer must be absent');
+assert(src.includes('else if(event?.type===\'no_audio\')'),'Show audio diagnostics');
 assert(bridge.includes('ZaviAndroidLocalVoice'),'Origin-checked Android bridge required');
 assert(bridge.includes('Local-only mode'),'Legacy Google/system handlers must be disabled');
 function simulate(admin){
  const clicks=[],app={isConnected:true,hidden:false},keys=admin?
  ['overview','customers','devices','support','payments','finance','activity','health','brand','security','settings']:
  ['dashboard','sales','purchases','products','contacts','phonebook','debtors','creditors','money','hawala','expenses','waste','reports','journal','repairs','settings','subscription'];
- const entries=keys.map(k=>({isConnected:true,disabled:false,hidden:false,dataset:admin?{page:k}:{go:k},textContent:k,getAttribute:()=>null,closest:()=>null,click:()=>clicks.push(k)}));
+ const entries=keys.map(k=>({isConnected:true,disabled:false,hidden:true,dataset:admin?{page:k}:{go:k},textContent:k,getAttribute:()=>null,closest:()=>null,click:()=>clicks.push(k)}));
  const document={readyState:'loading',currentScript:null,hidden:false,
   querySelector(sel){
    if(sel==='script[src*="zavi-voice-admin-v1442.js"]')return admin?{}:null;
@@ -38,7 +43,7 @@ function simulate(admin){
    return {kind:'unknown'};
   }
  }};
- const sandbox={window,document,localStorage:{getItem:()=>null,setItem:()=>{}},getComputedStyle:()=>({display:'block'}),console,setInterval:()=>{},Date,Option:function(){}};
+ const sandbox={window,document,localStorage:{getItem:()=>null,setItem:()=>{}},getComputedStyle:()=>({display:'none'}),console,setInterval:()=>{},Date,Option:function(){}};
  vm.runInNewContext(src,sandbox,{timeout:2000});
  assert.equal(typeof window.ZaviVoiceLocal6599.interpret,'function');
  return {api:window.ZaviVoiceLocal6599,clicks};
@@ -55,4 +60,4 @@ admin.api.interpret('گزارش‌ها را باز کن');
 admin.api.interpret('امنیت');
 admin.api.interpret('حذف همه مشتریان');
 assert.deepEqual(admin.clicks,['payments','finance','security']);
-console.log('PASS: no typing, ONE real product stock route, admin real page routes, delete refused, no legacy Google service');
+console.log('PASS voice-only, no footer, audio status, real store/admin routes on hidden sidebar, refused deletion, local microphone');

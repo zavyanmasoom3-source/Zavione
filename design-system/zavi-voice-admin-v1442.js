@@ -184,7 +184,7 @@ function analyse(){
   const box=el('div','z196-lines');
   box.append(el('p','',w.action+': '+(w[res.key]||res.key)));
   if(res.draft.party)box.append(el('p','',w.party+': '+res.draft.party));
-  res.draft.items.forEach(item=>box.append(el('p','',item.product+' · '+(item.quantity??'؟')+' '+(item.unit||'؟')));
+  res.draft.items.forEach(item=>box.append(el('p','',item.product+' · '+(item.quantity??'؟')+' '+(item.unit||'؟'))));
   area.append(box,el('p','z196-note',w.noMatch),el('p','z196-warning',w.safe))
  }else area.append(el('p','',w.open+': '+w[res.key]));
  const actions=el('div','z196-actions');

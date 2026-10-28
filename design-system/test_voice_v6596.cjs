@@ -22,7 +22,7 @@ for(const voice of [one,admin]){
   assert.equal(voice.route('بخش فروش را باز کن').kind,voice.app==='one'?'navigate':'unknown');
   assert.equal(voice.route('حذف تمام اسناد').kind,'unknown');
   assert.equal(voice.route('pay Ahmad 500').kind,'unknown');
-  assert.equal(voice.route('open subscriptions').kind,voice.app==='admin'?'navigate':'unknown');
+  assert.equal(voice.route('open subscriptions').kind,voice.app==='admin'?'navigate':'navigate_label');
 }
 const sale=one.route('فروش پنج کیلو برنج به احمد');
 assert.equal(sale.kind,'draft');assert.equal(sale.draft.status,'DRAFT_ONLY');

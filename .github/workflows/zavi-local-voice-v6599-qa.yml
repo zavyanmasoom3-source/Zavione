@@ -275,6 +275,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Shared Actions worker must not keep ONE's previous native voice patch.
+          git show HEAD:android-build/app/src/main/java/com/zavione/mobile/MainActivity.java > android-build/app/src/main/java/com/zavione/mobile/MainActivity.java
           python3 design-system/build_android_v6598.py --app admin --apk design-staging/admin.apk --expected-sha 4d06d6e76f6e7238ea01b4759f617087c195741267f191d89e0a865aff3f1eea
           python3 design-system/apply_local_voice_v6599.py --app admin
           node --check android-build/app/src/main/assets/zavi-voice-local-v6599.js

@@ -1,4 +1,4 @@
-/* ZAVI VOICE LOCAL 65.99 / 1.4.45: own lightweight screen & local-only Android bridge.
+/* ZAVI VOICE LISTEN ONLY 66.03 / 1.4.49: own lightweight screen & local-only Android bridge.
    Transcription uses bundled whisper.cpp, not Google / Android SpeechRecognizer.
    Navigation is immediate. Financial instructions are preview-only: never submit.
 */
@@ -12,7 +12,7 @@
   en:{loading:'Loading local voice model...',heard:'Sound detected',no_audio:'No voice detected. Speak closer to the microphone.',unrecognized:'Sound heard, words unclear. Please repeat.',title:'ZAVI VOICE',enabled:'Assistant is on',off:'Assistant is off',start:'Enable voice',stop:'Turn voice off',listening:'Listening — speak now',working:'Understanding speech',lang:'Language',example:'Say “open sales” or “show inventory”',confirm:'Open invoice for review',cancel:'Cancel',draft:'Transaction draft — not posted',review:'Review the product, price, stock and customer in the original invoice before posting.',unknown:'Command not clear; repeat.',permission:'Allow microphone access.',unavailable:'Local voice model is not available here; verify local voice model',error:'Voice engine unavailable.',closed:'Close',ready:'Tap Enable voice to begin.',navigated:'Section opened',safe:'Financial changes need final confirmation.'}
  };
  const names={'fa-AF':'دری افغانستان','ps-AF':'پښتو افغانستان','en-GB':'English'};
- const state={enabled:false,lang:'fa-AF',active:false,working:false,starting:false,root:null,last:'',pending:null,status:'',native:false,lastCommand:'',lastAt:0,noticeUntil:0,speaking:false,replyQueue:[],replyClip:null};
+ const state={enabled:false,lang:'fa-AF',active:false,working:false,starting:false,root:null,last:'',pending:null,status:'',native:false,lastCommand:'',lastAt:0,noticeUntil:0};
  const $=(s,p=document)=>p.querySelector(s);
  const el=(tag,cls,text)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(text!==undefined)x.textContent=text;return x};
  const t=()=>L[state.lang.startsWith('ps')?'ps':state.lang.startsWith('en')?'en':'fa'];
@@ -29,54 +29,9 @@
  function native(op){if(!avail())return false;try{window.ZaviAndroidLocalVoice.postMessage(JSON.stringify({op,language:state.lang}));return true}catch(_){return false}}
  function stop(){native('stop');state.active=false;state.working=false;state.starting=false;draw()}
  function toggle(){if(!auth())return;
-  if(state.enabled){state.enabled=false;cancelReplies();stop();save();publishStatus(t().off)}
+  if(state.enabled){state.enabled=false;stop();save();publishStatus(t().off)}
   else{state.enabled=true;save();if(!avail()){state.enabled=false;save();publishStatus(t().unavailable);return}
-   state.status=t().working;state.starting=false;if(!sayReply('enabled')){state.starting=true;if(!native('start')){state.starting=false;state.enabled=false;save();publishStatus(t().unavailable)}}draw()}
- }
-
- const replyIds=new Set(['enabled','executing','opened','cannot','confirm','cancelled','no_audio','unclear','error','review']);
- function replyLanguage(){return state.lang.startsWith('ps')?'ps':state.lang.startsWith('en')?'en':'fa'}
- function cancelReplies(){
-  state.replyQueue.length=0;
-  const audio=state.replyClip;state.replyClip=null;state.speaking=false;
-  if(audio){audio.onended=null;audio.onerror=null;try{audio.pause();audio.currentTime=0}catch(_){}}
- }
- function startListeningAfterReply(){
-  if(state.enabled&&!state.speaking&&!state.starting&&!document.hidden&&auth()&&avail()){
-   state.starting=true;native('start');
-  }
- }
- function playReplyQueue(){
-  if(state.speaking)return;
-  if(!state.enabled||document.hidden||!auth()){cancelReplies();return}
-  const id=state.replyQueue.shift();
-  if(!id){startListeningAfterReply();return}
-  if(!window.Audio){startListeningAfterReply();return}
-  state.speaking=true;
-  state.starting=false;
-  // Stop microphone while ZAVI speaks to prevent endless self-recognition loops.
-  native('stop');state.active=false;
-  const audio=new Audio('./voice/'+replyLanguage()+'/'+id+'.mp3');
-  state.replyClip=audio;
-  audio.preload='auto';
-  let finished=false;
-  const done=()=>{
-   if(finished)return;finished=true;
-   if(state.replyClip!==audio)return;
-   state.replyClip=null;state.speaking=false;
-   if(state.replyQueue.length)playReplyQueue();else startListeningAfterReply();
-  };
-  audio.onended=done;audio.onerror=done;
-  try{
-   const playing=audio.play();
-   if(playing&&typeof playing.catch==='function')playing.catch(done);
-  }catch(_){done()}
- }
- function sayReply(id){
-  if(!replyIds.has(id)||!state.enabled||!auth())return false;
-  // Do not repeat the same feedback phrase in a single queue.
-  if(state.replyQueue.at(-1)===id)return false;
-  state.replyQueue.push(id);playReplyQueue();return true;
+   state.status=t().working;state.starting=true;if(!native('start')){state.starting=false;state.enabled=false;save();publishStatus(t().unavailable)}else draw()}
  }
  function normalize(s){return String(s||'').replace(/[\u200c\u200e\u200f]/g,'').trim().toLowerCase();}
  const YES=/^(تایید|تأیید|تایید کن|تأیید کن|بلی|بله|هو|تایید کړه|confirm|yes|okay|ok)$/u;
@@ -107,7 +62,69 @@
   communications:['پیام','message','communications'],support:['پشتیبانی','support'],
   customers:['مشتریان','پېرودونکي','customers'],settingsPage:['تنظیمات','settings']
  };
- function cleanLabel(value){return normalize(value).replace(/[\u064b-\u065f]/g,'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim()}
+ function cleanLabel(value){return String(value||'').normalize('NFKC').toLowerCase().replace(/[\u064b-\u065f\u0670\u200c\u200e\u200f\u0640]/g,'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[أإآ]/g,'ا').replace(/[ۀة]/g,'ه').replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim()}
+
+ const VOICE_NAV_VERBS=/(?:^|\s)(?:باز|بکن|بکنی|بازکو|کو|برو|بیار|بیارید|نمایش|نشان|صفحه|بخش|بازکن|open|show|go|navigate|خلاص|پرانيزه|خلاصه|وښیه|راوړه|ورشه|ښکاره)(?:\s|$)/u;
+ const namedTargets={
+  dashboard:['داشبورد','خانه','صفحه اصلی','کور','ډشبورډ','home','dashboard'],
+  sales:['فروش','فروشی','فروخت','خرڅلاو','پلور','پلورلو','sale','sales'],
+  purchase:['خرید','خریداری','پیرود','پېرود','پیرودل','buy','purchase','purchases'],
+  inventory:['گدام','گدوم','انبار','موجودی','ګدام','اجناس','توکي','stock','inventory','warehouse','products'],
+  customers:['مشتری','مشتریان','مشتری ها','پېرودونکي','پیرودونکي','customers','contacts'],
+  debt:['قرضدار','قرضداران','بدهکار','بدهکاران','پور','پورونه','debtors','debts'],
+  reports:['گزارش','گزارشات','راپور','راپورونه','reports','report'],
+  settingsPage:['تنظیمات','تنظیم','تنظیمونه','settings'],
+  daily:['مدیریت روزمره','کارهای روزمره','روزمره','ورځني کارونه','daily'],
+  barcode:['بارکد','بار کود','بارکوډ','barcode'],
+  expenses:['مصارف','مصرف','هزینه','لګښتونه','expense','expenses'],
+  billing:['مالی','پرداخت','پرداخت ها','رسید','عاید','finance','billing','payments'],
+  subscriptions:['اشتراک','اشتراکات','تمدید','subscription'],
+  devices:['دستگاه','دستگاه ها','وسایل','device','devices'],
+  support:['پشتیبانی','حمایت','ملاتړ','support'],
+  audit:['فعالیت','فعالیت ها','تاریخچه','activity','audit'],
+  communications:['پیام','پیامها','پیغام','messages','communications'],
+  finance:['درامد','درآمد','عاید','finance','revenue'],
+  payments:['پرداخت','تمدید','payment','payments'],
+  health:['سلامت سیستم','وضعیت سیستم','health'],
+  security:['امنیت','امنیتی','security'],
+  brand:['برند','brand']
+ };
+ function distanceOne(a,b){
+  if(a===b)return true;
+  if(Math.abs(a.length-b.length)>1)return false;
+  let i=0,j=0,d=0;
+  while(i<a.length&&j<b.length){
+   if(a[i]===b[j]){i++;j++;continue}
+   if(++d>1)return false;
+   if(a.length>b.length)i++;else if(b.length>a.length)j++;else{i++;j++}
+  }
+  return d+(i<a.length?1:0)+(j<b.length?1:0)<=1;
+ }
+ function dialectNavigation(raw){
+  const normalized=cleanLabel(raw);
+  if(!normalized||normalized.length>120)return null;
+  const hasNavVerb=VOICE_NAV_VERBS.test(normalized);
+  const matches=[];
+  for(const [key,labels] of Object.entries(namedTargets)){
+   if(!Object.prototype.hasOwnProperty.call(routes,key))continue;
+   const aliases=[key,...labels].map(cleanLabel).filter(x=>x.length>=3);
+   for(const word of aliases){
+    if(normalized===word||hasNavVerb&&(normalized===word||normalized.includes(' '+word+' ')||normalized.startsWith(word+' ')||normalized.endsWith(' '+word))){
+     matches.push({key,score:word.length+100});break;
+    }
+    if(hasNavVerb&&word.length>=5){
+      const tokens=normalized.split(' ').filter(Boolean);
+      if(tokens.some(x=>x.length>=5&&distanceOne(x,word))){matches.push({key,score:word.length});break}
+    }
+   }
+  }
+  if(!matches.length)return null;
+  matches.sort((a,b)=>b.score-a.score);
+  // If two different modules are similarly plausible, don't execute anything.
+  if(matches.length>1&&matches[0].score===matches[1].score)return null;
+  return {kind:'navigate',key:matches[0].key,source:raw};
+ }
+
  function navFor(r){
   // Only click authentic navigation elements; never click arbitrary Save/Delete/Pay buttons.
   const id=routes[r.key];
@@ -125,21 +142,11 @@
  }
  function action(result){
   const target=navFor(result);
-  if(!target){state.noticeUntil=Date.now()+4500;publishStatus(t().unknown);sayReply('cannot');return false}
-  sayReply('executing');
-  // Only use the existing authenticated menu click handler. Never save money here.
+  if(!target){state.noticeUntil=Date.now()+4500;publishStatus(t().unknown);return false}
   target.click();
+  // Without hiding the panel, users think the page has not opened.
   if(state.root)state.root.hidden=true;
-  const targetId=target.dataset.go||target.dataset.page||'';
-  const check=()=>{
-   const selectors=['#sidebarLinks .active','#sidebarLinks2 .active','#mobileBottom .active','#side .selected','#appScreen .nav .selected'];
-   const active=[target,...document.querySelectorAll(selectors.join(','))];
-   const opened=active.some(n=>(n.dataset?.go||n.dataset?.page)===targetId&&
-     (n.classList?.contains('active')||n.classList?.contains('selected')||n.getAttribute?.('aria-current')==='page'));
-   if(opened){publishStatus(t().navigated);sayReply('opened')}
-   else{publishStatus(t().unknown);sayReply('cannot')}
-  };
-  if(typeof setTimeout==='function')setTimeout(check,350);else check();
+  publishStatus(t().navigated);
   return true;
  }
  function interpret(words){
@@ -151,10 +158,10 @@
   if(n===state.lastCommand&&now-state.lastAt<4500)return;
   state.lastCommand=n;state.lastAt=now;state.last=text;
   if(state.pending && YES.test(n)){const pending=state.pending;state.pending=null;action({kind:'navigate',key:pending.key});draw();return}
-  if(state.pending && NO.test(n)){state.pending=null;publishStatus(t().ready);sayReply('cancelled');return}
+  if(state.pending && NO.test(n)){state.pending=null;publishStatus(t().ready);return}
   const cleaned=text.replace(/^(?:ای|هی|hey|ok|okay)?\s*(?:زاوی|زاوي|zavi|zavy|زاوی وان)[،,\s:]*/iu,'').trim()||text;
   const command=cleaned.replace(/^(?:ثبت|ایجاد|انجام|record|create)\s+(?=فروش|خرید|sell|sale|buy|purchase)/iu,'');
-  let result=window.ZaviVoiceProV6596?.route?.(command);
+  let result=dialectNavigation(command)||window.ZaviVoiceProV6596?.route?.(command);
   // Use the exact authenticated app navigation, not guessed buttons.
   if(result?.kind==='unknown'||!result){
    const n=cleanLabel(command);
@@ -164,10 +171,10 @@
     }
    }
   }
-  if(!result||result.kind==='unknown'){state.pending=null;state.noticeUntil=Date.now()+4500;publishStatus(t().unknown);sayReply('unclear');return}
+  if(!result||result.kind==='unknown'){state.pending=null;state.noticeUntil=Date.now()+4500;publishStatus(t().unknown);return}
   if(result.kind==='draft'){
    state.pending={key:result.key,draft:result.draft};
-   publishStatus(t().draft);sayReply('confirm');return
+   publishStatus(t().draft);return
   }
   if(result.kind==='navigate'||result.kind==='navigate_label'){state.pending=null;action(result);return}
   publishStatus(t().unknown)
@@ -193,7 +200,7 @@
    const buttons=el('div','z199-actions'),confirm=el('button','z199-confirm',w.confirm),cancel=el('button','z199-cancel',w.cancel);
    confirm.type=cancel.type='button';
    confirm.addEventListener('click',()=>{const k=state.pending?.key;state.pending=null;if(k)action({kind:'navigate',key:k});draw()});
-   cancel.addEventListener('click',()=>{state.pending=null;sayReply('cancelled');draw()});
+   cancel.addEventListener('click',()=>{state.pending=null;draw()});
    buttons.append(confirm,cancel);preview.append(buttons);
   }
   preview.hidden=!state.pending;
@@ -210,7 +217,7 @@
   const row=el('div','z199-row'),label=el('label','z199-label');label.id='z199-label';
   const locale=el('select','z199-locale');locale.id='z199-locale';
   for(const [code,name] of Object.entries(names))locale.append(new Option(name,code));
-  locale.value=state.lang;locale.onchange=()=>{const was=state.enabled;stop();state.lang=locale.value;save();if(was){cancelReplies();state.starting=true;native('start')}draw()};
+  locale.value=state.lang;locale.onchange=()=>{const was=state.enabled;stop();state.lang=locale.value;save();if(was){state.starting=true;native('start')}draw()};
   row.append(label,locale);
   const toggleEl=el('button','z199-toggle');toggleEl.id='z199-toggle';toggleEl.type='button';toggleEl.onclick=toggle;
   const led=el('div','z199-led');led.setAttribute('aria-hidden','true');const statusEl=el('p','z199-status');statusEl.id='z199-status';statusEl.setAttribute('role','status');
@@ -228,10 +235,10 @@
   if(event?.type==='ready'){state.starting=false;state.active=true;state.working=false;if(Date.now()>=state.noticeUntil)publishStatus(t().listening);else draw()}
   else if(event?.type==='loading'){state.starting=true;publishStatus(t().loading)}
   else if(event?.type==='heard'){state.noticeUntil=0;publishStatus(t().heard)}
-  else if(event?.type==='no_audio'){if(state.speaking)return;state.noticeUntil=Date.now()+4500;publishStatus(t().no_audio)}
-  else if(event?.type==='unrecognized'){if(state.speaking)return;state.noticeUntil=Date.now()+4500;publishStatus(t().unrecognized);sayReply('unclear')}
+  else if(event?.type==='no_audio'){state.noticeUntil=Date.now()+4500;publishStatus(t().no_audio)}
+  else if(event?.type==='unrecognized'){state.noticeUntil=Date.now()+4500;publishStatus(t().unrecognized)}
   else if(event?.type==='working'){state.noticeUntil=0;state.working=true;publishStatus(t().working)}
-  else if(event?.type==='result'){if(state.speaking)return;state.working=false;state.noticeUntil=Date.now()+3800;interpret(event.text);state.active=true;draw()}
+  else if(event?.type==='result'){state.working=false;state.noticeUntil=Date.now()+3800;interpret(event.text);state.active=true;draw()}
   else if(event?.type==='permission'){state.starting=false;state.active=false;state.enabled=false;save();publishStatus(t().permission)}
   else if(event?.type==='error'){state.starting=false;state.active=false;state.enabled=false;save();publishStatus(t().error)}
   else if(event?.type==='stopped'){state.starting=false;state.active=false;state.working=false;draw()}
@@ -245,11 +252,11 @@
    event.preventDefault();event.stopImmediatePropagation();open();
   },true);
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.root)state.root.hidden=true});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelReplies();stop()}else if(state.enabled&&!state.speaking&&auth()&&avail()&&!state.starting){state.starting=true;native('start')}});
-  window.addEventListener('pagehide',()=>{cancelReplies();stop()});
-  setInterval(()=>{if(!auth()&&state.active)stop();else if(state.enabled&&!state.speaking&&!state.active&&!state.starting&&!document.hidden&&auth()&&avail()){state.starting=true;native('start')}},3500);
-  if(state.enabled&&!state.speaking&&avail()&&auth()&&!document.hidden){state.starting=true;native('start')}
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){stop()}else if(state.enabled&&auth()&&avail()&&!state.starting){state.starting=true;native('start')}});
+  window.addEventListener('pagehide',stop);
+  setInterval(()=>{if(!auth()&&state.active)stop();else if(state.enabled&&!state.active&&!state.starting&&!document.hidden&&auth()&&avail()){state.starting=true;native('start')}},3500);
+  if(state.enabled&&avail()&&auth()&&!document.hidden){state.starting=true;native('start')}
  }
- window.ZaviVoiceLocal6599=Object.freeze({open,interpret,stop,toggle,sayReply,isEnabled:()=>state.enabled,engine:'whisper.cpp device-only with male offline status clips'});
+ window.ZaviVoiceLocal6599=Object.freeze({open,interpret,stop,toggle,isEnabled:()=>state.enabled,engine:'whisper.cpp base q5_1 device-only, silent replies'});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

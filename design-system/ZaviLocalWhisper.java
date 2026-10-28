@@ -36,13 +36,13 @@ public final class ZaviLocalWhisper {
   locale=lang;if(!running.compareAndSet(false,true))return;executor.execute(this::capture);
  }
  private File model()throws IOException{
-  File dst=new File(activity.getFilesDir(),"zavi-ggml-tiny-q5_1.bin");
-  if(dst.isFile()&&dst.length()==32152673L)return dst;
+  File dst=new File(activity.getFilesDir(),"zavi-ggml-base-q5_1.bin");
+  if(dst.isFile()&&dst.length()>55000000L&&dst.length()<65000000L)return dst;
   File tmp=new File(activity.getFilesDir(),"zavi-model.tmp");
-  try(InputStream in=activity.getAssets().open("models/ggml-tiny-q5_1.bin");OutputStream out=new FileOutputStream(tmp)){
+  try(InputStream in=activity.getAssets().open("models/ggml-base-q5_1.bin");OutputStream out=new FileOutputStream(tmp)){
    byte[] b=new byte[65536];int n;while((n=in.read(b))!=-1)out.write(b,0,n);
   }
-  if(tmp.length()!=32152673L||!tmp.renameTo(dst))throw new IOException("Model incomplete");
+  if(tmp.length()<=55000000L||tmp.length()>=65000000L||!tmp.renameTo(dst))throw new IOException("Model incomplete");
   return dst;
  }
  private void capture(){

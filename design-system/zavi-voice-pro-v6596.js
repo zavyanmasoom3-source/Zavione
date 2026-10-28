@@ -47,8 +47,8 @@ const digits={zero:0,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nin
 const unitPattern='کیلوگرم|کیلوگرام|کیلو|کيلو|کيلوګرام|ګرام|گرم|گرام|سیر|بوتل|بوتلونه|کارتن|بسته|عدد|دانه|قطعه|متر|لیتر|لتر|کيلو|kg|kilo|kilos|grams?|bottles?|cartons?|packs?|pieces?|liters?|litres?';
 const units=Object.freeze({'کیلوگرم':'kg','کیلوگرام':'kg','کیلو':'kg','کيلو':'kg','کيلوګرام':'kg','kilo':'kg','kilos':'kg','kg':'kg','گرام':'g','گرم':'g','ګرام':'g','gram':'g','grams':'g','بوتل':'bottle','بوتلونه':'bottle','bottle':'bottle','bottles':'bottle','کارتن':'carton','carton':'carton','cartons':'carton','سیر':'seer','عدد':'piece','دانه':'piece','pieces':'piece','piece':'piece','liters':'litre','litres':'litre'});
 function transactionType(text){
- if(/^(?:فروش|بفروش|فروخت|فروشم|پلور|وپلوره|وپلورم|خرڅلاو|sell|sale)\b/.test(text))return 'sales';
- if(/^(?:خرید|بخر|پېرود|پیرود|واخله|buy|purchase)\b/.test(text))return 'purchase';
+ if(/^(?:فروش|بفروش|فروخت|فروشم|پلور|وپلوره|وپلورم|خرڅلاو|sell|sale)(?:\s|$)/.test(text))return 'sales';
+ if(/^(?:خرید|بخر|پېرود|پیرود|واخله|buy|purchase)(?:\s|$)/.test(text))return 'purchase';
  return null
 }
 function parseDraft(raw){

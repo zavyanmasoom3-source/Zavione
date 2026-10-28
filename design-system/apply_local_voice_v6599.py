@@ -116,14 +116,14 @@ g=g.replace(needle,'''    ndkVersion '27.2.12479018'
 # Preserve original admin vs store package distinct, and isolate QA edition from production.
 if a.app=='one':
     previous='com.zavione.one.unified20.v6598easyqa'
-    nextid='com.zavione.one.unified20.v6600qa'
+    nextid='com.zavione.one.unified20.v6601qa'
     oldcode='versionCode admin ? 4127 : 659800'
-    newcode='versionCode admin ? 4127 : 660000'
+    newcode='versionCode admin ? 4127 : 660100'
 else:
     previous='com.zavione.one.admin.easy1444qa'
-    nextid='com.zavione.one.admin.v1446qa'
+    nextid='com.zavione.one.admin.v1447qa'
     oldcode='versionCode admin ? 144400 : 6554'
-    newcode='versionCode admin ? 144600 : 6554'
+    newcode='versionCode admin ? 144700 : 6554'
 assert previous in g and oldcode in g,(previous,oldcode)
 g=g.replace(previous,nextid,1).replace(oldcode,newcode,1)
 g=g.replace('65.98-handsfree-qa','66.00-voice-qa').replace('1.4.44-handsfree-qa','1.4.46-voice-qa')

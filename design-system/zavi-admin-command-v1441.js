@@ -102,7 +102,7 @@ function messageUI(body){
  history.append(mk('h3','',w.manual+' · '+w.total+': '+state.log.length));
  if(!state.log.length && !state.serverHistory.length)history.append(mk('p','',w.noRecords));
  state.log.slice(0,12).forEach(x=>history.append(mk('div','z141-logrow',x.workspace+' • '+(tname[locale()][x.kind]||x.kind)+' • '+new Date(x.when).toLocaleString())));
- state.serverHistory.slice(0,45).forEach(x=>history.append(mk('div','z141-logrow',(x.workspace_name||'—')+' • '+(tname[locale()][x.template_key]||x.template_key)+' • '+(x.state||'')+' • '+(x.occurred_at||'')))););
+ state.serverHistory.slice(0,45).forEach(x=>history.append(mk('div','z141-logrow',(x.workspace_name||'—')+' • '+(tname[locale()][x.template_key]||x.template_key)+' • '+(x.state||'')+' • '+(x.occurred_at||''))));
  body.replaceChildren(form,history);
 }
 async function supportUI(body){

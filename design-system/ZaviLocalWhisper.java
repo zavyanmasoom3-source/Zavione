@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /** Foreground-only, no Google or system recognition. Transcription is local whisper.cpp JNI. */
 public final class ZaviLocalWhisper {
  public interface Listener{void onEvent(String type,String text);}
- private static final int RATE=16000,FRAME=3200,WINDOW=64000;
+ private static final int RATE=16000,FRAME=3200,WINDOW=RATE*6;
  private static boolean available;
  static{try{System.loadLibrary("zavivoice");available=true;}catch(Throwable e){available=false;}}
  private native long nativeOpen(String path);
@@ -58,18 +58,31 @@ public final class ZaviLocalWhisper {
    audio.startRecording();emit("ready","");
    short[] buffer=new short[FRAME];
    while(running.get()&&!closed){
-    float[] pcm=new float[WINDOW];int total=0,voiced=0;
+    float[] pcm=new float[WINDOW];
+    int total=0,spoken=0,silentFrames=0;
+    boolean detected=false;
     while(total<WINDOW&&running.get()){
      int n=audio.read(buffer,0,Math.min(buffer.length,WINDOW-total));
-     if(n<=0)break;
-     for(int i=0;i<n;i++){short s=buffer[i];pcm[total+i]=s/32768.0f;if(Math.abs((int)s)>700)voiced++;}
+     if(n==AudioRecord.ERROR_DEAD_OBJECT||n==AudioRecord.ERROR_INVALID_OPERATION)throw new IOException("Audio stream disconnected");
+     if(n<=0)continue;
+     int speechSamples=0;
+     for(int i=0;i<n;i++){
+      int sample=buffer[i];
+      pcm[total+i]=sample/32768.0f;
+      if(Math.abs(sample)>=520)speechSamples++;
+     }
      total+=n;
+     boolean speech=speechSamples>Math.max(35,n/42);
+     if(speech){detected=true;silentFrames=0;spoken+=speechSamples;}
+     else if(detected)silentFrames++;
+     // Finish after 0.8 second silence or 6 seconds maximum, preserving the whole phrase.
+     if(detected&&total>=RATE&&silentFrames>=4)break;
     }
-    if(!running.get()||total<8000)break;
-    if(voiced<1300)continue;
+    if(!running.get())break;
+    if(!detected||spoken<220||total<RATE/2)continue;
     emit("working","");
     String language="en-GB".equals(locale)?"en":"ps-AF".equals(locale)?"ps":"fa";
-    String answer=nativeTranscribe(context,pcm,language);
+    String answer=nativeTranscribe(context,java.util.Arrays.copyOf(pcm,total),language);
     if(running.get()&&answer!=null&&!answer.trim().isEmpty())emit("result",answer.trim());
     if(running.get())emit("ready","");
    }

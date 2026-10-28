@@ -19,7 +19,7 @@ const admin=load('zavi-voice-admin-v1442.js');
 assert(one&&admin,'voice module exports missing');
 for(const voice of [one,admin]){
   assert.equal(voice.route('open settings').key,'settingsPage');
-  assert.equal(voice.route('بخش فروش را باز کن').kind,voice.app==='one'?'navigate':'unknown');
+  assert.equal(voice.route('بخش فروش را باز کن').kind,voice.app==='one'?'navigate':'navigate_label');
   assert.equal(voice.route('حذف تمام اسناد').kind,'unknown');
   assert.equal(voice.route('pay Ahmad 500').kind,'unknown');
   assert.equal(voice.route('open subscriptions').kind,voice.app==='admin'?'navigate':'navigate_label');
@@ -38,6 +38,6 @@ assert.equal(admin.route('باز کن مدیریت همکاران').kind,'naviga
 assert.equal(one.route('موجودی را نشان بده').key,'inventory');
 assert.equal(admin.route('پیام های مستقیم').key,'communications');
 assert.equal(admin.route('بخش پشتیبانی را باز کن').key,'support');
-assert.equal(admin.route('فروش پنج کیلو برنج به احمد').kind,'navigate','ADMIN voice must never draft a store invoice');
+assert.equal(admin.route('فروش پنج کیلو برنج به احمد').kind,'unknown','ADMIN voice must never draft a store invoice');
 assert.equal(one.route('رمز خصوصی را حذف کن').kind,'unknown');
 console.log('PASS ZAVI VOICE commands and safe invoice previews, languages, consent UI and admin read-only routing');

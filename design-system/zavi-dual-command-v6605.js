@@ -49,7 +49,7 @@ const sections=ADMIN?{
 const commands=Object.entries(sections).map(([key,labels])=>({key,aliases:[key,...labels].map(norm)}));
 const NA=/\b(?:حذف|پاک|نابود|مسح|reset|delete|remove|erase|drop|wipe|ړنګ|لرې)\b/u;
 const DANGEROUS=/(حذف|پاک\s*کن|پاک\s*کړه|نابود|مسح|reset|delete|remove|erase|drop|wipe|ړنګ|لرې\s*کړه|غیرفعال کردن امنیت|تغییر مجوز|grant access)/iu;
-const NAV=/(?:^|\s)(?:باز|بکن|بکو|وا|برو|بیار|بگذار|ببین|نمایش|نشان|بخش|صفحه|منو|داشبورد|خلاص|پرانی|پراني|وښیه|ورشه|open|show|go|navigate|display|view|launch)(?:\s|$)/iu;
+const NAV=/(?:^|\s)(?:باز|بکن|بکو|وا|برو|بیار|بگذار|ببین|نمایش|نشان|بخش|برخه|صفحه|منو|داشبورد|خلاص|خلاصه|خلاصې|کړه|پرانی|پراني|پرانیځه|وښیه|ورشه|open|show|go|navigate|display|view|launch)(?:\s|$)/iu;
 function parseCommand(raw){
  const n=norm(raw);
  if(!n||n.length>280)return {kind:'unknown',reason:'empty'};

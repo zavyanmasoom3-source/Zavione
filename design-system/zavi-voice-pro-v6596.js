@@ -14,6 +14,7 @@ const LANG={
  'en-US':{name:'English (US)',welcome:'ZAVI VOICE PRO',start:'Speak now',stop:'Stop',ready:'Tap the microphone to start.',manual:'Type a command',execute:'Review command',confirm:'Open section / confirm',cancel:'Cancel',voiceOff:'Voice control is disabled.',on:'Enable voice commands',off:'Disable voice commands',privacy:'Microphone activates only on your tap. The device/browser speech service may process audio online; offline recognition is not guaranteed.',unsupported:'Speech recognition is unavailable; type your command instead.',noaction:'Command not recognized. Try “open sales”.',draft:'Transaction draft — NOT posted',review:'Review and confirm everything in the original invoice workflow.',safe:'Voice cannot automatically post sales, purchases or payments.',micError:'Microphone unavailable or permission denied.',read:'Speak response',open:'Open section',copy:'Copy draft',copied:'Draft copied.',settings:'Voice settings',language:'Language & accent',online:'Device/browser speech recognizer may require internet.',listening:'Listening…',help:'Try “open sales”, “sell five kilos of rice to Ahmad”, “show stock”.',field:'Insert into selected field',nofield:'Select an editable text field first.',goto:'Review this page before posting.',action:'Suggested section',sales:'Sales',purchase:'Purchases',inventory:'Inventory',customers:'Customers',debt:'Debtors',reports:'Reports',settingsPage:'Settings',daily:'Daily management',expenses:'Expenses',barcode:'Barcode',assistant:'Assistant',unknown:'Unknown command',prompt:'Recognized speech',business:'Items',quantity:'Quantity',unit:'Unit',party:'Customer/supplier',noMatch:'Verify product and quantity in the real invoice.'},
  'en-GB':{name:'English (UK)',welcome:'ZAVI VOICE PRO',start:'Speak now',stop:'Stop',ready:'Tap the microphone to begin.',manual:'Type a command',execute:'Review command',confirm:'Open section / confirm',cancel:'Cancel',voiceOff:'Voice control is disabled.',on:'Enable voice commands',off:'Disable voice commands',privacy:'The mic turns on only when you tap. Speech recognition may use an online service, not guaranteed offline.',unsupported:'No speech recognizer available; type a command.',noaction:'Command not recognized. Try “open sales”.',draft:'Transaction draft — NOT posted',review:'Review every detail in the original invoice workflow before posting.',safe:'Voice cannot automatically post financial transactions.',micError:'Microphone unavailable or permission denied.',read:'Read response aloud',open:'Open section',copy:'Copy draft',copied:'Draft copied.',settings:'Voice settings',language:'Language & accent',online:'Speech engine may require network.',listening:'Listening…',help:'Say “open purchases”, “sell 2 kilos of sugar to Ahmad”.',field:'Insert into selected field',nofield:'Select an editable field first.',goto:'Review before posting.',action:'Suggested section',sales:'Sales',purchase:'Purchases',inventory:'Inventory',customers:'Customers',debt:'Debtors',reports:'Reports',settingsPage:'Settings',daily:'Daily management',expenses:'Expenses',barcode:'Barcode',assistant:'Assistant',unknown:'Unknown command',prompt:'Recognized speech',business:'Items',quantity:'Quantity',unit:'Unit',party:'Customer/supplier',noMatch:'Check quantities and product names.'}
 };
+const LANG2={...LANG,'fa-IR':{...LANG['fa-AF'],name:'فارسی (لهجه ایران)'}};
 const synonyms={
  sales:['فروش','فروخت','فروشم','بفروش','فاکتور فروش','سودا','پلور','وپلوره','وپلورم','خرڅ','خرڅلاو','sell','sale','sales'],
  purchase:['خرید','بخر','خریدم','خریدارى','پېرود','پیرود','واخله','اخیستل','buy','purchase','purchases'],
@@ -100,9 +101,9 @@ function matchingNav(key){
  return null
 }
 const state={enabled:false,lang:'fa-AF',panel:null,recognition:null,fromNative:false,listening:false,last:null,field:null};
-function copyFor(){return LANG[state.lang]||LANG['fa-AF']}
+function copyFor(){return LANG2[state.lang]||LANG2['fa-AF']}
 function readState(){
- try{const p=JSON.parse(localStorage.getItem(KEY)||'{}');state.enabled=p.enabled===true;state.lang=Object.prototype.hasOwnProperty.call(LANG,p.lang)?p.lang:'fa-AF'}catch(_){}
+ try{const p=JSON.parse(localStorage.getItem(KEY)||'{}');state.enabled=p.enabled===true;state.lang=Object.prototype.hasOwnProperty.call(LANG2,p.lang)?p.lang:'fa-AF'}catch(_){}
 }
 function persist(){try{localStorage.setItem(KEY,JSON.stringify({enabled:state.enabled,lang:state.lang}))}catch(_){}}
 function speech(){return window.SpeechRecognition||window.webkitSpeechRecognition}
@@ -212,7 +213,7 @@ function build(){
  const exit=el('button','z196-close','×');exit.type='button';exit.setAttribute('aria-label','Close');exit.addEventListener('click',close);h.append(title,exit);
  const tool=el('div','z196-toolbar'),toggle=el('button');toggle.id='z196-toggle';toggle.type='button';toggle.addEventListener('click',()=>{state.enabled=!state.enabled;if(!state.enabled)stop();persist();draw()});
  const label=el('label','z196-label');label.id='z196-lang-label';const select=el('select');select.id='z196-lang';
- Object.keys(LANG).forEach(x=>select.append(new Option(LANG[x].name,x)));
+ Object.keys(LANG2).forEach(x=>select.append(new Option(LANG2[x].name,x)));
  select.addEventListener('change',()=>{state.lang=select.value;persist();draw()});label.append(select);
  tool.append(toggle,label);
  const mic=el('button','z196-mic');mic.id='z196-mic';mic.type='button';mic.addEventListener('click',start);

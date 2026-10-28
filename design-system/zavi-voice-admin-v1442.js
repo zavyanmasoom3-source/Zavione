@@ -91,6 +91,7 @@ function parseDraft(raw){
 }
 function route(raw){
  const n=clean(raw);
+ if(/(?:حذف|پاک کن|پاککردن|مسح|delete|erase|remove|reset account|ړنګ)/.test(n))return {kind:'unknown',source:raw};
  const draft=null; /* Owner-only ADMIN never builds accounting transactions. */
  if(draft&&draft.items.length)return {kind:'draft',key:draft.type,draft,source:raw};
  const likely=n.replace(/^(?:باز کن|نمایش بده|نشان بده|بخش|صفحه|برو به|ورکړه|خلاصه کړه|open|show|go to|navigate to|list)\s+/,'');
@@ -188,7 +189,7 @@ function analyse(){
  }else area.append(el('p','',w.open+': '+w[res.key]));
  const actions=el('div','z196-actions');
  const open=el('button','z196-confirm',w.confirm);open.type='button';open.addEventListener('click',()=>{
-  if(!isAppVisible()){showStatus(w.voiceOff);return}
+  if(!state.enabled||!isAppVisible()){showStatus(w.voiceOff);return}
   const node=matchingNav(res.key);
   if(!node){showStatus(w.goto+' — '+w[res.key]);return}
   state.panel.hidden=true;node.click();
@@ -196,7 +197,8 @@ function analyse(){
  });
  const cpy=el('button','',w.copy);cpy.type='button';cpy.addEventListener('click',()=>{
   const content=res.kind==='draft'?JSON.stringify(res.draft,null,2):raw;
-  navigator.clipboard?.writeText(content).then(()=>showStatus(w.copied)).catch(()=>showStatus(w.unsupported))
+  if(!navigator.clipboard?.writeText)return showStatus(w.unsupported);
+  navigator.clipboard.writeText(content).then(()=>showStatus(w.copied)).catch(()=>showStatus(w.unsupported))
  });
  actions.append(open,cpy);area.append(actions)
 }

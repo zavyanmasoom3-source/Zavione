@@ -19,7 +19,7 @@ const admin=load('zavi-voice-admin-v1442.js');
 assert(one&&admin,'voice module exports missing');
 for(const voice of [one,admin]){
   assert.equal(voice.route('open settings').key,'settingsPage');
-  assert.equal(voice.route('بخش فروش را باز کن').key,'sales'===undefined?'sales':voice.route('بخش فروش را باز کن').key);
+  assert.equal(voice.route('بخش فروش را باز کن').kind,voice.app==='one'?'navigate':'unknown');
   assert.equal(voice.route('حذف تمام اسناد').kind,'unknown');
   assert.equal(voice.route('pay Ahmad 500').kind,'unknown');
   assert.equal(voice.route('open subscriptions').kind,voice.app==='admin'?'navigate':'unknown');

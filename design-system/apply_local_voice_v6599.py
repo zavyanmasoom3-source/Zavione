@@ -92,9 +92,9 @@ c=c.replace(needle,'''        if(request==ZAVI_LOCAL_AUDIO_PERMISSION){
             } else {pendingLocalLanguage=null;sendZaviLocalEvent("permission","");}
         }
 '''+needle,1)
-needle='    @Override protected void onPause(){super.onPause();'
+needle='    @Override protected void onPause(){'
 assert c.count(needle)==1
-c=c.replace(needle,'    @Override protected void onPause(){if(zaviLocalWhisper!=null)zaviLocalWhisper.stop();super.onPause();',1)
+c=c.replace(needle,needle+'if(zaviLocalWhisper!=null)zaviLocalWhisper.stop();',1)
 needle='    @Override protected void onDestroy(){'
 assert c.count(needle)==1
 c=c.replace(needle,needle+'\n        if(zaviLocalWhisper!=null){zaviLocalWhisper.destroy();zaviLocalWhisper=null;}',1)

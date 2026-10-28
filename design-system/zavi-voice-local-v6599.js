@@ -39,8 +39,9 @@
 
  function visible(n){return !!n&&n.isConnected&&!n.disabled&&!n.hidden&&!n.closest('[hidden],[aria-hidden="true"]')&&getComputedStyle(n).display!=='none'}
  const routes=ADMIN?{
-  dashboard:'overview',daily:'overview',reports:'overview',customers:'customers',subscriptions:'customers',support:'support',
-  devices:'devices',billing:'billing',communications:'communications',audit:'audit',releases:'releases',settingsPage:'settings'
+  dashboard:'overview',daily:'overview',reports:'finance',customers:'customers',subscriptions:'customers',support:'support',
+  devices:'devices',billing:'payments',communications:'support',audit:'activity',releases:'brand',settingsPage:'settings',
+  finance:'finance',payments:'payments',activity:'activity',health:'health',brand:'brand',security:'security'
  }:{
   dashboard:'dashboard',daily:'dashboard',sales:'sales',purchase:'purchases',inventory:'products',customers:'contacts',
   debt:'debtors',reports:'reports',settingsPage:'settings',expenses:'expenses',barcode:'products',assistant:'dashboard',
@@ -52,7 +53,9 @@
   money:['دریافت','پرداخت','نقدی','cash','receipt','payment'],hawala:['حواله','remittance'],
   journal:['روزنامچه','journal','ledger'],creditors:['قرض های ما','بدهی ما','creditor'],waste:['ضایعات','waste'],
   repairs:['تعمیرات','repairs'],dashboard:['داشبورد','dashboard','home'],billing:['مالی','finance','payment'],
-  devices:['دستگاه','device'],audit:['تاریخچه','audit'],subscriptions:['اشتراک','subscription'],
+  devices:['دستگاه','device'],audit:['تاریخچه','audit','activity'],subscriptions:['اشتراک','subscription'],
+  finance:['مالی','finance','revenue'],payments:['پرداخت','payments'],activity:['فعالیت','activity'],
+  health:['سلامت','وضعیت سیستم','health'],brand:['برند','brand'],security:['امنیت','security'],
   communications:['پیام','message','communications'],support:['پشتیبانی','support'],
   customers:['مشتریان','پېرودونکي','customers'],settingsPage:['تنظیمات','settings']
  };

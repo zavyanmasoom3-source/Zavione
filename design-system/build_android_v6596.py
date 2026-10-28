@@ -28,7 +28,12 @@ assert n>= (175 if a.app=="one" else 100),n
 sys.argv=["apply_skin_v6596.py","--web",str(assets),"--app",a.app]
 runpy.run_path("design-system/apply_skin_v6596.py",run_name="__main__")
 # Native Android speech recognition chooser, scoped to the first-party embedded web app.
-runpy.run_path('design-system/patch_native_voice_v6596.py',run_name='__main__')
+native=Path('android-build/app/src/main/java/com/zavione/mobile/MainActivity.java')
+if 'ZaviAndroidVoice' not in native.read_text(encoding='utf8'):
+ runpy.run_path('design-system/patch_native_voice_v6596.py',run_name='__main__')
+else:
+ assert 'RecognizerIntent.ACTION_RECOGNIZE_SPEECH' in native.read_text(encoding='utf8')
+ print('PASS reused previously patched native voice handler in shared CI build')
 original=subprocess.check_output(["git","show","HEAD:android-build/app/build.gradle"],text=True)
 if a.app=="one":
  pairs={

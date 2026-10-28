@@ -34,7 +34,11 @@ if 'ZaviAndroidVoice' not in native.read_text(encoding='utf8'):
 else:
  assert 'RecognizerIntent.ACTION_RECOGNIZE_SPEECH' in native.read_text(encoding='utf8')
  print('PASS reused previously patched native voice handler in shared CI build')
-runpy.run_path('design-system/patch_native_handsfree_v6598.py',run_name='__main__')
+if 'ZaviAndroidHandsfree' not in native.read_text(encoding='utf8'):
+ runpy.run_path('design-system/patch_native_handsfree_v6598.py',run_name='__main__')
+else:
+ assert 'SpeechRecognizer.createSpeechRecognizer' in native.read_text(encoding='utf8')
+ print('PASS foreground speech patch already installed for second app build')
 original=subprocess.check_output(["git","show","HEAD:android-build/app/build.gradle"],text=True)
 if a.app=="one":
  pairs={

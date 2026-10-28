@@ -7,7 +7,7 @@ fa:{headline:'مدیریت هوشمند کسب‌وکار',sub:'یک شروع م
 ps:{headline:'ستاسې کاروبار، مسلکي مدیریت',sub:'خوندي پیل، نوې تجربه.',intro:'مخکې له حسابدارۍ خپل کلاوډ حساب فعال کړئ.',sign:'حساب ته ننوتل',up:'نوی حساب جوړول',out:'له حسابه وتل',account:'زما حساب',hint:'خپل Gmail یا برېښنالیک او د ZAVI ONE حساب رمز ولیکئ.',owner:'مرکزي اداره یوازې د اصلي مالک لپاره',ownerHint:'د مدیر حساب دلته نه جوړېږي. د سرور تایید اړین دی.',motion:'حرکتونه کمول',privacy:'ستاسې مالي معلومات د سرور له خوا خوندي کېږي'},
 en:{headline:'Your business. Beautifully managed.',sub:'A secure start. A better experience.',intro:'Connect your verified cloud account before entering the workspace.',sign:'Sign in',up:'Create account',out:'Sign out',account:'My account',hint:'Enter your Gmail or email address and ZAVI ONE account password.',owner:'Central administration is owner-only',ownerHint:'Admin self-registration is disabled. Only a server-verified owner can sign in.',motion:'Reduce motion',privacy:'Financial data protected by server-side access controls'}
 };
-let root=null,accountBtn=null;
+let root=null,accountBtn=null,statusObserver=null;
 const $=(s,p=document)=>p.querySelector(s);
 function l(){let v=$('#zaviGateLanguage,#zaviAdminAuthLanguage,#zaviTopLanguage')?.value||document.documentElement.lang||'fa';return String(v).startsWith('ps')?'ps':String(v).startsWith('en')?'en':'fa'}
 function d(){return words[l()]}
@@ -53,6 +53,16 @@ function fillCloud(){
  const a=$('#z20Email',slot),b=$('#z20Password',slot);
  if(a){a.value=email;a.placeholder='name@gmail.com';a.setAttribute('aria-label',d().hint)}
  if(b){b.value=password;b.autocomplete='current-password'}
+ // Surface the ORIGINAL server auth errors/confirmation messages in the new UI.
+ if(statusObserver){statusObserver.disconnect();statusObserver=null}
+ const status=$('#z20CloudStatus',slot);
+ if(status&&typeof MutationObserver!=='undefined'){
+   statusObserver=new MutationObserver(()=>{
+     const info=$('#z704-info',root);
+     if(info)info.textContent=status.textContent||d().hint;
+   });
+   statusObserver.observe(status,{childList:true,characterData:true,subtree:true});
+ }
  // Hidden native action controls are called by our large accessible buttons.
  slot.querySelectorAll('[data-z20-cloud="login"],[data-z20-cloud="signup"]').forEach(n=>n.tabIndex=-1);
 }
@@ -63,7 +73,7 @@ function authorize(which){
  const real=root.querySelector('[data-z20-cloud="'+which+'"]');
  if(real)real.click();else $('#z704-info',root).textContent=d().intro;
 }
-function hide(){if(root){root.remove();root=null}document.documentElement.classList.remove('z704-cloud-first')}
+function hide(){if(statusObserver){statusObserver.disconnect();statusObserver=null}if(root){root.remove();root=null}document.documentElement.classList.remove('z704-cloud-first')}
 function show(){
  build();root.hidden=false;document.documentElement.classList.add('z704-cloud-first');
  translate();$('#z704-info',root).textContent=d().hint;
@@ -91,7 +101,9 @@ function adminAuth(){
  const screen=$('#authScreen');if(!screen)return;
  screen.classList.add('z704-admin-login');
  const card=$('.auth-card',screen);
- if(card&&!$('#z704-owner-note',card)){
+ const old=$('#z704-owner-note',card||screen);
+ if(old){const labels=old.querySelectorAll('b,p');if(labels[0])labels[0].textContent=d().owner;if(labels[1])labels[1].textContent=d().ownerHint}
+ if(card&&!old){
   const note=add('div','z704-owner-note');note.id='z704-owner-note';
   note.append(add('b','',d().owner),add('p','',d().ownerHint));card.prepend(note);
  }
@@ -99,7 +111,7 @@ function adminAuth(){
 }
 function start(){
  applyMotion();
- if(ADMIN){adminAuth();return}
+ if(ADMIN){adminAuth();document.addEventListener('change',e=>{if(e.target.matches?.('.zavi-language-picker'))adminAuth()});return}
  if(typeof window.zaviCloudPanel!=='function'||typeof window.zaviCloudGetAuthSession!=='function'){
   setTimeout(start,140);return;
  }

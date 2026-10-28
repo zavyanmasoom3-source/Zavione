@@ -80,7 +80,7 @@ function parseCommand(raw){
  return {kind:'unknown',reason:distinct.length?'ambiguous':'no_match',normalized:n2};
 }
 function existingSession(){
- const gate=$('#z704-welcome');if(gate&&!gate.hidden)return false;
+ // Startup uses the original app gate; cloud management stays inside the app.
  if(ADMIN){
   const a=$('#appScreen');const screen=$('#authScreen');
   if(!a||a.hidden||getComputedStyle(a).display==='none')return false;

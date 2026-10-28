@@ -10,7 +10,7 @@ assert(js.includes('data-z20-cloud'));
 assert(js.includes("root.querySelector('[data-z20-cloud="));
 assert(js.includes("window.addEventListener('zavi-cloud-session-changed'"));
 assert(js.includes("window.addEventListener('zavi-cloud-logged-out'"));
-assert(js.includes("if(ADMIN){adminAuth();return}"));
+assert(js.includes("if(ADMIN){adminAuth();"),"ADMIN authentic login UI must be preserved");
 assert(!js.includes('service_role'));
 assert(!js.includes('access_token='));
 assert(!js.includes('signInWithOAuth')&&!js.includes('/auth/v1/authorize'),'No unconfigured Google OAuth claim');

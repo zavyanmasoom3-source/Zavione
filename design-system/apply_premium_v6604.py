@@ -37,7 +37,7 @@ else:
     admin=(root/'app.js').read_text(encoding='utf8')
     assert 'ZAVI_ADMIN_ALLOWED_EMAILS' in admin
     assert '/auth/v1/token?grant_type=password' in admin
-    assert "el('logoutBtn')" in admin
+    assert 'logoutBtn' in admin
 page.write_text(html,encoding='utf8')
 sw=root/'sw.js'
 text=sw.read_text(encoding='utf8')

@@ -1,0 +1,30 @@
+/* Compact original PIN gate: dark/light themes, no cloud-first sign-in.
+   Keep existing PIN validation, forgot-password, language, offline permit and click handlers. */
+:root{--z707-accent:#1379ed}
+html :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) :is(.zavi-private-card,.zavi-gate-card,.login-card,.gate-card,.z20-gate-card){
+ width:min(92vw,390px)!important;max-width:390px!important;max-height:calc(100dvh - 24px)!important;
+ overflow-y:auto!important;box-sizing:border-box!important;padding:clamp(16px,4vw,24px)!important;
+ margin:auto!important;border-radius:22px!important;
+ border:1px solid rgba(102,188,245,.48)!important;
+ background:linear-gradient(145deg,#102c51,#081c35)!important;
+ box-shadow:0 14px 42px rgba(0,10,31,.28)!important;color:#eef7ff!important;
+}
+html :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) :is(input,select,button){max-width:100%!important}
+html :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) :is(input,select){min-height:44px!important;border-radius:11px!important}
+html :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) :is(button[type="submit"],.primary,.btn-primary){
+ border-radius:12px!important;min-height:46px!important;background:linear-gradient(105deg,#1681f6,#03c2e3)!important;
+ color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important
+}
+html :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) :is(.logo,.brand-logo,img){max-height:64px!important;object-fit:contain!important}
+html :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) :is(h1,h2){font-size:clamp(18px,5vw,24px)!important;line-height:1.4!important;margin-block:6px 12px!important}
+html[data-zavi-theme="light"] :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) :is(.zavi-private-card,.zavi-gate-card,.login-card,.gate-card,.z20-gate-card){
+ background:linear-gradient(150deg,#fff,#eef6ff)!important;color:#122b47!important;
+ border-color:#b7d4f4!important;box-shadow:0 14px 38px rgba(38,91,150,.13)!important
+}
+html[data-zavi-theme="light"] :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) :is(input,select){
+ background:#f7fbff!important;color:#15314c!important;border-color:#b6d1e9!important
+}
+@media(max-width:480px){html :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]){padding:12px!important}
+ html :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) :is(.zavi-private-card,.zavi-gate-card,.login-card,.gate-card,.z20-gate-card){width:min(92vw,370px)!important}
+}
+@media(prefers-reduced-motion:reduce){html :is(#zaviPrivateGate,#loginScreen,[id*="PrivateGate"]) *{animation:none!important;transition:none!important}}

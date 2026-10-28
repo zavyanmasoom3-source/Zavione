@@ -7,7 +7,11 @@ from pathlib import Path
 p=Path("android-build/app/src/main/java/com/zavione/mobile/MainActivity.java")
 s=p.read_text(encoding="utf8")
 assert s.count("public final class MainActivity") == 1
-assert "ZaviAndroidVoice" not in s
+if "ZaviAndroidVoice" in s:
+ assert 'RecognizerIntent.ACTION_RECOGNIZE_SPEECH' in s
+ assert 'VOICE_RECOGNITION' in s
+ print("PASS Android voice bridge already patched for another APK in this CI job")
+ raise SystemExit(0)
 s=s.replace("import android.provider.MediaStore;", "import android.provider.MediaStore;\nimport android.speech.RecognizerIntent;\nimport android.content.ActivityNotFoundException;\nimport java.util.ArrayList;",1)
 s=s.replace("private static final int CAMERA_PERMISSION = 4703;","private static final int CAMERA_PERMISSION = 4703;\n    private static final int VOICE_RECOGNITION = 4706;",1)
 bridge='''            WebViewCompat.addWebMessageListener(webView, "ZaviAndroidVoice",

@@ -7,12 +7,12 @@
  const ADMIN=!!document.querySelector('script[src*="zavi-voice-admin-v1442.js"]');
  const KEY='zavi.local.voice.6599.'+(ADMIN?'admin':'one');
  const L={
-  fa:{title:'ZAVI VOICE',enabled:'دستیار روشن است',off:'دستیار خاموش است',start:'فعال‌کردن صدا',stop:'خاموش‌کردن صدا',listening:'گوش می‌دهم؛ صحبت کنید',working:'در حال فهمیدن صحبت شما',lang:'زبان',example:'مثلاً: «بخش فروش را باز کن»',confirm:'بازکردن فاکتور برای بررسی',cancel:'لغو',draft:'پیش‌نویس معامله — ثبت نشده',review:'برای ثبت نهایی، نام کالا، قیمت، موجودی و مشتری را در فاکتور اصلی تأیید کنید.',unknown:'دستور واضح نبود؛ دوباره بگویید.',permission:'اجازه میکروفون را فعال کنید.',unavailable:'مدل صوتی محلی در این نسخه در دسترس نیست؛ مدل صوتی محلی نیاز به بررسی دارد',error:'دستیار صوتی موقتاً در دسترس نیست.',closed:'بستن',ready:'برای شروع، دکمه روشن‌کردن را بزنید.',privacy:'صدا روی همین گوشی پردازش می‌شود؛ به گوگل ارسال نمی‌شود.',navigated:'بخش باز شد',safe:'عملیات مالی بدون تأیید نهایی ثبت نمی‌شود.'},
-  ps:{title:'ZAVI VOICE',enabled:'مرستیال فعال دی',off:'مرستیال بند دی',start:'غږ فعال کړئ',stop:'غږ بند کړئ',listening:'اورم؛ خبرې وکړئ',working:'ستاسې خبرې پېژنم',lang:'ژبه',example:'ووایئ: «د پلور برخه خلاصه کړه»',confirm:'اصلي بل ته د کتنې لپاره لاړ شئ',cancel:'لغوه',draft:'د معاملې مسوده — نه ده ثبت شوې',review:'د توکو، بیې او پېرودونکي جزیات په اصلي بل کې تایید کړئ.',unknown:'امر نه پېژنم؛ بیا یې ووایئ.',permission:'مایکروفون ته اجازه ورکړئ.',unavailable:'سیمه‌ییز غږیز ماډل نشته؛ مدل صوتی محلی نیاز به بررسی دارد',error:'غږیز مرستیال اوس کار نه کوي.',closed:'بندول',ready:'د غږ لپاره تڼۍ کېکاږئ.',privacy:'غږ په همدې موبایل کې پېژندل کېږي؛ ګوګل ته نه لېږل کېږي.',navigated:'برخه پرانیستل شوه',safe:'مالي معامله له وروستي تایید پرته نه ثبتېږي.'},
-  en:{title:'ZAVI VOICE',enabled:'Assistant is on',off:'Assistant is off',start:'Enable voice',stop:'Turn voice off',listening:'Listening — speak now',working:'Understanding speech',lang:'Language',example:'Say “open sales” or “show inventory”',confirm:'Open invoice for review',cancel:'Cancel',draft:'Transaction draft — not posted',review:'Review the product, price, stock and customer in the original invoice before posting.',unknown:'Command not clear; repeat.',permission:'Allow microphone access.',unavailable:'Local voice model is not available here; verify local voice model',error:'Voice engine unavailable.',closed:'Close',ready:'Tap Enable voice to begin.',privacy:'Speech is processed on this device, not sent to Google.',navigated:'Section opened',safe:'Financial changes need final confirmation.'}
+  fa:{loading:'در حال آماده‌کردن موتور صدا...',heard:'صدا دریافت شد',no_audio:'صدایی تشخیص داده نشد؛ نزدیک میکروفون صحبت کنید.',unrecognized:'صدا دریافت شد اما کلمات واضح نبود؛ دوباره بگویید.',title:'ZAVI VOICE',enabled:'دستیار روشن است',off:'دستیار خاموش است',start:'فعال‌کردن صدا',stop:'خاموش‌کردن صدا',listening:'گوش می‌دهم؛ صحبت کنید',working:'در حال فهمیدن صحبت شما',lang:'زبان',example:'مثلاً: «بخش فروش را باز کن»',confirm:'بازکردن فاکتور برای بررسی',cancel:'لغو',draft:'پیش‌نویس معامله — ثبت نشده',review:'برای ثبت نهایی، نام کالا، قیمت، موجودی و مشتری را در فاکتور اصلی تأیید کنید.',unknown:'دستور واضح نبود؛ دوباره بگویید.',permission:'اجازه میکروفون را فعال کنید.',unavailable:'مدل صوتی محلی در این نسخه در دسترس نیست؛ مدل صوتی محلی نیاز به بررسی دارد',error:'دستیار صوتی موقتاً در دسترس نیست.',closed:'بستن',ready:'برای شروع، دکمه روشن‌کردن را بزنید.',navigated:'بخش باز شد',safe:'عملیات مالی بدون تأیید نهایی ثبت نمی‌شود.'},
+  ps:{loading:'غږیز موتور چمتو کېږي...',heard:'ستاسې غږ ترلاسه شو',no_audio:'غږ نه اورم؛ مایکروفون ته نږدې خبرې وکړئ.',unrecognized:'غږ واورېدل شو، خو خبرې روښانه نه وې؛ بیا یې ووایئ.',title:'ZAVI VOICE',enabled:'مرستیال فعال دی',off:'مرستیال بند دی',start:'غږ فعال کړئ',stop:'غږ بند کړئ',listening:'اورم؛ خبرې وکړئ',working:'ستاسې خبرې پېژنم',lang:'ژبه',example:'ووایئ: «د پلور برخه خلاصه کړه»',confirm:'اصلي بل ته د کتنې لپاره لاړ شئ',cancel:'لغوه',draft:'د معاملې مسوده — نه ده ثبت شوې',review:'د توکو، بیې او پېرودونکي جزیات په اصلي بل کې تایید کړئ.',unknown:'امر نه پېژنم؛ بیا یې ووایئ.',permission:'مایکروفون ته اجازه ورکړئ.',unavailable:'سیمه‌ییز غږیز ماډل نشته؛ مدل صوتی محلی نیاز به بررسی دارد',error:'غږیز مرستیال اوس کار نه کوي.',closed:'بندول',ready:'د غږ لپاره تڼۍ کېکاږئ.',navigated:'برخه پرانیستل شوه',safe:'مالي معامله له وروستي تایید پرته نه ثبتېږي.'},
+  en:{loading:'Loading local voice model...',heard:'Sound detected',no_audio:'No voice detected. Speak closer to the microphone.',unrecognized:'Sound heard, words unclear. Please repeat.',title:'ZAVI VOICE',enabled:'Assistant is on',off:'Assistant is off',start:'Enable voice',stop:'Turn voice off',listening:'Listening — speak now',working:'Understanding speech',lang:'Language',example:'Say “open sales” or “show inventory”',confirm:'Open invoice for review',cancel:'Cancel',draft:'Transaction draft — not posted',review:'Review the product, price, stock and customer in the original invoice before posting.',unknown:'Command not clear; repeat.',permission:'Allow microphone access.',unavailable:'Local voice model is not available here; verify local voice model',error:'Voice engine unavailable.',closed:'Close',ready:'Tap Enable voice to begin.',navigated:'Section opened',safe:'Financial changes need final confirmation.'}
  };
  const names={'fa-AF':'دری افغانستان','ps-AF':'پښتو افغانستان','en-GB':'English'};
- const state={enabled:false,lang:'fa-AF',active:false,working:false,starting:false,root:null,last:'',pending:null,status:'',native:false,lastCommand:'',lastAt:0};
+ const state={enabled:false,lang:'fa-AF',active:false,working:false,starting:false,root:null,last:'',pending:null,status:'',native:false,lastCommand:'',lastAt:0,noticeUntil:0};
  const $=(s,p=document)=>p.querySelector(s);
  const el=(tag,cls,text)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(text!==undefined)x.textContent=text;return x};
  const t=()=>L[state.lang.startsWith('ps')?'ps':state.lang.startsWith('en')?'en':'fa'];
@@ -37,7 +37,10 @@
  const YES=/^(تایید|تأیید|تایید کن|تأیید کن|بلی|بله|هو|تایید کړه|confirm|yes|okay|ok)$/u;
  const NO=/^(لغو|لغوه|نخیر|نه|no|cancel|stop)$/u;
 
- function visible(n){return !!n&&n.isConnected&&!n.disabled&&!n.hidden&&!n.closest('[hidden],[aria-hidden="true"]')&&getComputedStyle(n).display!=='none'}
+ function visible(n){return !!n&&n.isConnected&&!n.disabled&&!n.closest('#z199-voice,#z196-voice,#z198-easy')}
+ // On small Android screens the sidebar can be display:none; its real data-go
+ // controls still own the app's delegated click handlers. Do not reject them
+ // as invisible or sales/inventory/reports will never open from voice.
  const routes=ADMIN?{
   dashboard:'overview',daily:'overview',reports:'finance',customers:'customers',subscriptions:'customers',support:'support',
   devices:'devices',billing:'payments',communications:'support',audit:'activity',releases:'brand',settingsPage:'settings',
@@ -77,7 +80,7 @@
  }
  function action(result){
   const target=navFor(result);
-  if(!target){publishStatus(t().unknown);return false}
+  if(!target){state.noticeUntil=Date.now()+4500;publishStatus(t().unknown);return false}
   target.click();
   // Without hiding the panel, users think the page has not opened.
   if(state.root)state.root.hidden=true;
@@ -87,7 +90,7 @@
  function interpret(words){
   if(!auth())return;
   const text=String(words||'').trim().slice(0,350);
-  if(!text)return;
+  if(!text){state.noticeUntil=Date.now()+3500;publishStatus(t().unrecognized);return}
   const n=normalize(text);
   const now=Date.now();
   if(n===state.lastCommand&&now-state.lastAt<4500)return;
@@ -106,7 +109,7 @@
     }
    }
   }
-  if(!result||result.kind==='unknown'){state.pending=null;publishStatus(t().unknown);return}
+  if(!result||result.kind==='unknown'){state.pending=null;state.noticeUntil=Date.now()+4500;publishStatus(t().unknown);return}
   if(result.kind==='draft'){
    state.pending={key:result.key,draft:result.draft};
    publishStatus(t().draft);return
@@ -125,7 +128,6 @@
   $('#z199-toggle',root).classList.toggle('on',state.enabled);
   $('#z199-status',root).textContent=state.status||(state.working?w.working:state.active?w.listening:state.enabled?w.enabled:w.ready);
   $('#z199-note',root).textContent=state.pending?w.review:w.example;
-    $('#z199-privacy',root).textContent=avail()?w.privacy:w.unavailable;
   const transcript=$('#z199-transcript',root);transcript.hidden=!state.last;transcript.textContent=state.last;
   const preview=$('#z199-preview',root);preview.replaceChildren();
   if(state.pending){
@@ -160,8 +162,7 @@
   const heard=el('p','z199-transcript');heard.id='z199-transcript';heard.hidden=true;
   const note=el('p','z199-note');note.id='z199-note';
   const preview=el('div','z199-preview');preview.id='z199-preview';preview.hidden=true;
-  const privacy=el('p','z199-privacy');privacy.id='z199-privacy';
-  sheet.append(header,row,toggleEl,led,statusEl,heard,note,preview,privacy);
+  sheet.append(header,row,toggleEl,led,statusEl,heard,note,preview);
   root.append(sheet);root.addEventListener('click',e=>{if(e.target===root)root.hidden=true});
   document.body.append(root);state.root=root;draw();
  }
@@ -169,9 +170,13 @@
  // The old "Start speech" Google/system UI is intentionally NOT called, even as fallback.
  window.ZaviVoiceLocalNativeEvent=event=>{
   if(!state.enabled||!auth())return;
-  if(event?.type==='ready'){state.starting=false;state.active=true;state.working=false;publishStatus(t().listening)}
-  else if(event?.type==='working'){state.working=true;publishStatus(t().working)}
-  else if(event?.type==='result'){state.working=false;interpret(event.text);state.active=true;draw()}
+  if(event?.type==='ready'){state.starting=false;state.active=true;state.working=false;if(Date.now()>=state.noticeUntil)publishStatus(t().listening);else draw()}
+  else if(event?.type==='loading'){state.starting=true;publishStatus(t().loading)}
+  else if(event?.type==='heard'){state.noticeUntil=0;publishStatus(t().heard)}
+  else if(event?.type==='no_audio'){state.noticeUntil=Date.now()+4500;publishStatus(t().no_audio)}
+  else if(event?.type==='unrecognized'){state.noticeUntil=Date.now()+4500;publishStatus(t().unrecognized)}
+  else if(event?.type==='working'){state.noticeUntil=0;state.working=true;publishStatus(t().working)}
+  else if(event?.type==='result'){state.working=false;state.noticeUntil=Date.now()+3800;interpret(event.text);state.active=true;draw()}
   else if(event?.type==='permission'){state.starting=false;state.active=false;state.enabled=false;save();publishStatus(t().permission)}
   else if(event?.type==='error'){state.starting=false;state.active=false;state.enabled=false;save();publishStatus(t().error)}
   else if(event?.type==='stopped'){state.starting=false;state.active=false;state.working=false;draw()}

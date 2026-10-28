@@ -43,7 +43,7 @@ function simulate(admin){
    return {kind:'unknown'};
   }
  }};
- const sandbox={window,document,localStorage:{getItem:()=>null,setItem:()=>{}},getComputedStyle:()=>({display:'none'}),console,setInterval:()=>{},Date,Option:function(){}};
+ const sandbox={window,document,localStorage:{getItem:()=>null,setItem:()=>{}},getComputedStyle:(node)=>({display:node===app?'block':'none'}),console,setInterval:()=>{},Date,Option:function(){}};
  vm.runInNewContext(src,sandbox,{timeout:2000});
  assert.equal(typeof window.ZaviVoiceLocal6599.interpret,'function');
  return {api:window.ZaviVoiceLocal6599,clicks};

@@ -88,10 +88,20 @@ function route(raw){
   if(likely.includes(term)&&term.length>=3){const score=term.length;if(score>bestScore){bestScore=score;best=key}}
  }
  if(best)return {kind:'navigate',key:best,source:raw};
+ // Arbitrary but SAFE page navigation: only match existing navigation elements.
+ const match=n.match(/^(?:باز کن|برو به|نشان بده|نمایش بده|بخش|صفحه|خلاصه کړه|پرانيزه|خلاصه|open|show|go to|navigate to)\\s+(.{2,65})$/u)
+ ||n.match(/^(?:بخش|صفحه)\\s+(.{2,65}?)\\s+(?:را\\s+)?(?:باز کن|نشان بده|نمایش بده)$/u);
+ if(match)return {kind:'navigate_label',label:match[1],source:raw};
  return {kind:'unknown',source:raw};
 }
 function visible(n){if(!n?.isConnected||n.disabled||n.closest('[hidden],[aria-hidden="true"]'))return false;const r=n.getBoundingClientRect();return r.width>0&&r.height>0}
 function allowedSection(n){return n?.matches?.('button[data-page],a[data-page],.nav-btn,.nav-item,[role="tab"],button[onclick*="goPage"],a[href^="#"]')&&!n.closest('#z196-voice,#z141-center,#z139-dialog')}
+function matchingNavLabel(label){
+ const expected=clean(label).replace(/^بخش\\s+|^صفحه\\s+/,''),menu=[...document.querySelectorAll('button[data-page],a[data-page],.nav-btn,.nav-item,[role="tab"],button[onclick*="goPage"],a[href^="#"]')];
+ return menu.find(n=>visible(n)&&allowedSection(n)&&[
+  n.textContent,n.getAttribute('aria-label'),n.getAttribute('title'),n.getAttribute('data-page')
+ ].some(x=>{const title=clean(x||'');return title===expected||title.startsWith(expected+' ')||expected.startsWith(title+' ')&&title.length>=3}))||null
+}
 function matchingNav(key){
  const options=[...document.querySelectorAll('button[data-page],a[data-page],.nav-btn,.nav-item,[role="tab"],button[onclick*="goPage"],a[href^="#"]')].filter(x=>visible(x)&&allowedSection(x));
  const aliases=pageText[key].map(clean);
@@ -176,7 +186,7 @@ function analyse(){
  const actions=el('div','z196-actions');
  const open=el('button','z196-confirm',w.confirm);open.type='button';open.addEventListener('click',()=>{
   if(!state.enabled||!isAppVisible()){showStatus(w.voiceOff);return}
-  const node=matchingNav(res.key);
+  const node=res.kind==='navigate_label'?matchingNavLabel(res.label):matchingNav(res.key);
   if(!node){showStatus(w.goto+' — '+w[res.key]);return}
   state.panel.hidden=true;node.click();
   if(res.kind==='draft'){showStatus(w.review)}

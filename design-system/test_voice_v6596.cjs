@@ -33,6 +33,8 @@ assert.equal(sale.draft.items[0].product,'برنج');
 const en=one.route('sell two bottles oil to Ahmad');
 assert.equal(en.kind,'draft');assert.equal(en.draft.items[0].quantity,2);
 assert.equal(one.route('open purchases').kind,'navigate');
+assert.equal(one.route('open colleague management').kind,'navigate_label');
+assert.equal(admin.route('باز کن مدیریت همکاران').kind,'navigate_label');
 assert.equal(one.route('موجودی را نشان بده').key,'inventory');
 assert.equal(admin.route('پیام های مستقیم').key,'communications');
 assert.equal(admin.route('بخش پشتیبانی را باز کن').key,'support');

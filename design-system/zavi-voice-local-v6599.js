@@ -161,6 +161,10 @@
   if(state.pending && NO.test(n)){state.pending=null;publishStatus(t().ready);return}
   const cleaned=text.replace(/^(?:ای|هی|hey|ok|okay)?\s*(?:زاوی|زاوي|zavi|zavy|زاوی وان)[،,\s:]*/iu,'').trim()||text;
   const command=cleaned.replace(/^(?:ثبت|ایجاد|انجام|record|create)\s+(?=فروش|خرید|sell|sale|buy|purchase)/iu,'');
+  // Never interpret destructive requests as ordinary navigation.
+  if(/(?:حذف|پاک\s*کن|نابود|delete|erase|reset|ړنګ|لرې\s*کړه)/iu.test(cleanLabel(command))){
+   state.pending=null;state.noticeUntil=Date.now()+4500;publishStatus(t().unknown);return;
+  }
   let result=dialectNavigation(command)||window.ZaviVoiceProV6596?.route?.(command);
   // Use the exact authenticated app navigation, not guessed buttons.
   if(result?.kind==='unknown'||!result){

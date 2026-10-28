@@ -76,8 +76,8 @@ function parseDraft(raw){
  const lines=[];
  const chunks=text.split(/\s+(?:و|او|and)\s+/);
  for(const c of chunks.slice(0,12)){
-  let m=c.match(new RegExp('^(\\d+(?:\\.\\d+)?|'+Object.keys(digits).sort((a,b)=>b.length-a.length).join('|')+')\s*('+unitPattern+')?\s+(.{1,85})$','u'));
-  if(!m){m=c.match(new RegExp('^(.{1,85}?)\s+(\\d+(?:\\.\\d+)?|'+Object.keys(digits).join('|')+')\s*('+unitPattern+')?$','u'));if(m){const item=m[1],amount=m[2],unit=m[3];m=[c,amount,unit,item]}}
+  let m=c.match(new RegExp('^(\\d+(?:\\.\\d+)?|'+Object.keys(digits).sort((a,b)=>b.length-a.length).join('|')+')\\s*('+unitPattern+')?\\s+(.{1,85})$','u'));
+  if(!m){m=c.match(new RegExp('^(.{1,85}?)\\s+(\\d+(?:\\.\\d+)?|'+Object.keys(digits).join('|')+')\\s*('+unitPattern+')?$','u'));if(m){const item=m[1],amount=m[2],unit=m[3];m=[c,amount,unit,item]}}
   if(m){
    const qty=Number.isFinite(+m[1])?+m[1]:digits[m[1]];
    if(!Number.isFinite(qty)||qty<=0||qty>100000)continue;

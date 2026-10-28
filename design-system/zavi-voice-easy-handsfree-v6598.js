@@ -131,8 +131,8 @@ window.ZaviHandsfreeNativeEvent=e=>{
  if(e?.type==='result')interpret(e.text);
  else if(e?.type==='listening'){state.active=true;status(q().on)}
  else if(e?.type==='paused'){state.active=false;status(q().pause)}
- else if(e?.type==='permission'){state.active=false;status(q().permission)}
- else if(e?.type==='error'){state.active=false;status(q().error)}
+ else if(e?.type==='permission'){state.active=false;state.session=false;status(q().permission)}
+ else if(e?.type==='error'){state.active=false;state.session=false;status(q().error)}
 };
 function build(){
  if(state.modal)return;
@@ -183,7 +183,7 @@ function init(){
   if(!authorized()){if(state.active||state.rec||state.native)stopSpeech();return}
   // Only Android's explicit, origin-checked microphone bridge can auto-resume a saved
   // consent across app launches. Browser speech usually requires a fresh user gesture.
-  if(state.enabled&&!state.active&&!state.rec&&!document.hidden&&window.ZaviAndroidHandsfree?.postMessage){
+  if(state.enabled&&!state.native&&!state.active&&!state.rec&&!document.hidden&&window.ZaviAndroidHandsfree?.postMessage){
    state.session=true;begin()
   }
  };

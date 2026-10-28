@@ -35,11 +35,11 @@ function holder(){
 }
 function dashboardIsActive(){
  if(!loggedIn())return false;
- if(ADMIN)return true; // owner dashboard header remains a discoverable voice shortcut
+ if(ADMIN)return true; // owner-only central shell, all pages
  const c=content();
- return !!(c&&visible(c)&&(c.classList.contains('zrf-dashboard')||
-  c.querySelector('.zrf-home,.z62-hero,.welcome,.dashboard,.dashboard-grid')||
-  !app())); // fallback only for legacy authenticated, non-#appScreen profiles
+ // Voice continues across every authorized screen after the one-time opt-in.
+ // The small circular manual-off shortcut must remain accessible for privacy.
+ return !!(c&&visible(c));
 }
 function icon(){
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');

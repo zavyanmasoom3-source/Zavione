@@ -10,8 +10,8 @@ a=p.parse_args()
 root=Path('android-build/app/src/main')
 assets=root/'assets';page=assets/'index.html'
 models=assets/'models';models.mkdir(exist_ok=True)
-shutil.copy2('design-model/ggml-tiny-q5_1.bin',models/'ggml-tiny-q5_1.bin')
-assert (models/'ggml-tiny-q5_1.bin').stat().st_size==32152673
+shutil.copy2('design-model/ggml-base-q5_1.bin',models/'ggml-base-q5_1.bin')
+assert 55000000<(models/'ggml-base-q5_1.bin').stat().st_size<65000000
 html=page.read_text(encoding='utf8')
 for name in ('zavi-voice-local-v6599.css','zavi-voice-local-v6599.js'):
     assert name not in html
@@ -30,6 +30,13 @@ oldscript=oldjs.read_text(encoding='utf8')
 anchor='if(window.ZaviHandsfreeEasy6598)return;'
 assert oldscript.count(anchor)==1
 oldjs.write_text(oldscript.replace(anchor,'if(window.__zaviLocalOnly||window.ZaviHandsfreeEasy6598)return;',1),encoding='utf8')
+# Prevent stale voice preferences from starting system TTS/STT. Retain the
+# legacy safe route() parser that ZAVI VOICE calls, but suppress its old UI.
+legacy=assets/('zavi-voice-admin-v1442.js' if a.app=='admin' else 'zavi-voice-pro-v6596.js')
+legacy_src=legacy.read_text(encoding='utf8')
+last="if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();"
+assert last in legacy_src
+legacy.write_text(legacy_src.replace(last,"if(!window.__zaviLocalOnly){"+last+"}",1),encoding='utf8')
 page.write_text(html,encoding='utf8')
 sw=assets/'sw.js';s=sw.read_text(encoding='utf8')
 assert 'const CORE=[' in s
@@ -38,9 +45,6 @@ sw.write_text(s,encoding='utf8')
 java=root/'java/com/zavione/mobile/MainActivity.java'
 c=java.read_text(encoding='utf8')
 # Allow bundled offline MP3 responses after an STT callback (not a user gesture).
-playback_anchor='        settings.setJavaScriptEnabled(true);'
-assert c.count(playback_anchor)==1
-c=c.replace(playback_anchor,playback_anchor+'\n        settings.setMediaPlaybackRequiresUserGesture(false);',1)
 # Hard-disable BOTH previous Android recognition API entry points. An old restored
 # preference or a legacy button must never be allowed to invoke the Google/system UI.
 for method in ('startZaviVoiceRecognition(String message)','handleHandsfreeMessage(String input)'):
@@ -120,14 +124,14 @@ g=g.replace(needle,'''    ndkVersion '27.2.12479018'
 # Preserve original admin vs store package distinct, and isolate QA edition from production.
 if a.app=='one':
     previous='com.zavione.one.unified20.v6598easyqa'
-    nextid='com.zavione.one.unified20.v6602qa'
+    nextid='com.zavione.one.unified20.v6603qa'
     oldcode='versionCode admin ? 4127 : 659800'
-    newcode='versionCode admin ? 4127 : 660200'
+    newcode='versionCode admin ? 4127 : 660300'
 else:
     previous='com.zavione.one.admin.easy1444qa'
-    nextid='com.zavione.one.admin.v1448qa'
+    nextid='com.zavione.one.admin.v1449qa'
     oldcode='versionCode admin ? 144400 : 6554'
-    newcode='versionCode admin ? 144800 : 6554'
+    newcode='versionCode admin ? 144900 : 6554'
 assert previous in g and oldcode in g,(previous,oldcode)
 g=g.replace(previous,nextid,1).replace(oldcode,newcode,1)
 g=g.replace('65.98-handsfree-qa','66.00-voice-qa').replace('1.4.44-handsfree-qa','1.4.46-voice-qa')

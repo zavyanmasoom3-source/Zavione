@@ -62,8 +62,8 @@ function parseDraft(raw){
  const lines=[];
  const chunks=text.split(/\s+(?:و|او|and)\s+/);
  for(const c of chunks.slice(0,12)){
-  let m=c.match(new RegExp('^(\\d+(?:\\.\\d+)?|'+Object.keys(digits).sort((a,b)=>b.length-a.length).join('|')+')\\s*('+unitPattern+')?\\s+(.{1,85})$','u'));
-  if(!m){m=c.match(new RegExp('^(.{1,85}?)\\s+(\\d+(?:\\.\\d+)?|'+Object.keys(digits).join('|')+')\\s*('+unitPattern+')?$','u'));if(m){const item=m[1],amount=m[2],unit=m[3];m=[c,amount,unit,item]}}
+  let m=c.match(new RegExp('^(\\d+(?:\\.\\d+)?|'+Object.keys(digits).sort((a,b)=>b.length-a.length).join('|')+')\s*('+unitPattern+')?\s+(.{1,85})$','u'));
+  if(!m){m=c.match(new RegExp('^(.{1,85}?)\s+(\\d+(?:\\.\\d+)?|'+Object.keys(digits).join('|')+')\s*('+unitPattern+')?$','u'));if(m){const item=m[1],amount=m[2],unit=m[3];m=[c,amount,unit,item]}}
   if(m){
    const qty=Number.isFinite(+m[1])?+m[1]:digits[m[1]];
    if(!Number.isFinite(qty)||qty<=0||qty>100000)continue;
@@ -89,15 +89,15 @@ function route(raw){
  }
  if(best)return {kind:'navigate',key:best,source:raw};
  // Arbitrary but SAFE page navigation: only match existing navigation elements.
- const match=n.match(/^(?:باز کن|برو به|نشان بده|نمایش بده|بخش|صفحه|خلاصه کړه|پرانيزه|خلاصه|open|show|go to|navigate to)\\s+(.{2,65})$/u)
- ||n.match(/^(?:بخش|صفحه)\\s+(.{2,65}?)\\s+(?:را\\s+)?(?:باز کن|نشان بده|نمایش بده)$/u);
+ const match=n.match(/^(?:باز کن|برو به|نشان بده|نمایش بده|بخش|صفحه|خلاصه کړه|پرانيزه|خلاصه|open|show|go to|navigate to)\s+(.{2,65})$/u)
+ ||n.match(/^(?:بخش|صفحه)\s+(.{2,65}?)\s+(?:را\s+)?(?:باز کن|نشان بده|نمایش بده)$/u);
  if(match)return {kind:'navigate_label',label:match[1],source:raw};
  return {kind:'unknown',source:raw};
 }
 function visible(n){if(!n?.isConnected||n.disabled||n.closest('[hidden],[aria-hidden="true"]'))return false;const r=n.getBoundingClientRect();return r.width>0&&r.height>0}
 function allowedSection(n){return n?.matches?.('button[data-page],a[data-page],.nav-btn,.nav-item,[role="tab"],button[onclick*="goPage"],a[href^="#"]')&&!n.closest('#z196-voice,#z141-center,#z139-dialog')}
 function matchingNavLabel(label){
- const expected=clean(label).replace(/^بخش\\s+|^صفحه\\s+/,''),menu=[...document.querySelectorAll('button[data-page],a[data-page],.nav-btn,.nav-item,[role="tab"],button[onclick*="goPage"],a[href^="#"]')];
+ const expected=clean(label).replace(/^بخش\s+|^صفحه\s+/,''),menu=[...document.querySelectorAll('button[data-page],a[data-page],.nav-btn,.nav-item,[role="tab"],button[onclick*="goPage"],a[href^="#"]')];
  return menu.find(n=>visible(n)&&allowedSection(n)&&[
   n.textContent,n.getAttribute('aria-label'),n.getAttribute('title'),n.getAttribute('data-page')
  ].some(x=>{const title=clean(x||'');return title===expected||title.startsWith(expected+' ')||expected.startsWith(title+' ')&&title.length>=3}))||null

@@ -60,10 +60,14 @@ if mode=='one':
     assert 'versionCode admin ? 4127 : 660300' in g
     g=g.replace('com.zavione.one.unified20.v6603qa','com.zavione.one.unified20.v6604qa')
     g=g.replace('versionCode admin ? 4127 : 660300','versionCode admin ? 4127 : 660400')
+    assert '66.00-voice-qa' in g
+    g=g.replace('66.00-voice-qa','66.04-premium-cloud-qa')
 else:
     assert 'com.zavione.one.admin.v1449qa' in g
     assert 'versionCode admin ? 144900 : 6554' in g
     g=g.replace('com.zavione.one.admin.v1449qa','com.zavione.one.admin.v1450qa')
     g=g.replace('versionCode admin ? 144900 : 6554','versionCode admin ? 145000 : 6554')
+    assert '1.4.46-voice-qa' in g
+    g=g.replace('1.4.46-voice-qa','1.4.50-premium-cloud-qa')
 gradle.write_text(g,encoding='utf8')
 print('PASS',mode,'premium cloud-first UI, preserved original server authentication and billing logic')

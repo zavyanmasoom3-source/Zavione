@@ -38,12 +38,12 @@ jobs:
           if [ ! -x "$MANAGER" ];then MANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -1)";fi
           "$MANAGER" --install 'ndk;27.2.12479018' 'cmake;3.22.1'
           git clone --depth 1 --branch v1.9.5 --recurse-submodules https://github.com/ggml-org/whisper.cpp.git android-build/whisper-core
-          mkdir -p android-build/app/src/main/assets/models
+          mkdir -p design-model
           curl -fL --retry 4 --retry-delay 3 --connect-timeout 20 \
             'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny-q5_1.bin' \
-            -o android-build/app/src/main/assets/models/ggml-tiny-q5_1.bin
-          echo '818710568da3ca15689e31a743197b520007872ff9576237bda97bd1b469c3d7  android-build/app/src/main/assets/models/ggml-tiny-q5_1.bin' | sha256sum -c
-          test "$(wc -c < android-build/app/src/main/assets/models/ggml-tiny-q5_1.bin)" -eq 32152673
+            -o design-model/ggml-tiny-q5_1.bin
+          echo '818710568da3ca15689e31a743197b520007872ff9576237bda97bd1b469c3d7  design-model/ggml-tiny-q5_1.bin' | sha256sum -c
+          test "$(wc -c < design-model/ggml-tiny-q5_1.bin)" -eq 32152673
       - name: Obtain original SHA-verified ZAVI ONE 65.83 and owner ADMIN 1.4.29 binaries
         shell: bash
         run: |
@@ -287,7 +287,7 @@ jobs:
           ! grep -Eq 'window\.(webkitSpeechRecognition|SpeechRecognition)|ZaviAndroidHandsfree\.postMessage' android-build/app/src/main/assets/zavi-voice-local-v6599.js
           test -s android-build/app/src/main/cpp/CMakeLists.txt
           test -s android-build/app/src/main/cpp/zavi_whisper.cpp
-          test -s android-build/app/src/main/assets/models/ggml-tiny-q5_1.bin
+          test -s design-model/ggml-tiny-q5_1.bin
           node --check android-build/app/src/main/assets/zavi-unified-v6584.js
           test -s android-build/app/src/main/assets/zavi-unified-navigation-v6585.css
           node --check android-build/app/src/main/assets/zavi-admin-v1428-offline-seven-days.js

@@ -116,16 +116,17 @@ g=g.replace(needle,'''    ndkVersion '27.2.12479018'
 # Preserve original admin vs store package distinct, and isolate QA edition from production.
 if a.app=='one':
     previous='com.zavione.one.unified20.v6598easyqa'
-    nextid='com.zavione.one.unified20.localvoiceqa'
+    nextid='com.zavione.one.unified20.v6600qa'
     oldcode='versionCode admin ? 4127 : 659800'
-    newcode='versionCode admin ? 4127 : 659900'
+    newcode='versionCode admin ? 4127 : 660000'
 else:
     previous='com.zavione.one.admin.easy1444qa'
-    nextid='com.zavione.one.admin.localvoiceqa'
+    nextid='com.zavione.one.admin.v1446qa'
     oldcode='versionCode admin ? 144400 : 6554'
-    newcode='versionCode admin ? 144500 : 6554'
+    newcode='versionCode admin ? 144600 : 6554'
 assert previous in g and oldcode in g,(previous,oldcode)
 g=g.replace(previous,nextid,1).replace(oldcode,newcode,1)
+g=g.replace('65.98-handsfree-qa','66.00-voice-qa').replace('1.4.44-handsfree-qa','1.4.46-voice-qa')
 gradle.write_text(g)
 assert 'SpeechRecognizer.createSpeechRecognizer' in c # legacy source remains but entry points disabled
 assert html.count('zavi-voice-local-v6599.js')==1

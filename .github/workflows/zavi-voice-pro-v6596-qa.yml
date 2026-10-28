@@ -79,7 +79,7 @@ jobs:
           c=(r/'zavi-voice-pro-v6596.js').read_text()
           assert h.count('zavi-voice-pro-v6596.js?v=65.96')==1
           assert h.index('zavi-store-ops-v6595.js')<h.index('zavi-voice-pro-v6596.js')
-          assert all(x in c for x in ('fa-AF','fa-IR','ps-AF','en-GB','en-US','DRAFT_ONLY','navigator.clipboard','SpeechRecognition','ZaviAndroidVoice','store'))
+          assert all(x in c for x in ('fa-AF','fa-IR','ps-AF','en-GB','en-US','DRAFT_ONLY','navigator.clipboard','SpeechRecognition','ZaviAndroidVoice',"const APP='one'"))
           assert 'zavi-zxing-bundle-v6591.js' in h
           assert 'zavi-store-v6596-voice' in (r/'sw.js').read_text()
           print('PASS multilingual opt-in voice app, no automatic ledger updates; previous barcode and offline files included')

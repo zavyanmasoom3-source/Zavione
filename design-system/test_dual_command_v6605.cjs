@@ -61,7 +61,7 @@ for(const [cmd,key] of [['تنظیمات را باز کن','settings'],['open pa
 }
 assert.equal(admin.api.parseCommand('فروش را باز کن').kind,'unknown','ADMIN does not expose store sales');
 const before=one.opened.length;
-one.doc.querySelector=selector=>selector==='#z704-welcome'?{hidden:false}:
+one.doc.querySelector=selector=>selector==='#loginScreen'?{hidden:false}:
   selector==='#content'?{hidden:false}:null;
 assert.equal(one.api.execute('فروش را باز کن').kind,'blocked','Cloud login gate required');
 assert.equal(one.opened.length,before,'no bypass while logged out');

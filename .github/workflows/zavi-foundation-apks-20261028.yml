@@ -568,13 +568,3 @@ jobs:
           gh release create "$TAG" --target "$GITHUB_SHA" --title "ZAVI ONE V65.98-F1 + ADMIN V1.4.44-F1 Additive Foundation QA" --notes-file README_DARI.txt --prerelease || gh release view "$TAG" >/dev/null
           gh release upload "$TAG" ./*.apk ./*.apk.sha256 ./*_IPAD_PWA_QA.zip ./*_IPAD_PWA_QA.zip.sha256 --clobber
           echo "Android published at https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
-
-      - name: Upload both signed QA APKs as one artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ZAVI_ONE_ADMIN_FOUNDATION_F1_ANDROID_QA
-          path: |
-            design-delivery/*FOUNDATION_F1_QA.apk
-            design-delivery/*FOUNDATION_F1_QA.apk.sha256
-          if-no-files-found: error
-          retention-days: 10

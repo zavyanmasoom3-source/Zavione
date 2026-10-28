@@ -83,7 +83,7 @@ function accountMenu(){
  const bar=$('.topbar');if(!bar)return;
  if(!accountBtn){accountBtn=add('button','z704-account');accountBtn.id='z704-account';accountBtn.type='button';bar.append(accountBtn);
  accountBtn.addEventListener('click',()=>{
-  if(!signed()){show();return}
+  if(!signed()){window.zaviCloudPanel?.();return}
   let old=$('#z704-account-pop');if(old){old.remove();return}
   const pop=add('div','z704-account-pop'),email=add('p','',session()?.user?.email||'');
   pop.id='z704-account-pop';
@@ -94,8 +94,8 @@ function accountMenu(){
 }
 function onCloud(){
  if(ADMIN)return;
- if(signed()){hide();accountMenu()}
- else{show();accountMenu()}
+ // Restore the original in-app cloud panel. Never show a mandatory cloud-first gate.
+ hide();accountMenu();
 }
 function adminAuth(){
  const screen=$('#authScreen');if(!screen)return;

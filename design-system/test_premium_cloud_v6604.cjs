@@ -8,7 +8,7 @@ assert(js.includes('window.zaviCloudGetAuthSession'));
 assert(js.includes('window.zaviCloudPanel'));
 assert(js.includes('data-z20-cloud'));
 assert(js.includes("root.querySelector('[data-z20-cloud="));
-assert(js.includes('window.addEventListener(\\'zavi-cloud-session-changed\\''));
+assert(js.includes("window.addEventListener('zavi-cloud-session-changed'"));
 assert(js.includes("window.addEventListener('zavi-cloud-logged-out'"));
 assert(js.includes("if(ADMIN){adminAuth();return}"));
 assert(!js.includes('service_role'));

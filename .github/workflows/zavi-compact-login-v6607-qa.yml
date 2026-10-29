@@ -1,7 +1,7 @@
 name: ZAVI ONE V66.07 + ADMIN 1.4.53 Compact Dark Light Login Android QA
 on:
   push:
-    branches: [zavi-compact-login-v6607-admin1453-qa]
+    branches: [zavi-compact-login-v6607-admin1453-qa, zavi-assistant-single-launcher-fix-20261029]
     paths:
       - '.github/workflows/zavi-compact-login-v6607-qa.yml'
       - 'design-system/**'
@@ -53,6 +53,7 @@ jobs:
           node --check design-system/zavi-premium-cloud-v6604.js
           node design-system/test_premium_cloud_v6604.cjs
           node --check design-system/zavi-dual-command-v6605.js
+          node --check design-system/zavi-single-assistant-fix-v6608.js
           node design-system/test_dual_command_v6605.cjs
           python3 -m py_compile design-system/apply_compact_login_v6607.py
           ! grep -Fq 'sayReply(' design-system/zavi-voice-local-v6599.js
@@ -89,6 +90,7 @@ jobs:
           python3 design-system/apply_premium_v6604.py --app one
           python3 design-system/apply_dual_command_v6605.py --app one
           python3 design-system/apply_compact_login_v6607.py --app one
+          python3 design-system/apply_single_assistant_v6608.py
           node --check android-build/app/src/main/assets/zavi-dual-command-v6605.js
           grep -Fq 'zavi-dual-command-v6605.js?v=66.05' android-build/app/src/main/assets/index.html
           grep -Fq 'zavi-dual-command-v6605.css?v=66.05' android-build/app/src/main/assets/index.html
@@ -112,6 +114,7 @@ jobs:
           node --check design-system/zavi-premium-cloud-v6604.js
           node design-system/test_premium_cloud_v6604.cjs
           node --check design-system/zavi-dual-command-v6605.js
+          node --check design-system/zavi-single-assistant-fix-v6608.js
           node design-system/test_dual_command_v6605.cjs
           python3 -m py_compile design-system/apply_compact_login_v6607.py
           ! grep -Eq "el\\('textarea'|el\\('details'" design-system/zavi-voice-local-v6599.js
@@ -271,7 +274,7 @@ jobs:
           APK=android-build/app/build/outputs/apk/release/app-release.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK" | grep 'Verified using v2 scheme'
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "com.zavione.one.unified20.v6605qa"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "com.zavione.one.unified20.v6607qa"
           unzip -Z1 "$APK" | grep -Fx assets/zavi-unified-navigation-v6585.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-real-viewport-v6586.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-three-sizes-v6588.css
@@ -294,6 +297,7 @@ jobs:
           unzip -Z1 "$APK" | grep -Fx assets/zavi-voice-easy-handsfree-v6598.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-voice-local-v6599.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-premium-cloud-v6604.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-single-assistant-fix-v6608.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-dual-command-v6605.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-dual-command-v6605.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-premium-cloud-v6604.css
@@ -326,6 +330,7 @@ jobs:
           python3 design-system/apply_premium_v6604.py --app admin
           python3 design-system/apply_dual_command_v6605.py --app admin
           python3 design-system/apply_compact_login_v6607.py --app admin
+          python3 design-system/apply_single_assistant_v6608.py
           node --check android-build/app/src/main/assets/zavi-dual-command-v6605.js
           grep -Fq 'zavi-dual-command-v6605.js?v=66.05' android-build/app/src/main/assets/index.html
           grep -Fq 'zavi-dual-command-v6605.css?v=66.05' android-build/app/src/main/assets/index.html
@@ -349,6 +354,7 @@ jobs:
           node --check design-system/zavi-premium-cloud-v6604.js
           node design-system/test_premium_cloud_v6604.cjs
           node --check design-system/zavi-dual-command-v6605.js
+          node --check design-system/zavi-single-assistant-fix-v6608.js
           node design-system/test_dual_command_v6605.cjs
           python3 -m py_compile design-system/apply_compact_login_v6607.py
           ! grep -Eq "el\\('textarea'|el\\('details'" design-system/zavi-voice-local-v6599.js
@@ -531,7 +537,7 @@ jobs:
           APK=android-build/app/build/outputs/apk/release/app-release.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose "$APK" | grep 'Verified using v2 scheme'
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F 'com.zavione.one.admin.v1451qa'
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F 'com.zavione.one.admin.v1453qa'
           unzip -Z1 "$APK" | grep -Fx assets/zavi-unified-v6584.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-unified-v6584.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-real-viewport-v6586.css
@@ -554,6 +560,7 @@ jobs:
           unzip -Z1 "$APK" | grep -Fx assets/zavi-voice-easy-handsfree-v6598.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-voice-local-v6599.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-premium-cloud-v6604.js
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-single-assistant-fix-v6608.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-dual-command-v6605.js
           unzip -Z1 "$APK" | grep -Fx assets/zavi-dual-command-v6605.css
           unzip -Z1 "$APK" | grep -Fx assets/zavi-premium-cloud-v6604.css
@@ -580,7 +587,7 @@ jobs:
           iPads use hosted Safari PWA ZIP; Android APK cannot install on an iPad.
           QA ONLY: all sections are not automatically controllable. Menu navigation and safe draft previews only; no automatic accounting changes. Speech accuracy for Dari/Pashto not verified on real devices. Android arm64 only, isolated signing IDs. Windows and PWA do NOT have native offline voice yet.
           EOF
-          TAG=zavi-v6607-admin1453-compact-login-qa-20261028
-          gh release create "$TAG" --target "$GITHUB_SHA" --title "ZAVI ONE V66.06 + ADMIN V1.4.52 Independent Text and Speech QA" --notes-file README_DARI.txt --prerelease || gh release view "$TAG" >/dev/null
+          TAG=zavi-v6607-admin1453-single-assistant-qa-20261029
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "ZAVI ONE V66.07 + ADMIN V1.4.53 Single Assistant QA" --notes-file README_DARI.txt --prerelease || gh release view "$TAG" >/dev/null
           gh release upload "$TAG" ./*.apk ./*.apk.sha256 ./*_IPAD_PWA_QA.zip ./*_IPAD_PWA_QA.zip.sha256 --clobber
           echo "Android published at https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"

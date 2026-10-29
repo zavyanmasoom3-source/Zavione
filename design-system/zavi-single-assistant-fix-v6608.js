@@ -8,6 +8,7 @@
  #z605-panel .z605-badge{display:none!important}
  #z197-dashboard-mic,#z196-launch,#z198-power,#z199-launch,
  .z196-launch,.z197-fab{display:none!important}
+ #zavi-assistant-one-button[hidden]{display:none!important}
  #zavi-assistant-one-button{
  position:fixed!important;bottom:calc(env(safe-area-inset-bottom,0px) + 86px)!important;
  right:18px!important;left:auto!important;z-index:2147483000!important;
@@ -26,10 +27,7 @@
  document.body.append(btn);
  function visible(){
  const base=document.getElementById('z605-launch');
- btn.hidden=!base||base.hidden||getComputedStyle(base).display==='none'&&
- !window.ZaviDualCommand605;
- // Original launcher uses session state; mirror its hidden attribute.
- if(base)btn.hidden=base.hidden;
+ btn.hidden=!base||base.hidden||!window.ZaviDualCommand605;
  }
  visible();setInterval(visible,1500);
 })();

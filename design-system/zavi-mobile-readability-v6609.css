@@ -1,0 +1,21 @@
+/* ZAVI mobile readability hotfix: voice dialog and PIN gate, scoped only. */
+:root{color-scheme:light dark}
+#z199-voice,#z196-voice,#z605-panel{font-family:Tahoma,system-ui,sans-serif!important}
+#z199-voice :is(button,input,textarea,select),#z196-voice :is(button,input,textarea,select),#z605-panel :is(button,input,textarea,select){font-family:inherit!important;font-size:14px!important;line-height:1.55!important;box-sizing:border-box!important}
+#z199-voice :is(input,textarea,select),#z196-voice :is(input,textarea,select){min-height:40px!important;background:#f8fbff!important;color:#122b48!important;-webkit-text-fill-color:#122b48!important;border:1px solid #b7cbe0!important}
+#z199-voice :is(input,textarea)::placeholder,#z196-voice :is(input,textarea)::placeholder{color:#536b82!important;opacity:1!important}
+#z199-voice :is(button,textarea,input,select),#z196-voice :is(button,textarea,input,select){max-width:100%!important}
+#z605-panel .z605-shell{width:min(94vw,390px)!important;max-height:min(78dvh,640px)!important;padding:14px!important;gap:9px!important;border-radius:19px!important}
+#z605-panel .z605-pulse{height:48px!important}
+#z605-panel .z605-rings{width:46px!important;height:46px!important}
+#z605-panel .z605-micro{font-size:24px!important}
+#z605-panel .z605-content{padding:11px!important}
+#z605-panel #z605-type{min-height:70px!important;resize:none!important}
+#z605-panel .z605-title b{font-size:16px!important}
+#z605-panel .z605-safe{font-size:11px!important}
+#z605-panel .z605-badge{display:none!important}
+html[data-zavi-theme="light"] #z605-panel .z605-shell,html[data-theme="light"] #z605-panel .z605-shell{background:#fff!important;color:#15314b!important;border-color:#bdd4e8!important}
+html[data-zavi-theme="light"] #z605-panel :is(.z605-content,.z605-tabs),html[data-theme="light"] #z605-panel :is(.z605-content,.z605-tabs){background:#f0f6fd!important;border-color:#d1e2f0!important}
+html[data-zavi-theme="light"] #z605-panel :is(.z605-title b,.z605-locale label,#z605-type-label,.z605-feedback,.z605-safe),html[data-theme="light"] #z605-panel :is(.z605-title b,.z605-locale label,#z605-type-label,.z605-feedback,.z605-safe){color:#19344f!important;-webkit-text-fill-color:#19344f!important}
+html[data-zavi-theme="light"] #z605-panel #z605-type,html[data-theme="light"] #z605-panel #z605-type{background:white!important;color:#15314b!important;-webkit-text-fill-color:#15314b!important}
+@media(max-width:480px){#z199-voice [role="dialog"],#z196-voice [role="dialog"]{width:min(94vw,390px)!important;max-height:80dvh!important;overflow-y:auto!important;padding:14px!important}}

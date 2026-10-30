@@ -10,7 +10,9 @@ assert '<body' in s.lower(), 'Expected app HTML body missing'
 assert name not in s
 assert '</body>' in s
 shutil.copy2(Path('design-system')/name,root/name)
-s=s.replace('</body>',f'<script defer src="./{name}?v=66.08"></script></body>',1)
+pos=s.lower().rfind('</body>')
+assert pos > s.lower().rfind('</head>'), 'Final document body not found'
+s=s[:pos]+f'<script defer src="./{name}?v=66.08"></script>'+s[pos:]
 html.write_text(s,encoding='utf-8')
 sw=root/'sw.js'
 t=sw.read_text(encoding='utf-8')

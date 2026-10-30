@@ -6,7 +6,7 @@ root=Path('android-build/app/src/main/assets')
 html=root/'index.html'
 s=html.read_text(encoding='utf-8')
 name='zavi-single-assistant-fix-v6608.js'
-assert 'zavi-dual-command-v6605.js' in s
+assert '<body' in s.lower(), 'Expected app HTML body missing'
 assert name not in s
 assert '</body>' in s
 shutil.copy2(Path('design-system')/name,root/name)

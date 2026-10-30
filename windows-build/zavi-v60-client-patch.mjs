@@ -8,7 +8,7 @@ const here=path.dirname(fileURLToPath(import.meta.url));
 export function applyZaviV60(web){
  const index=path.join(web,'index.html');
  if(!fs.existsSync(index))throw Error('ZAVI V63: missing main index.html');
- let html=fs.readFileSync(index,'utf8');
+   let html=fs.readFileSync(index,'utf8');
  if(!html.includes('cloud.js')||!html.trimEnd().toLowerCase().endsWith('</html>'))throw Error('ZAVI V63: wrong or incomplete customer app');
  for(const ext of ['js','css']){
    const file='zavi-v63-team-operations.'+ext;

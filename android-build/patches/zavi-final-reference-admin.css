@@ -1,0 +1,146 @@
+/* ZAVI ONE ADMIN V1.4.12 | premium reference-matched owner-only presentation.
+   Visual-only styles: no permission, subscription, invoice, finance or auth logic touched.
+*/
+html{
+ --zfa-blue:#1768f4;--zfa-cyan:#1bc8ef;--zfa-gold:#d7a246;
+ --zfa-radius:18px;--zfa-gradient:linear-gradient(112deg,#1353ec,#0f9bf3 75%,#1bc7e9);
+}
+html[data-zavi-theme="light"]{
+ --zfa-panel:#fff;--zfa-page:#f3f8ff;--zfa-ink:#162341;
+ --zfa-line:#deebf7;--zfa-muted:#667c9c;--zfa-soft:#eaf4ff;
+ --zfa-shadow:0 9px 25px rgba(35,79,146,.075);
+}
+html:not([data-zavi-theme="light"]){
+ --zfa-panel:#0c1e33;--zfa-page:#071528;--zfa-ink:#edf7ff;
+ --zfa-line:#234362;--zfa-muted:#a3bcdb;--zfa-soft:#173353;
+ --zfa-shadow:0 12px 28px rgba(0,5,21,.25);
+}
+body #appScreen{background:var(--zfa-page)!important;color:var(--zfa-ink)!important}
+body #appScreen #view{background:var(--zfa-page)!important;color:var(--zfa-ink)!important}
+body #appScreen .sidebar{
+ background:var(--zfa-panel)!important;border-inline-end:1px solid var(--zfa-line)!important;
+ box-shadow:none!important
+}
+body #appScreen .sidebar .brand{border-color:var(--zfa-line)!important}
+body #appScreen .sidebar .brand strong{letter-spacing:.03em;font-size:17px}
+body #appScreen .sidebar .brand strong span{color:var(--zfa-blue)!important}
+body #appScreen .sidebar .nav-item{
+ border-radius:12px!important;margin-block:3px!important;min-height:45px!important;
+ font-size:13px!important;font-weight:730!important;
+ transition:background .18s ease,color .18s ease,transform .18s ease!important
+}
+body #appScreen .sidebar .nav-item.selected{
+ color:var(--zfa-blue)!important;
+ background:linear-gradient(115deg,var(--zfa-soft),rgba(27,151,243,.045))!important;
+ border-inline-start:3px solid var(--zfa-blue)!important;
+ box-shadow:0 3px 10px rgba(32,121,238,.08)!important
+}
+body #appScreen .topbar{
+ background:var(--zfa-panel)!important;color:var(--zfa-ink)!important;
+ border-bottom:1px solid var(--zfa-line)!important;
+ box-shadow:none!important
+}
+body #appScreen #view .admin-hero{
+ position:relative;isolation:isolate;overflow:hidden;
+ min-height:132px!important;border:1px solid var(--zfa-line)!important;
+ border-radius:21px!important;padding:23px!important;
+ background:radial-gradient(circle at 92% 8%,rgba(21,170,253,.14),transparent 39%),
+ linear-gradient(115deg,var(--zfa-panel),var(--zfa-soft))!important;
+ box-shadow:var(--zfa-shadow)!important;
+}
+body #appScreen #view .admin-hero:after{
+ content:"";position:absolute;inset:auto -50px -180px auto;width:340px;height:340px;
+ border:1px solid rgba(31,151,246,.19);border-radius:50%;pointer-events:none;
+ box-shadow:0 0 0 30px rgba(25,160,245,.035),0 0 0 70px rgba(25,160,245,.018);
+ animation:zfa-orbit 12s ease-in-out infinite alternate;
+}
+body #appScreen #view .admin-hero h1{
+ font-size:clamp(21px,3vw,34px)!important;letter-spacing:-.025em;color:var(--zfa-ink)!important;
+ text-shadow:none!important;
+}
+body #appScreen #view .admin-hero h1 em{color:var(--zfa-blue)!important;font-style:normal}
+body #appScreen #view .admin-hero h2{font-weight:850!important;color:var(--zfa-ink)!important}
+body #appScreen #view .admin-hero p{color:var(--zfa-muted)!important}
+body #appScreen #view .admin-hero-kicker{
+ background:var(--zfa-soft)!important;border:1px solid var(--zfa-line)!important;
+ border-radius:10px!important;padding:6px 11px;color:var(--zfa-blue)!important;
+ font-size:12px!important;font-weight:850!important;display:inline-block;
+}
+body #appScreen #view .admin-kpis{
+ display:grid!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important;
+ gap:12px!important;max-width:100%;
+}
+body #appScreen #view .admin-kpi{
+ position:relative;overflow:hidden;isolation:isolate;min-width:0;
+ padding:17px!important;min-height:113px!important;
+ border:1px solid var(--zfa-line)!important;border-radius:17px!important;
+ background:var(--zfa-panel)!important;color:var(--zfa-ink)!important;
+ box-shadow:var(--zfa-shadow)!important;animation:zfa-rise .45s cubic-bezier(.2,.7,.2,1) both;
+ transition:transform .2s ease,box-shadow .2s ease!important;
+}
+body #appScreen #view .admin-kpi:before{
+ content:"";position:absolute;top:0;inset-inline:0;height:3px;
+ background:linear-gradient(90deg,#126bf8,#36d7ed);pointer-events:none;
+}
+body #appScreen #view .admin-kpi:nth-child(2):before{background:linear-gradient(90deg,#00bba6,#5edfcc)}
+body #appScreen #view .admin-kpi:nth-child(3):before{background:linear-gradient(90deg,#efa04a,#ffce64)}
+body #appScreen #view .admin-kpi:nth-child(4):before{background:linear-gradient(90deg,#9a82f8,#d3acff)}
+body #appScreen #view .admin-kpi:nth-child(2){animation-delay:.045s}
+body #appScreen #view .admin-kpi:nth-child(3){animation-delay:.09s}
+body #appScreen #view .admin-kpi:nth-child(4){animation-delay:.135s}
+body #appScreen #view .admin-kpi:nth-child(5){animation-delay:.18s}
+body #appScreen #view .admin-kpi strong{color:var(--zfa-ink)!important;font-size:clamp(21px,2.5vw,29px)!important;font-variant-numeric:tabular-nums}
+body #appScreen #view .admin-kpi small,body #appScreen #view .admin-kpi .kpi-foot{color:var(--zfa-muted)!important;line-height:1.4}
+body #appScreen #view .admin-kpi:hover{transform:translateY(-3px);box-shadow:0 14px 28px rgba(31,124,234,.13)!important}
+body #appScreen #view .admin-analytics,body #appScreen #view .admin-secondary{gap:12px!important}
+body #appScreen #view .panel,body #appScreen #view .admin-analytics-main,
+body #appScreen #view .admin-distribution{
+ background:var(--zfa-panel)!important;border:1px solid var(--zfa-line)!important;
+ color:var(--zfa-ink)!important;border-radius:17px!important;
+ box-shadow:var(--zfa-shadow)!important;min-width:0!important;
+ animation:zfa-rise .35s ease both;
+}
+body #appScreen #view .panel :is(h1,h2,h3),body #appScreen #view .panel-heading{
+ color:var(--zfa-ink)!important;font-weight:840!important;
+}
+body #appScreen #view .admin-quick-grid button{
+ background:var(--zfa-soft)!important;border:1px solid var(--zfa-line)!important;
+ border-radius:12px!important;color:var(--zfa-ink)!important;
+ transition:transform .18s ease!important;
+}
+body #appScreen #view .admin-quick-grid button:hover{transform:translateY(-2px)}
+body #appScreen #view .button.primary{
+ background:var(--zfa-gradient)!important;border:0!important;
+ color:#fff!important;box-shadow:0 6px 17px rgba(27,104,237,.17)!important;border-radius:12px!important;
+}
+body #appScreen #view :is(input,select,textarea){
+ border:1px solid var(--zfa-line)!important;border-radius:11px!important;
+ background:var(--zfa-panel)!important;color:var(--zfa-ink)!important;
+}
+body #appScreen #view table th{background:var(--zfa-soft)!important;color:var(--zfa-muted)!important}
+body #appScreen #view table td{color:var(--zfa-ink)!important;border-color:var(--zfa-line)!important}
+body #appScreen .zavi-v6-menu-scroll{overflow-y:auto!important;overscroll-behavior:contain!important}
+body #appScreen :is(button,select,input,textarea):focus-visible{outline:2px solid var(--zfa-cyan)!important;outline-offset:2px!important}
+body #appScreen #view :is(.table-wrap,table){max-width:100%}
+@keyframes zfa-rise{from{opacity:.55;transform:translate3d(0,11px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@keyframes zfa-orbit{from{transform:translateY(8px) scale(.96)}to{transform:translateY(-8px) scale(1.05)}}
+@media(max-width:900px){
+ body #appScreen #view .admin-hero{min-height:106px!important;padding:16px!important}
+ body #appScreen #view .admin-hero:after{width:180px;height:180px;inset:auto -50px -90px auto}
+ body #appScreen #view .admin-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ body #appScreen #view .admin-kpi{min-height:100px!important;padding:13px!important}
+ body #appScreen #view .admin-kpi:hover{transform:none}
+ body #appScreen #view .admin-analytics,body #appScreen #view .admin-secondary{grid-template-columns:1fr!important}
+ body #appScreen #view{padding:12px!important}
+ body #appScreen .admin-mobile-nav{box-shadow:0 -6px 21px rgba(0,48,98,.09)!important;border-top:1px solid var(--zfa-line)!important}
+}
+@media(max-width:380px){
+ body #appScreen #view .admin-kpi strong{font-size:18px!important}
+ body #appScreen #view .admin-kpis{gap:7px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ body #appScreen #view :is(.admin-hero:after,.admin-kpi,.panel,.admin-analytics-main,.admin-distribution){
+ animation:none!important;transition:none!important
+ }
+}
+@media print{body #appScreen #view .admin-hero:after{display:none}body #appScreen #view .admin-kpi{animation:none!important;box-shadow:none!important}}

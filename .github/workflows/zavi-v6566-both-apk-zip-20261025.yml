@@ -1,0 +1,97 @@
+name: ZAVI ONE 65.66 and ADMIN 1.4.13 Verified QA APK ZIP
+on:
+  push:
+    branches: [zavi-v6566-publish-review-both-20261025]
+    paths:
+      - ".github/workflows/zavi-v6566-both-apk-zip-20261025.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and audit both signed APKs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p installers
+          gh release download zavi-v6566-one-admin-qa-20261025 \
+            --pattern 'ZAVI_ONE_V65_66_RESTORED_INVOICE_QA.apk*' --dir installers
+          gh release download zavi-v6566-one-admin-qa-20261025 \
+            --pattern 'ZAVI_ONE_ADMIN_V1_4_13_POLISHED_QA.apk*' --dir installers
+          cd installers
+          for apk in ZAVI_ONE_V65_66_RESTORED_INVOICE_QA.apk ZAVI_ONE_ADMIN_V1_4_13_POLISHED_QA.apk; do
+            test -s "$apk"
+            expected="$(awk 'NR==1{print $1}' "$apk.sha256")"
+            echo "$expected  $apk" | sha256sum -c -
+            test "$(stat -c %s "$apk")" -gt 3000000
+            unzip -t "$apk" | tail -1
+            unzip -Z1 "$apk" | grep -Fx assets/index.html
+            unzip -Z1 "$apk" | grep -Fx classes.dex
+          done
+          unzip -Z1 ZAVI_ONE_V65_66_RESTORED_INVOICE_QA.apk | grep -Fx assets/zavi-final-reference-store.js
+          unzip -Z1 ZAVI_ONE_V65_66_RESTORED_INVOICE_QA.apk | grep -Fx assets/zavi-dashboard-polish-v6562.js
+          unzip -Z1 ZAVI_ONE_V65_66_RESTORED_INVOICE_QA.apk | grep -Fx assets/zavi-dashboard-polish-v6562.css
+          unzip -Z1 ZAVI_ONE_V65_66_RESTORED_INVOICE_QA.apk | grep -Fx assets/zavi-final-reference-store.css
+          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_13_POLISHED_QA.apk | grep -Fx assets/zavi-final-reference-admin.css
+          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_13_POLISHED_QA.apk | grep -Fx assets/zavi-admin-v1413-polish.css
+          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_13_POLISHED_QA.apk | grep -Fx assets/zavi-admin-v1413-polish.js
+          unzip -p ZAVI_ONE_V65_66_RESTORED_INVOICE_QA.apk assets/zavi-v6565-sales-settings.js | grep -Fq 'invoice.setAttribute'
+          sha256sum *.apk > SHA256_CHECKSUMS.txt
+          cat > READ_ME_FIRST_DARI.txt <<'README'
+          ZAVI ONE 65.66 + ZAVI ONE ADMIN 1.4.13
+          Final-reference look / Android QA — 25 October 2026.
+
+          دو فایل APK برای بررسی طراحی روشن و تیره تهیه شدند:
+          1) ZAVI_ONE_V65_66_RESTORED_INVOICE_QA.apk — فروشگاه
+          2) ZAVI_ONE_ADMIN_V1_4_13_POLISHED_QA.apk — مدیریت مرکزی
+
+          تغییرات طراحی:
+          - داشبورد مرتب، جستجوی کوچک فعال و کارت‌های گرافیکی
+          - صفحه «همه بخش‌ها» به شکل شبکه قابل اسکرول، بدون جستجوی بزرگ
+          - «مرکز سلامت» از داشبورد حذف شده، منطق سایر بخش‌ها محفوظ است
+          - کارت کوچک نرخ امروز دالر و راه دسترسی به نرخ اصلی
+          - حالت روشن/تیره و انیمیشن‌های قابل کنترل
+          - ADMIN ظاهر مدیریتی جدید؛ مجوز مالک مرکزی در اصل برنامه unchanged
+
+          نکته بسیار مهم:
+          این‌ها دو برنامه مستقل QA هستند و شناسه نصب‌شان با نسخه اصلی متفاوت است.
+          این کار از جایگزینی ناخواسته برنامه دارای داده مشتری جلوگیری می‌کند.
+          نسخه‌های QA از امضای موقت Build استفاده می‌کنند.
+          پیش از انتقال دستگاه یا حذف برنامه قبلی، معاملات ارسال‌نشده را
+          همگام و نسخه پشتیبان معتبر بگیرید.
+          این بسته هنوز تضمین برابری پیکسل‌به‌پیکسل با تصاویر، کارکرد صددرصد
+          بدون خطا، یا آزمون واقعی چاپ/دوربین/آفلاین/ورود ابری نیست.
+          کارهای حسابداری، دستگاه‌ها، مشترکان و محدودیت‌های دسترسی را
+          پیش از عرضه عمومی با حساب آزمایشی روی دستگاه واقعی تست کنید.
+          README
+          cd ..
+          zip -9 -q -j ZAVI_ONE_6566_ADMIN_1413_TESTED_QA_APKS.zip \
+            installers/ZAVI_ONE_V65_66_RESTORED_INVOICE_QA.apk \
+            installers/ZAVI_ONE_ADMIN_V1_4_13_POLISHED_QA.apk \
+            installers/SHA256_CHECKSUMS.txt \
+            installers/READ_ME_FIRST_DARI.txt
+          unzip -t ZAVI_ONE_6566_ADMIN_1413_TESTED_QA_APKS.zip | tail -1
+          test "$(unzip -Z1 ZAVI_ONE_6566_ADMIN_1413_TESTED_QA_APKS.zip | grep -c '\.apk$')" -eq 2
+          sha256sum ZAVI_ONE_6566_ADMIN_1413_TESTED_QA_APKS.zip > ZAVI_ONE_6566_ADMIN_1413_TESTED_QA_APKS.zip.sha256
+          echo "PASS: 2 signed app bundles; SHA256, required UI source, and ZIP integrity"
+      - name: Publish signed APK collection
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-v6566-both-qa-apks-20261025
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1;then
+            gh release create "$TAG" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE 65.66 + ADMIN 1.4.13 — dual APKs QA" \
+              --notes "Store 65.66 restores native Create Invoice and removes duplicate Debtors; ADMIN 1.4.13 refines central owner settings and mobile layout. Both separately QA signed and checksummed, files and internal ZIP verified. Do not replace current production installations; live auth/owner security regression, offline sync, camera, print and production signing still need final device tests."
+          fi
+          gh release upload "$TAG" \
+            ZAVI_ONE_6566_ADMIN_1413_TESTED_QA_APKS.zip \
+            ZAVI_ONE_6566_ADMIN_1413_TESTED_QA_APKS.zip.sha256 --clobber

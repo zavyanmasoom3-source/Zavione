@@ -1,0 +1,21 @@
+name: Cancel superseded duplicate QA matrix runs (preserve latest validated jobs)
+on:
+  push:
+    branches: [zavi-v6573-industry-editions-20261026]
+    paths: ['.github/workflows/zavi-v6573-cancel-superseded.yml']
+permissions:
+  actions: write
+  contents: read
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Cancel only superseded CI runs from earlier failing upload methods
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for id in 40282233993 40282445360 40282497547 40282610803 40282971288 40282240752 40283002207 40283020761;do
+            gh api -X POST "/repos/$GITHUB_REPOSITORY/actions/runs/$id/cancel" >/dev/null 2>&1 && echo "Cancelled superseded $id" || echo "Already ended or cannot cancel $id"
+          done
+          echo "Kept current Android 40283085420 and Windows 40283583571 builds."

@@ -1,0 +1,28 @@
+name: ZAVI industry test git-based delivery access
+on:
+  push:
+    branches: [zavi-v6573-industry-editions-20261026]
+    paths: ['.github/workflows/zavi-v6573-test-git-delivery.yml']
+permissions:
+  contents: write
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Probe a tiny generated file on an isolated upload branch, never main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name 'ZAVI CI Build'
+          git config user.email 'zavi-build@users.noreply.github.com'
+          git checkout -B zavi-v6573-industry-build-delivery-qa
+          mkdir -p industry-delivery
+          printf '%s\n' 'Automated industry QA binaries; testing repository-backed upload permission.' > industry-delivery/README.txt
+          git add industry-delivery/README.txt
+          git commit -m 'test: confirm direct source-controlled download path for restricted artifact storage'
+          git push --force-with-lease origin HEAD:zavi-v6573-industry-build-delivery-qa
+          echo 'GIT_BINARY_DELIVERY_ALLOWED'

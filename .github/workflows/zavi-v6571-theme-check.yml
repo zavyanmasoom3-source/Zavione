@@ -1,0 +1,35 @@
+name: Inspect ADMIN theme markers without customer data
+on:
+  push:
+    branches: [zavi-v6571-light-admin-compact-store-devices-20261026]
+    paths: [".github/workflows/zavi-v6571-theme-check.yml"]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Examine local theme toggle implementation
+        run: |
+          set -eu
+          base64 -d windows-build/admin-v145-responsive-web.zip.base64 > /tmp/zavi-theme.zip
+          mkdir -p /tmp/zavi-theme
+          unzip -q /tmp/zavi-theme.zip -d /tmp/zavi-theme
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/zavi-theme')
+          for p in root.rglob('*'):
+           if p.is_file() and p.suffix in ('.html','.js','.css'):
+            s=p.read_text(errors='replace')
+            matches=[]
+            for t in ('data-zavi-theme','data-theme','themeMode','theme-toggle','light-mode','dark-mode','setTheme','zaviAdminTheme','applyTheme'):
+             matches.extend([x.start() for x in list(re.finditer(re.escape(t),s))[:4]])
+            if not matches:continue
+            print('FILE',p.relative_to(root),'SIZE',len(s))
+            for pos in sorted(set(matches))[:15]:
+             snippet=re.sub(r'\\s+',' ',s[max(0,pos-90):pos+110])
+             if 'http' in snippet or 'eyJ' in snippet or 'apikey' in snippet.lower():continue
+             print('THEME',snippet[:240])
+          PY

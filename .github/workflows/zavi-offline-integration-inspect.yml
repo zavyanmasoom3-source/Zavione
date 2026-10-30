@@ -1,0 +1,63 @@
+name: ZAVI offline controls safe source integration inspection
+on:
+  push:
+    branches: [zavi-v6570-offline-permission-console-20261026]
+    paths:
+      - ".github/workflows/zavi-offline-integration-inspect.yml"
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect offline and central ADMIN runtime APIs without data or secrets
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zavi-inspect
+          base64 -d windows-build/admin-v145-responsive-web.zip.base64 > /tmp/zavi-inspect/admin.zip
+          unzip -oq /tmp/zavi-inspect/admin.zip -d /tmp/zavi-inspect/app
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/zavi-inspect/app')
+          for file in root.rglob('*'):
+            if not file.is_file() or file.suffix not in ('.js','.html'):continue
+            t=file.read_text(errors='replace')
+            names=re.findall(r'(?:const|let|var)\s+(\w+)\s*=\s*(?:window\.)?(?:supabase\.)?createClient\s*\(',t)
+            names+=re.findall(r'(?:const|let|var)\s+(\w+)\s*=\s*(?:window\.)?(?:supabase\.createClient|createClient)\s*\(',t)
+            relevant=bool(re.search('zavi_admin_list_workspaces|zavi_v269_set_offline_policy|zavi_my_offline_policy|supabase.auth.getSession|db.rpc',t))
+            if names or relevant or file.name in ('app.js','index.html','account-control.js'):
+              print('FILE',str(file.relative_to(root)),'chars',len(t),'client_bindings',list(dict.fromkeys(names)))
+              for pattern in [r'(?m)^.{0,100}(?:const|let|var) (?:sb|supabaseClient|client|supa|supabase|db)\b.{0,130}$',r'(?m)^.{0,90}\.rpc\(["\\x27](?:zavi_admin_list_workspaces|zavi_v269_set_offline_policy|zavi_my_offline_policy|zavi_admin_v241_overview).{0,100}$',r'(?m)^.{0,95}\b(?:getSession|currentSession|isAdmin)\s*\(.{0,80}$']:
+                matches=re.findall(pattern,t)
+                for line in matches[:5]:
+                  if any(x in line for x in ('service_role','apikey','anon_key','http://','https://')):continue
+                  print('MATCH',line.strip()[:230])
+          for fname in ('app.js','account-control.js','admin-portal.js','index.html'):
+            file=root/fname
+            if not file.exists():continue
+            t=file.read_text(errors='replace')
+            print('CLIENT STRUCTURE',fname)
+            for pat in (r'supabase\\.createClient',r'createClient\\(',r'\\brpc\\(',r'getSession\\(',r'\\bconst\\s+sb\\b',r'\\blet\\s+sb\\b',r'window\\.[A-Za-z_$][A-Za-z0-9_$]{0,30}'):
+              results=list(re.finditer(pat,t,re.I))
+              print('PATTERN',pat,'occurrences',len(results))
+              for m in results[:5]:
+                sample=t[max(0,m.start()-75):m.end()+90].replace(chr(10),' ')
+                sample=re.sub(r'eyJ[A-Za-z0-9_.-]+','[TOKEN]',sample)
+                sample=re.sub(r'https?://[^\\s\\"\']+','[URL]',sample)
+                if len(sample)>240:sample=sample[:240]
+                print('CONTEXT',sample)
+          print('ADMIN STRUCTURE')
+          for fname in ('app.js','account-control.js','index.html'):
+            f=root/fname
+            if not f.exists():continue
+            raw=f.read_text(errors='replace')
+            for i,line in enumerate(raw.splitlines()):
+              if len(line)>480:continue
+              if any(x in line for x in ('supabase', '.rpc(', 'getSession(', '.auth.', 'data-page', 'window.ZAVI', 'const client', 'const sb', 'let sb', 'let client', 'fetch(')):
+                if re.search(r'eyJ[A-Za-z0-9._\\-]{30,}|[A-Za-z0-9_.-]{70,}|service_role|apikey|anon.?key|https?://',line,re.I):continue
+                print(fname,i+1,line.strip()[:300])
+                if i>1100:break
+          PY

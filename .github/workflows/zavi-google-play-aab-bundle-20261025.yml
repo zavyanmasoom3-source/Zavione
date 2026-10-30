@@ -1,0 +1,92 @@
+name: ZAVI ONE and ADMIN Combined Google Play AAB Candidate Package
+on:
+  push:
+    branches: [zavi-google-play-aab-release-candidate-20261025]
+    paths:
+      - ".github/workflows/zavi-google-play-aab-bundle-20261025.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE: zavi-google-play-aab-candidates-20261025
+      DEST: zavi-google-play-aab-bundle-20261025
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch verified AAB candidates and browser QA reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p src selected
+          for i in $(seq 1 40);do
+            gh release download "$SOURCE" --pattern '*.aab' --dir src --clobber >/dev/null 2>&1 || true
+            gh release download "$SOURCE" --pattern 'ZAVI_BROWSER_QA_*.zip' --dir src --clobber >/dev/null 2>&1 || true
+            test "$(find src -type f -name '*.aab' | wc -l)" -ge 2 &&
+            test -s src/ZAVI_BROWSER_QA_one.zip &&
+            test -s src/ZAVI_BROWSER_QA_admin.zip && break
+            sleep 6
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil,zipfile,json
+          root=Path('src'); dest=Path('selected')
+          for prefix in ('ZAVI_ONE_65_69','ZAVI_ONE_ADMIN_1_4_16'):
+            signed=root/(prefix+'_SIGNED_UPLOAD_CANDIDATE.aab')
+            unsigned=root/(prefix+'_UNSIGNED_REQUIRES_OWNER_KEY.aab')
+            assert signed.exists() or unsigned.exists(),'Missing AAB: '+prefix
+            aab=signed if signed.exists() else unsigned
+            with zipfile.ZipFile(aab) as z:
+              assert z.testzip() is None
+              allfiles=set(z.namelist())
+              assert 'base/manifest/AndroidManifest.xml' in allfiles
+              assert 'base/assets/index.html' in allfiles
+            shutil.copy2(aab,dest/aab.name)
+            print('PASS:',aab.name,'SIGNED' if signed.exists() else 'UNSIGNED - NOT PLAY UPLOADABLE')
+          for mode in ('one','admin'):
+            qa=root/('ZAVI_BROWSER_QA_'+mode+'.zip')
+            assert qa.is_file(),qa
+            with zipfile.ZipFile(qa) as z:
+              j=json.loads(z.read('qa.json'))
+              assert j['fail_count']==0, j
+            shutil.copy2(qa,dest/qa.name)
+            print('PASS browser checks',mode,j['pass_count'])
+          PY
+          cp android-build/release/GOOGLE_PLAY_RELEASE_GUIDE_DARI.md selected/
+          sha256sum selected/*.aab > selected/AAB_SHA256.txt
+          cat > selected/START_HERE_DARI.txt <<'README'
+          GOOGLE PLAY PRE-SUBMISSION CANDIDATES, ZAVI ONE 65.69 and ADMIN 1.4.16
+
+          Two canonical-package AAB files and browser QA reports included.
+          If a filename contains UNSIGNED, it MUST NOT be uploaded to Google Play.
+          Configure your own upload signing key as 4 GitHub Actions secrets
+          PER APPLICATION, and rerun the workflow for new signed candidates.
+          Do not place passwords or JKS files in the repository or chat.
+          Check GOOGLE_PLAY_RELEASE_GUIDE_DARI.md for detailed instructions.
+
+          APK signed with an earlier temporary/debug QA key may not be directly
+          upgradable to Google Play's permanent signing key. Backup all local data,
+          especially pending offline sales, before attempting migration.
+
+          The Play account, privacy policy, data-safety declarations, account
+          deletion method, owner-only admin review login and physical-device
+          testing have not been completed. This is NOT an approved public release.
+          README
+          (cd selected && zip -9 -q -r ../ZAVI_ONE_ADMIN_PLAY_AAB_CANDIDATES_2026_10_25.zip .)
+          unzip -t ZAVI_ONE_ADMIN_PLAY_AAB_CANDIDATES_2026_10_25.zip | tail -n1
+          sha256sum ZAVI_ONE_ADMIN_PLAY_AAB_CANDIDATES_2026_10_25.zip > ZAVI_ONE_ADMIN_PLAY_AAB_CANDIDATES_2026_10_25.zip.sha256
+      - name: Publish explicitly pre-production bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$DEST" >/dev/null 2>&1;then
+            gh release create "$DEST" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE 65.69 + ADMIN 1.4.16 — Google Play AAB pre-submission package" \
+              --notes "Canonical packages, Android API 36, tested local UI, buildable AABs, owner signing gate. UNSIGNED artifacts need the owner's private upload keystore before Play. Policy, live device and Play review are not complete. NOT PUBLISHED TO GOOGLE PLAY."
+          fi
+          gh release upload "$DEST" \
+            ZAVI_ONE_ADMIN_PLAY_AAB_CANDIDATES_2026_10_25.zip \
+            ZAVI_ONE_ADMIN_PLAY_AAB_CANDIDATES_2026_10_25.zip.sha256 --clobber

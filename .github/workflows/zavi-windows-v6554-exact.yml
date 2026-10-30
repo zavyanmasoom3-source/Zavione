@@ -1,0 +1,120 @@
+name: ZAVI ONE Windows x64 Setup — V65.55 desktop visibility hotfix
+on:
+  push:
+    branches: [zavi-windows-v6555-visible-content-fix]
+    paths:
+      - ".github/workflows/zavi-windows-v6554-exact.yml"
+      - "windows-build/desktop-visible-v6555.css"
+      - "windows-build/desktop-visible-v6555.js"
+      - "windows-build/main.cjs"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  windows_store:
+    runs-on: windows-2022
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch exact ZAVI ONE V65.54 web ZIP from private GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "windows-output/ZAVI_ONE/web" | Out-Null
+          New-Item -ItemType Directory -Force -Path "source" | Out-Null
+          gh release download zavi-web-v6554-responsive-20261024 --pattern "ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip" --dir source
+          Expand-Archive -LiteralPath source/ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip -DestinationPath windows-output/ZAVI_ONE/web -Force
+          if (!(Test-Path windows-output/ZAVI_ONE/web/index.html)) { throw "Missing store index.html" }
+          $count=(Get-ChildItem windows-output/ZAVI_ONE/web -Recurse -File).Count
+          if ($count -lt 170) {throw "Incomplete latest web source: $count files"}
+          $html=Get-Content windows-output/ZAVI_ONE/web/index.html -Raw
+          if (!$html.Contains('id="usdRateDashboardForm"')){throw "USD dashboard manual editor missing"}
+          if ($html.Contains('id="usdRateForm"')){throw "Unexpected obsolete Settings editor"}
+          if (!$html.Contains('zavi-web-responsive-v1.css')){throw "Responsive assets missing"}
+          Write-Host "PASS — exact latest web V65.54 embedded ($count files)"
+      - name: Ensure dashboard, stock, customers and settings are visible on desktop
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          Copy-Item windows-build/desktop-visible-v6555.css windows-output/ZAVI_ONE/web/
+          Copy-Item windows-build/desktop-visible-v6555.js windows-output/ZAVI_ONE/web/
+          node --check windows-output/ZAVI_ONE/web/desktop-visible-v6555.js
+          @'
+          const fs=require('fs');
+          const p='windows-output/ZAVI_ONE/web/index.html';
+          let html=fs.readFileSync(p,'utf8');
+          if(html.includes('desktop-visible-v6555.js'))throw Error('Already injected');
+          const sheet='<link rel="stylesheet" href="./desktop-visible-v6555.css?v=65.55">';
+          const script='<script defer src="./desktop-visible-v6555.js?v=65.55"></script>';
+          if(!html.includes('</head>')||!html.includes('</body>'))throw Error('Missing root HTML shell');
+          html=html.replace('</head>',sheet+'</head>');
+          let at=html.lastIndexOf('</body>');
+          html=html.slice(0,at)+script+html.slice(at);
+          fs.writeFileSync(p,html);
+          for(const needle of ['id="usdRateDashboardForm"','function renderProducts(){','function renderSettings(){','zavi-signup-whatsapp-once-v6548.js']){
+            if(!html.includes(needle))throw Error('Store feature lost: '+needle);
+          }
+          console.log('PASS: existing accounting modules retained, separate desktop assistance installed.');
+          '@ | node
+          if ($LASTEXITCODE -ne 0){throw 'Desktop UI fix injection failed'}
+      - name: Stage standalone Electron desktop wrapper with persistent profile
+        shell: pwsh
+        run: |
+          Copy-Item windows-build/main.cjs windows-output/ZAVI_ONE/main.cjs
+          Copy-Item windows-build/desktop-server.cjs windows-output/ZAVI_ONE/desktop-server.cjs
+          $pkg=@{
+            name="zavi-one-desktop";productName="ZAVI ONE";version="65.55.0";private=$true
+            description="ZAVI ONE V65.55 Windows x64 desktop content and sync clarity hotfix"
+            main="main.cjs"
+            scripts=@{test="node --check main.cjs && node --check desktop-server.cjs"; "dist:win"="electron-builder --win nsis --x64"}
+            devDependencies=@{electron="^38.0.0";"electron-builder"="^26.0.0"}
+            build=@{
+              appId="com.zavione.accounting";productName="ZAVI ONE";asar=$true
+              directories=@{output="dist"}
+              files=@("main.cjs","desktop-server.cjs","web/**/*","package.json","!**/*.map")
+              win=@{icon="web/icon-512.png";target=@(@{target="nsis";arch=@("x64")});requestedExecutionLevel="asInvoker"}
+              nsis=@{
+                oneClick=$false;perMachine=$false;allowToChangeInstallationDirectory=$true
+                createDesktopShortcut=$true;createStartMenuShortcut=$true
+                shortcutName="ZAVI ONE";deleteAppDataOnUninstall=$false
+                artifactName="Setup_ZAVI_ONE_65_55_DESKTOP_FIX_Windows_x64.exe"
+              }
+            }
+          }
+          ConvertTo-Json -InputObject $pkg -Depth 20 | Set-Content windows-output/ZAVI_ONE/package.json -Encoding utf8
+          $metadata=@{source="GitHub release zavi-web-v6554-responsive-20261024";version="65.54";target="Windows x64";features="Same V65.54 data engine with transparent desktop content and clear cloud sign-in instructions";signing="Unsigned QA installer, not Authenticode";test="Windows package compile only; authentication and hardware runtime require on-device QA"}
+          ConvertTo-Json -InputObject $metadata -Depth 8 | Set-Content windows-output/ZAVI_ONE/BUILD_SOURCE_REPORT.json -Encoding utf8
+      - name: Install Electron, run code checks and build setup
+        shell: pwsh
+        working-directory: windows-output/ZAVI_ONE
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+          npm run dist:win
+      - name: Verify real NSIS setup and checksums
+        shell: pwsh
+        run: |
+          $exe="windows-output/ZAVI_ONE/dist/Setup_ZAVI_ONE_65_55_DESKTOP_FIX_Windows_x64.exe"
+          if (!(Test-Path $exe)) { throw "No setup exe" }
+          $size=(Get-Item $exe).Length
+          if ($size -lt 30000000) {throw "Unusually small Electron setup, size $size"}
+          $hash=(Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  Setup_ZAVI_ONE_65_55_DESKTOP_FIX_Windows_x64.exe" | Set-Content windows-output/ZAVI_ONE/dist/Setup_ZAVI_ONE_65_55_DESKTOP_FIX_Windows_x64.exe.sha256 -Encoding ascii
+          Write-Host "PASS: direct NSIS Windows x64 setup, $size bytes, SHA256 $hash"
+      - name: Release installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-windows-v6555-desktop-fix-qa
+        shell: pwsh
+        run: |
+          gh release view $env:TAG 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $env:TAG --target "$env:GITHUB_SHA" --prerelease --title "ZAVI ONE 65.55 Windows Desktop Content Fix QA" --notes "Windows V65.55: all prior V65.54 business data code unchanged. Fixes desktop visibility, avoids animation-hidden cards, explains empty fresh local profile, and helps open cloud Settings for user-authorized sync. Existing local data not removed. Unsigned QA, Windows hardware and real-account tests still required."
+          }
+          gh release upload $env:TAG "windows-output/ZAVI_ONE/dist/Setup_ZAVI_ONE_65_55_DESKTOP_FIX_Windows_x64.exe" "windows-output/ZAVI_ONE/dist/Setup_ZAVI_ONE_65_55_DESKTOP_FIX_Windows_x64.exe.sha256" --clobber

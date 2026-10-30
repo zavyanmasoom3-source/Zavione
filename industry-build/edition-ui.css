@@ -1,0 +1,17 @@
+/* ZAVI ONE industry-branded settings banner; compact and mobile friendly. */
+#content .zavi-edition-card{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between;box-sizing:border-box;min-width:0;max-width:100%;padding:11px 13px;margin:0 0 12px;border:1px solid #b8d5f4;border-radius:15px;background:linear-gradient(117deg,rgba(36,89,223,.10),rgba(10,172,211,.08));color:var(--z71s-ink,#233751);direction:rtl}
+#content .zavi-edition-detail{flex:1 1 180px;min-width:0}
+#content .zavi-edition-detail strong{display:block;font-size:13.5px;line-height:1.55;color:var(--z71s-ink,#173850)!important;font-weight:900}
+#content .zavi-edition-detail small{display:block;margin-top:2px;font-size:10.5px;line-height:1.65;color:var(--z71s-muted,#53718a)!important}
+#content .zavi-edition-focus{flex:0 1 auto;min-width:0;max-width:100%;font-size:10.5px;color:var(--z71s-ink,#173850)!important;border:1px solid #bdd1e4;padding:5px 9px;border-radius:9px;overflow-wrap:anywhere}
+#content .zavi-edition-button{min-height:38px;padding:7px 11px;font-size:11.5px;white-space:normal;font-weight:850;border:1px solid #2267d5;border-radius:10px;background:linear-gradient(120deg,#2655da,#069ed5);color:#fff!important;-webkit-text-fill-color:#fff!important;cursor:pointer}
+#content .zavi-edition-button:focus-visible{outline:3px solid #27b7e9;outline-offset:2px}
+html[data-zavi-theme="dark"] #content .zavi-edition-card{background:linear-gradient(117deg,#183457,#0e3753);border-color:#376184}
+html[data-zavi-theme="dark"] #content .zavi-edition-focus{border-color:#456584}
+@media(max-width:430px){#content .zavi-edition-card{padding:9px;gap:6px;border-radius:11px}#content .zavi-edition-button{width:100%}}
+/* Business chooser remains human-approved, never saved just because an APK was installed. */
+.zavi-edition-onboarding{margin:10px 0;padding:11px 13px;background:#eef6ff;border:1px solid #bad5ed;border-radius:13px;color:#183b5b;display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap}
+.zavi-edition-onboarding strong{font-size:13px;color:#153654}
+.zavi-edition-onboarding button{min-height:40px;background:#176cd0;color:#fff;border:0;border-radius:9px;padding:7px 11px;cursor:pointer;font-size:12px;font-weight:800}
+html[data-zavi-theme="dark"] .zavi-edition-onboarding{background:#183653;border-color:#365c7c;color:#e9f7ff}
+html[data-zavi-theme="dark"] .zavi-edition-onboarding strong{color:#f0f9ff}

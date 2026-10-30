@@ -1,0 +1,166 @@
+name: ZAVI camera fix Android APKs (test builds)
+on:
+  push:
+    branches:
+      - zavi-camera-fix-v65-43-20261024
+      - zavi-mobile-ux-v6547-20261024
+      - zavi-v6548-release
+    paths:
+      - 'android-build/**'
+      - '.github/workflows/zavi-camera-v65-43-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  android-apk:
+    name: Build ${{ matrix.mode }} Android camera fix APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: one
+            folder: ZAVI_ONE
+            file: ZAVI_ONE_V65_48_WHATSAPP_ONCE_QA.apk
+          - mode: admin
+            folder: ZAVI_ONE_ADMIN
+            file: ZAVI_ONE_ADMIN_V1_3_7_SPLASH_QA.apk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: SDK 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n1)"; fi
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Ignore obsolete V60 desktop-only patch in Android staging
+        if: matrix.mode == 'one'
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('windows-build/fetch-and-stage.mjs')
+          s=p.read_text()
+          before='if(mode==="one"){applyZaviV60(web);report.version='
+          assert before in s, 'Unexpected staging script layout'
+          p.write_text(s.replace(before,'if(mode==="one"){report.version='))
+          PY
+      - name: Stage latest published web files
+        run: |
+          set -euo pipefail
+          node windows-build/fetch-and-stage.mjs "${{ matrix.mode }}"
+          mkdir -p android-build/app/src/main/assets
+          cp -a "windows-output/${{ matrix.folder }}/web/." android-build/app/src/main/assets/
+          test -s android-build/app/src/main/assets/index.html
+      - name: Apply saved display density and hide platform name from customer sales invoices
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-build/patches/zavi-display-settings-v6545.js
+          node --check android-build/patches/patch-android-ui-v6545.mjs
+          node android-build/patches/patch-android-ui-v6545.mjs "android-build/app/src/main/assets" "${{ matrix.mode }}"
+          test -s android-build/app/src/main/assets/zavi-display-settings-v6545.js
+          grep -Fq 'zavi-display-settings-v6545.js' android-build/app/src/main/assets/index.html
+          ! grep -Fq 'zavi-display-scale-v6544.js' android-build/app/src/main/assets/index.html
+          grep -Fq 'MIN=50,MAX=115' android-build/app/src/main/assets/zavi-display-settings-v6545.js
+          grep -Fq "'.zavi-theme-settings'" android-build/app/src/main/assets/zavi-display-settings-v6545.js
+          grep -Fq "'#zaviSettingsLanguage'" android-build/app/src/main/assets/zavi-display-settings-v6545.js
+          if [ "${{ matrix.mode }}" = one ]; then
+            if test -f android-build/app/src/main/assets/invoice.html; then
+              ! grep -q '<b>ZAVI ONE</b>' android-build/app/src/main/assets/invoice.html
+            fi
+          fi
+      - name: Add PIN or fingerprint choice, thermal print close and sorted settings
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-build/patches/zavi-biometric-ui-v6546.js
+          node --check android-build/patches/zavi-settings-priority-v6546.js
+          node --check android-build/patches/patch-android-6546.mjs
+          node android-build/patches/patch-android-6546.mjs "android-build/app/src/main/assets" "${{ matrix.mode }}"
+          grep -Fq 'zavi-settings-priority-v6546.js' android-build/app/src/main/assets/index.html
+          if [ "${{ matrix.mode }}" = one ]; then
+            grep -Fq 'zavi-biometric-ui-v6546.js' android-build/app/src/main/assets/index.html
+            grep -Fq 'zavi-pin-changed' android-build/app/src/main/assets/index.html
+            grep -Fq '✕ بستن' android-build/app/src/main/assets/zavi-business-plus-v644.js
+            grep -Fq 'ZaviAndroidBiometric' android-build/app/src/main/java/com/zavione/mobile/MainActivity.java
+          fi
+      - name: Apply V65.47 full-screen menus and account-contact registration
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-build/patches/zavi-mobile-ux-safe-v6547.js
+          node --check android-build/patches/zavi-account-contact-v6547.js
+          node --check android-build/patches/zavi-admin-contact-v6547.js
+          node --check android-build/patches/patch-zavi-ux-v6547.mjs
+          node android-build/patches/patch-zavi-ux-v6547.mjs "android-build/app/src/main/assets" "${{ matrix.mode }}"
+          grep -Fq 'zavi-mobile-ux-safe-v6547.js' android-build/app/src/main/assets/index.html
+          if [ "${{ matrix.mode }}" = one ]; then
+            grep -Fq 'zavi-account-contact-v6547.js' android-build/app/src/main/assets/index.html
+            grep -Fq 'zavi_contact:contact' android-build/app/src/main/assets/cloud.js
+            test -s android-build/app/src/main/assets/zavi-country-dials-v6547.json
+          else
+            grep -Fq 'zavi-admin-contact-v6547.js' android-build/app/src/main/assets/index.html
+          fi
+      - name: One-time signup WhatsApp + restored ADMIN splash
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check android-build/patches/zavi-signup-whatsapp-once-v6548.js
+          node --check android-build/patches/zavi-admin-splash-v6548.js
+          node --check android-build/patches/patch-zavi-v6548.mjs
+          node android-build/patches/patch-zavi-v6548.mjs "android-build/app/src/main/assets" "${{ matrix.mode }}"
+          if [ "${{ matrix.mode }}" = one ]; then
+            grep -Fq 'zavi-signup-whatsapp-once-v6548.js' android-build/app/src/main/assets/index.html
+            grep -Fq 'await window.ZaviSignupOnceV6548.collect()' android-build/app/src/main/assets/cloud.js
+            ! grep -Fq 'ZaviAccountContactV6547' android-build/app/src/main/assets/cloud.js
+            ! grep -Fq 'zavi-account-contact-v6547.js' android-build/app/src/main/assets/index.html
+          else
+            grep -Fq 'zavi-admin-splash-v6548.js' android-build/app/src/main/assets/index.html
+            grep -Fq 'ZAVI ONE' android-build/app/src/main/assets/index.html
+            grep -Fq 'zavi-admin-contact-v6547.js' android-build/app/src/main/assets/index.html
+          fi
+      - name: Configure app icon
+        run: |
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          cp "android-build/icons/${{ matrix.mode }}.webp" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+      - name: Build and sign debug APK for test-only installs
+        working-directory: android-build
+        run: gradle --no-daemon --stacktrace -PzaviApp=${{ matrix.mode }} :app:assembleDebug
+      - name: Verify signed APK and camera configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=android-build/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump permissions "$APK" | tee permissions.txt
+          grep -F 'android.permission.CAMERA' permissions.txt
+          unzip -Z1 "$APK" | grep -Fx 'classes.dex'
+          unzip -Z1 "$APK" | grep -Fx 'assets/index.html'
+          mkdir -p dist
+          cp "$APK" "dist/${{ matrix.file }}"
+          sha256sum "dist/${{ matrix.file }}" > "dist/${{ matrix.file }}.sha256"
+      - name: Publish test APK directly to private GitHub prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-onetime-wa-v65-48-20261024
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --target "${GITHUB_SHA}" --prerelease --title "ZAVI 65.48 one-time WhatsApp signup / ADMIN 1.3.7 branded splash" --notes "QA testing: WhatsApp collected only when user creates a new cloud account, never on sign-in; protected server-side one-time storage and owner-only ADMIN contacts RPC enabled; ADMIN entry splash restored. Requires real-device and signup integration testing. APKs debug signed; do NOT uninstall existing apps with offline data." || gh release view "$TAG" >/dev/null
+          fi
+          gh release upload "$TAG" "dist/${{ matrix.file }}" "dist/${{ matrix.file }}.sha256" --clobber

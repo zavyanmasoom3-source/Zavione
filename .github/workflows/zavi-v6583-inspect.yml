@@ -1,0 +1,49 @@
+name: Inspect ZAVI ONE offline seven day UI and ES256 linkage
+on:
+  push:
+    branches: [zavi-v6583-seven-day-offline-real-status-qa]
+    paths: ['.github/workflows/zavi-v6583-inspect.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare application files and inspect offline permission status
+        env: {GH_TOKEN: '${{ github.token }}'}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/base /tmp/web
+          gh release download zavi-6572-admin1419-trial7-offline-assistant-qa-20261026 --pattern 'ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk*' --dir /tmp/base
+          sha="$(awk 'NR==1{print $1}' /tmp/base/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk.sha256)"
+          echo "$sha  /tmp/base/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk" | sha256sum -c
+          python3 industry-build/prepare_unified_v6582.py --apk /tmp/base/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk --web /tmp/web
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/web')
+          f=['offline-license-secure.js','offline-ui-v46.js','annual-license.js','device-activation.js','offline-auto-prepare.js','zavi-store-v6579-auto-signed-offline.js']
+          for name in f:
+            p=root/name
+            if not p.exists(): continue
+            s=p.read_text()
+            print('INSPECT FILE',name,'length',len(s))
+            if name=='offline-license-secure.js': print('COMPRESSED',re.sub(r'\\s+',' ',s)[:6500])
+            else:
+              for key in ('مجوز ثبت نشده','ثبت نشده','offline_status','zavi-offline-lease-ready','zaviSecureOfflineLicense','zaviAutoOffline','zavi_v28_offline_license_status','function refresh','function render','data-zavi-auto-offline-card','zavi-offline-lease','async function request'):
+                i=s.find(key)
+                if i>=0:print('FOUND',key,'AT',i,'CONTEXT',re.sub(r'\\s+',' ',s[max(0,i-450):i+2000])[:2450])
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          d=Path('/tmp/web/annual-license.js').read_text()
+          for key in ('function validSubscription(){','function allowed(){','function verify(','function restoreSecureLease(){','async function verify(','function subscriptionView(){',"'zavi-offline-lease-ready'"):
+             i=d.find(key)
+             if i>=0:print('CHECKBLOCK',key,'SEGMENT',re.sub(r'\\s+',' ',d[i:i+4650])[:4650])
+          for tok in ('semiannual','trial','detail?.workspace','detail?.workspace_id'):
+             print('TERM',tok,'COUNT',len(list(re.finditer(re.escape(tok),d))))
+          PY

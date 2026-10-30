@@ -1,0 +1,90 @@
+name: Inspect ZAVI ONE registered industry ids and Windows packaging
+on:
+  push:
+    branches: [zavi-v6573-industry-editions-20261026]
+    paths: ['.github/workflows/zavi-v6573-inspect-industries.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage exactly the store frontend and inspect local business-selector code
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/zavi-industry
+          gh release download zavi-web-v6554-responsive-20261024 \
+            --pattern "ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip" --dir /tmp/zavi-industry
+          unzip -oq /tmp/zavi-industry/ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip -d /tmp/zavi-industry/base
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/zavi-industry/base')
+          terms=('businessType','business_type','industryType','industry','businessKind','storeType','bizType','typeOfBusiness','shopType','نوع کسب','نوع تجارت','سوپرمارکت','زرگری','صرافی','ساختمان')
+          for p in sorted(root.rglob('*')):
+            if not p.is_file() or p.suffix not in ('.js','.html','.json'):continue
+            s=p.read_text(errors='replace')
+            hits=sorted({m.start() for t in terms for m in re.finditer(re.escape(t),s,re.IGNORECASE)})
+            if not hits:continue
+            print('FILE',p.relative_to(root),'CHARS',len(s),'HITS',len(hits))
+            for pos in hits[:32]:
+              piece=s[max(0,pos-130):pos+230].replace('\n',' ')
+              if 'eyJ' in piece or 'http' in piece or 'apikey' in piece.lower():continue
+              print('INDUSTRY',piece[:350])
+          PY
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          p=Path('/tmp/zavi-industry/base/v25-business.html');s=p.read_text()
+          print('V25_START',s[:2500].replace(chr(10),' '))
+          for term in ('<select','type="submit"','business','form','save','v25'):
+            found=[m.start() for m in re.finditer(re.escape(term),s,re.I)]
+            print('V25_TERM',term,len(found))
+            for i in found[:5]:
+              z=s[max(0,i-80):i+250].replace(chr(10),' ')
+              print('V25_SNIP',z[:320])
+          t=Path('/tmp/zavi-industry/base/index.html').read_text()
+          marker='function zaviBusinessTypeV638()'
+          i=t.find(marker);print('ACTIVE_TYPE',t[i:i+1350].replace(chr(10),' '))
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('/tmp/zavi-industry/base')
+          files=['v25-business.html','zavi-industry-focus-v639.js','zavi-smart-business-v642.js','index.html']
+          import re
+          for fname in files:
+            p=root/fname
+            if not p.exists():continue
+            t=p.read_text(errors='replace')
+            print('CONFIG_FILE',fname)
+            pats=(r'.{0,130}(?:businessType|business_type|industryType|selectedType|typeSelect|business-select|typeSelect|v25Business|zaviBusinessTypeV638).{0,200}',r'.{0,130}(?:sessionStorage|localStorage|saveBiz|saveBusiness|settings\.type|\.business_type).{0,190}')
+            seen=0
+            for pat in pats:
+              for m in re.finditer(pat,t,re.I):
+                snippet=m.group(0).replace(chr(10),' ')[:380]
+                if any(x in snippet for x in ('apikey','http','eyJ')):continue
+                print('CONFIG',snippet)
+                seen+=1
+                if seen>=42:break
+              if seen>=42:break
+          PY
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          root=Path('/tmp/zavi-industry/base')
+          for name in ('v25-business.html','zavi-industry-forms-v6529.js','zavi-trade-plus-v6530.js','zavi-business-profile-v638.js','zavi-industry-focus-v639.js'):
+            p=root/name
+            if not p.exists():continue
+            t=p.read_text(errors='replace')
+            print('TARGET_FILE',name,'length',len(t))
+            for reg in [r'<option[^>]{0,140}>[^<]{0,100}</option>',r'businessType.{0,220}',r'const BUSINESS_TYPES.{0,250}',r'ZAVI_BUSINESS_TYPES.{0,200}',r'\bexchange\b.{0,110}',r'\bconstruction\b.{0,110}']:
+              matches=list(re.finditer(reg,t,re.I))
+              print('TARGET_PATTERN',reg,'matches',len(matches))
+              for m in matches[:32]:
+                snippet=m.group(0).replace(chr(10),' ')[:235]
+                if any(x in snippet for x in ('http','eyJ')):continue
+                print('VALUE',snippet)
+          PY

@@ -1,0 +1,97 @@
+name: Inspect store transfer and signed offline hooks (QA)
+on:
+  push:
+    branches: [zavi-v6580-one-tap-device-transfer-offline-qa]
+    paths: ['.github/workflows/zavi-v6580-inspect-transfer.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract original verified store APK and inspect transfer logic
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/base /tmp/web
+          gh release download zavi-6572-admin1419-trial7-offline-assistant-qa-20261026 --pattern 'ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk*' --dir /tmp/base
+          sha="$(awk 'NR==1{print $1}' /tmp/base/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk.sha256)"
+          echo "$sha  /tmp/base/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk" | sha256sum -c
+          python3 industry-build/prepare_unified_v6579.py --apk /tmp/base/ZAVI_ONE_V65_72_OFFLINE_ASSISTANT_QA.apk --web /tmp/web
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          src=Path('/tmp/web')
+          print('TRANSFER ASSET CANDIDATES')
+          for p in src.glob('*.js'):
+              try:s=p.read_text()
+              except:continue
+              matches=list(re.finditer(r'zavi_v41_owner_replace_device|transferMainDevice|transfer-main-device|انتقال دستگاه|transfer main device|zavi_v652_owner_devices|transferDevice',s,re.I))
+              if matches:
+                  print('FILE',p.name,'matches',len(matches),'bytes',len(s))
+                  for m in matches[:10]:
+                      print('MATCH',m.group(),'WINDOW',re.sub(r'\s+',' ',s[max(0,m.start()-370):m.end()+730])[:1050])
+          for n in ('offline-license-secure.js','cloud-sync.js','zavi-store-v6579-auto-signed-offline.js'):
+              p=src/n
+              if not p.exists():continue
+              s=p.read_text()
+              print('HOOK FILE',n,'chars',len(s))
+              for pattern in ('window.zaviSecureOfflineLicense','const api=','request:','async function request','function request','zaviCloudRestoreInfo','zaviCloudGetAuthSession','zaviCloudRefreshAuthSession','zaviCloudGetPublicConfig','zaviCloudSync','pendingCount','unsyncedCount'):
+                  idx=s.find(pattern)
+                  if idx>=0:print('HOOK',pattern,re.sub(r'\s+',' ',s[max(0,idx-160):idx+470])[:620])
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/web')
+          for filename,starts in [
+           ('device-activation.js',['async function replacePrimary','async function prepare(']),
+           ('zavi-devices-v652.js',['async function safeToTransfer','async function allowTransfer','window.zaviOwnerDevices']),
+           ('offline-auto-prepare.js',['async function prepareOnce','window.zaviAutoOffline']),
+           ('annual-license.js',['zaviDeviceReplace','addEventListener'])]:
+              s=(root/filename).read_text()
+              print('CODE FILE:',filename)
+              for needle in starts:
+                  i=s.find(needle)
+                  if i>=0:print('ANCHOR',needle,re.sub(r'\\s+',' ',s[i:i+5800])[:5800])
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('/tmp/web/offline-license-secure.js').read_text()
+          print('SECURE CLIENT CODE:',re.sub(r'\\s+',' ',s)[:5700])
+          for p in ['[180,365]','[180, 365]','offline_days','trial','7,180','function verify']:
+              print('SECURE MATCH',p,[m.start() for m in re.finditer(re.escape(p),s)])
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/web')
+          for name in ('zaviCloudRestoreInfo','zaviCloudGetAuthSession','zaviCloudRefreshAuthSession','zaviCloudGetPublicConfig','zaviCloudDeviceSyncStatus','zaviTenantIsBound'):
+             matches=[]
+             for p in root.glob('*.js'):
+                 body=p.read_text(errors='ignore')
+                 pattern=re.compile(r'window\\.'+name+r'\\s*=')
+                 for m in pattern.finditer(body):
+                     matches.append((p.name,re.sub(r'\\s+',' ',body[max(0,m.start()-55):m.start()+280])))
+             print('CLOUD EXPORT',name,matches[:5])
+          PY
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path('/tmp/web')
+          for word in ('zaviCloudRestoreInfo','zaviCloudGetAuthSession','zaviCloudRefreshAuthSession','zaviCloudGetPublicConfig'):
+              print('ALL OCCURRENCES',word)
+              matches=[]
+              for p in root.rglob('*'):
+                  if p.suffix not in ('.js','.html'):continue
+                  try:body=p.read_text()
+                  except:continue
+                  for m in list(re.finditer(re.escape(word),body))[:8]:
+                      matches.append((p.name,re.sub(r'\\s+',' ',body[max(0,m.start()-70):m.start()+95])))
+              print('COUNT',len(matches),'SAMPLES',matches[:13])
+          PY

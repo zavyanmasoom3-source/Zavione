@@ -1,0 +1,160 @@
+/* ZAVI ONE ADMIN 1.4.14 – ONE-matched navy/cyan card system and real modular menu.
+   Existing ADMIN authentication and server-owner authorization are untouched. */
+:root{
+ --za67-gradient:linear-gradient(114deg,#2455ed 0%,#0d90f0 68%,#03cee3 100%);
+ --za67-cyan:#09bfeb;--za67-blue:#2674ef
+}
+html[data-zavi-theme="light"]{
+ --za67-page:#f4f8ff;--za67-surface:#fff;--za67-wash:#edf5ff;
+ --za67-text:#152c4b;--za67-muted:#526b88;--za67-border:#d9e6f5;
+ --za67-shadow:0 6px 17px rgba(22,80,156,.075)
+}
+html:not([data-zavi-theme="light"]){
+ --za67-page:#08182d;--za67-surface:#112b46;--za67-wash:#183959;
+ --za67-text:#f1f8ff;--za67-muted:#bad1e9;--za67-border:#315777;
+ --za67-shadow:0 7px 18px rgba(0,5,25,.28)
+}
+body #appScreen,body #appScreen #view{background:var(--za67-page)!important;color:var(--za67-text)!important}
+body #appScreen #view .admin-hero{
+ background:var(--za67-gradient)!important;border:1px solid rgba(91,200,252,.44)!important;
+ color:#fff!important;border-radius:19px!important;box-shadow:0 9px 23px rgba(18,101,231,.20)!important
+}
+body #appScreen #view .admin-hero :is(h1,h2,p,small,span,strong,b){
+ color:#fff!important;text-shadow:none!important;opacity:1!important;line-height:1.55!important
+}
+body #appScreen #view .admin-hero .admin-hero-kicker{
+ background:rgba(255,255,255,.17)!important;color:#fff!important;
+ border:1px solid rgba(255,255,255,.35)!important;border-radius:10px!important
+}
+body #appScreen #view .admin-kpis{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:10px!important
+}
+body #appScreen #view .admin-kpi,body #appScreen #view :is(.panel,.admin-analytics-main,.admin-distribution){
+ min-width:0!important;max-width:100%!important;
+ border:1px solid var(--za67-border)!important;border-radius:16px!important;
+ background:var(--za67-surface)!important;color:var(--za67-text)!important;
+ box-shadow:var(--za67-shadow)!important
+}
+body #appScreen #view .admin-kpi{padding:13px!important;min-height:93px!important}
+body #appScreen #view .admin-kpi :is(b,strong,small,p,span){overflow-wrap:anywhere!important}
+body #appScreen #view .admin-kpi :is(b,strong){color:var(--za67-text)!important;font-weight:900!important}
+body #appScreen #view .admin-kpi :is(small,p){color:var(--za67-muted)!important}
+body #appScreen #view :is(.panel,.admin-analytics-main,.admin-distribution) :is(h1,h2,h3,strong,b,label){
+ color:var(--za67-text)!important;overflow-wrap:anywhere!important;line-height:1.55!important
+}
+body #appScreen #view :is(.panel,.admin-analytics-main,.admin-distribution) :is(p,small,.muted){
+ color:var(--za67-muted)!important;line-height:1.65!important
+}
+body #appScreen #view :is(.admin-quick-grid,.admin-grid-actions){
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:9px!important
+}
+body #appScreen #view .admin-quick-grid button{
+ min-height:54px!important;padding:9px 8px!important;display:flex!important;
+ justify-content:center!important;align-items:center!important;gap:7px!important;
+ background:var(--za67-wash)!important;color:var(--za67-text)!important;
+ border:1px solid var(--za67-border)!important;border-radius:13px!important;
+ font-size:12px!important;font-weight:800!important
+}
+body #appScreen #view :is(.button.primary,button.primary){
+ background:var(--za67-gradient)!important;color:#fff!important;border-color:#1179eb!important
+}
+body #appScreen .sidebar .nav-item.selected{
+ background:var(--za67-wash)!important;border-inline-start:3px solid var(--za67-blue)!important;
+ color:var(--za67-blue)!important
+}
+body #appScreen .topbar,body #appScreen .sidebar{
+ background:var(--za67-surface)!important;color:var(--za67-text)!important;
+ border-color:var(--za67-border)!important
+}
+body #appScreen :is(button,input,select,textarea):focus-visible{
+ outline:2px solid var(--za67-cyan)!important;outline-offset:2px!important
+}
+body #appScreen #view :is(.table-wrap,.table-responsive){overflow-x:auto!important;max-width:100%}
+/* Distinct compact All Sections button appears only inside the authenticated app shell. */
+body #appScreen .za67-menu-trigger{
+ display:inline-flex!important;align-items:center;justify-content:center;gap:6px;
+ min-height:36px!important;padding:6px 11px!important;margin-inline:6px!important;
+ border:1px solid var(--za67-border)!important;border-radius:11px!important;
+ background:var(--za67-wash)!important;color:var(--za67-text)!important;
+ white-space:nowrap!important;font:inherit!important;font-size:12px!important;
+ font-weight:850!important
+}
+body #appScreen .za67-menu-trigger .za67-squares{color:var(--za67-blue)!important;font-size:15px!important}
+body.za67-overlay-open{overflow:hidden!important}
+#za67-menu{
+ position:fixed!important;inset:0!important;z-index:99999!important;
+ display:flex!important;align-items:stretch!important;justify-content:center!important;
+ background:var(--za67-page)!important;color:var(--za67-text)!important;
+ isolation:isolate!important
+}
+#za67-menu .za67-panel{
+ box-sizing:border-box;width:min(100%,760px);height:100dvh;
+ display:flex;flex-direction:column;gap:10px;overflow:hidden;
+ padding:calc(env(safe-area-inset-top,0px) + 9px) 12px
+ calc(env(safe-area-inset-bottom,0px) + 8px);
+ background:var(--za67-page);direction:rtl
+}
+#za67-menu .za67-head{
+ display:flex;justify-content:space-between;align-items:center;flex:none;gap:10px;
+ min-height:52px;font-weight:900;font-size:21px
+}
+#za67-menu .za67-head b{direction:ltr;color:var(--za67-text)!important}
+#za67-menu .za67-head b span{color:var(--za67-blue)!important}
+#za67-menu .za67-close{
+ min-height:41px;min-width:41px;border:1px solid var(--za67-border);
+ background:var(--za67-surface);border-radius:12px;color:var(--za67-text);
+ font-size:21px
+}
+#za67-menu .za67-hero{
+ flex:none;padding:15px 17px;border-radius:17px;
+ min-height:87px;display:flex;flex-direction:column;justify-content:center;gap:5px;
+ background:var(--za67-gradient);color:#fff!important;
+ box-shadow:0 9px 25px rgba(17,90,214,.18)
+}
+#za67-menu .za67-hero strong{
+ font-size:clamp(20px,6vw,26px);font-weight:900;color:#fff!important
+}
+#za67-menu .za67-hero small{font-size:12px;line-height:1.55;color:#eff9ff!important}
+#za67-menu .za67-grid{
+ flex:1 1 0;min-height:0;max-height:100%;overflow-y:auto;overflow-x:hidden;
+ -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ grid-auto-rows:minmax(70px,auto);gap:9px;align-content:start;
+ padding:4px 2px calc(45px + env(safe-area-inset-bottom,0px))
+}
+#za67-menu .za67-item{
+ box-sizing:border-box;min-width:0;max-width:100%;min-height:70px;
+ display:flex;align-items:center;gap:8px;text-align:start;
+ padding:10px 8px;border:1px solid var(--za67-border);
+ border-radius:16px;color:var(--za67-text)!important;background:var(--za67-surface)!important;
+ font:inherit;font-size:12px;font-weight:820;
+ white-space:normal;word-break:normal;overflow-wrap:anywhere;line-height:1.65;
+ box-shadow:var(--za67-shadow)
+}
+#za67-menu .za67-item.za67-long{grid-column:span 2;min-height:65px;font-size:13px}
+#za67-menu .za67-symbol{
+ flex:0 0 34px;width:34px;height:34px;border-radius:10px;
+ display:grid;place-items:center;background:linear-gradient(135deg,#25baf4,#2361ee);
+ font-size:18px;color:#fff
+}
+#za67-menu .za67-item:nth-child(4n + 2) .za67-symbol{background:linear-gradient(135deg,#8e68f6,#634fed)}
+#za67-menu .za67-item:nth-child(4n + 3) .za67-symbol{background:linear-gradient(135deg,#2ad3a6,#0bafa6)}
+#za67-menu .za67-item:nth-child(4n + 4) .za67-symbol{background:linear-gradient(135deg,#ffb755,#f37a38)}
+#za67-menu .za67-label{flex:1;min-width:0;white-space:normal;overflow-wrap:anywhere}
+#za67-menu .za67-chevron{flex:0 0 11px;color:#3997ea;font-size:19px}
+@media(max-width:375px){
+ #za67-menu .za67-grid{grid-template-columns:1fr}
+ #za67-menu .za67-item{min-height:59px}
+ #za67-menu .za67-item.za67-long{grid-column:auto}
+}
+@media(max-width:900px){
+ body #appScreen #view{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))!important}
+ body #appScreen #view .admin-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body #appScreen #view .admin-analytics,body #appScreen #view .admin-secondary{grid-template-columns:1fr!important}
+ body #appScreen .za67-menu-trigger{font-size:11px!important;padding:6px 9px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #za67-menu .za67-item{transition:none!important;animation:none!important}
+}

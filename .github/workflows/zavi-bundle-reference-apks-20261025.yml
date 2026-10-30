@@ -1,0 +1,53 @@
+name: Bundle Verified ZAVI Light-Dark QA APKs
+on:
+  push:
+    branches: [zavi-reference-design-apks-20261025]
+    paths: [".github/workflows/zavi-bundle-reference-apks-20261025.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Download both real APKs directly from GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-reference-light-dark-apks-20261025
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.apk' --dir dist
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.apk.sha256' --dir dist
+          cd dist
+          test "$(find . -maxdepth 1 -name '*.apk' | wc -l)" -eq 2
+          for f in *.apk.sha256;do
+            sed 's#  dist/#  #' "$f" | sha256sum -c -
+          done
+          cat > READ_ME_FIRST_DARI.txt <<'README'
+          ZAVI ONE 65.57 + ZAVI ONE ADMIN 1.4.8 — Android QA Reference Light/Dark Design
+          Both complete APK files are inside this ZIP.
+          Original accounting, cloud authorization, admin-only, device transfer and offline source retained.
+          Theme CSS is inspired by the supplied ZAVI ONE desktop reference; mobile layout adapts to phone sizes.
+          These are visually inspired builds, NOT pixel-perfect certified replicas of the image.
+          APK was compiled/signed and source integrity checked; physical-device E2E and all features are NOT guaranteed.
+          CAUTION: test-only signature can differ from installed versions. Do not uninstall an old app with unsynced offline data.
+          Check backup, sign-in, device permissions, scan, sale, reports and language in a test account first.
+          README
+          zip -0 -q ZAVI_ONE_AND_ADMIN_LIGHT_DARK_DESIGN_ANDROID_QA_2026_10_25.zip *.apk *.sha256 READ_ME_FIRST_DARI.txt
+          unzip -t ZAVI_ONE_AND_ADMIN_LIGHT_DARK_DESIGN_ANDROID_QA_2026_10_25.zip | tail -n1
+          sha256sum ZAVI_ONE_AND_ADMIN_LIGHT_DARK_DESIGN_ANDROID_QA_2026_10_25.zip > ZAVI_ONE_AND_ADMIN_LIGHT_DARK_DESIGN_ANDROID_QA_2026_10_25.zip.sha256
+          echo "PASS: both exact verified APKs packaged and archive tested"
+      - name: Publish full ZIP package to existing QA Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-reference-light-dark-apks-20261025
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" \
+            dist/ZAVI_ONE_AND_ADMIN_LIGHT_DARK_DESIGN_ANDROID_QA_2026_10_25.zip \
+            dist/ZAVI_ONE_AND_ADMIN_LIGHT_DARK_DESIGN_ANDROID_QA_2026_10_25.zip.sha256 \
+            --repo "$GITHUB_REPOSITORY" --clobber

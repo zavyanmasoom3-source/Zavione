@@ -1,0 +1,7 @@
+/* Only non-destructive motion improvements. Existing layout and ledger styling intact. */
+:root[data-zavi-qa-reduce-motion="1"] *, :root[data-zavi-qa-reduce-motion="1"] *::before, :root[data-zavi-qa-reduce-motion="1"] *::after{
+ animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+@media (prefers-reduced-motion:reduce){
+ :root *, :root *::before, :root *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+:where(button,[role="button"]):not(:disabled){-webkit-tap-highlight-color:transparent}

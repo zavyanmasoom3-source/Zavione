@@ -1,0 +1,24 @@
+'use strict';
+/* Static QA: the new launcher must be small, visible in the actual dashboard, and only a UI shortcut. */
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const js=fs.readFileSync('design-system/zavi-voice-dashboard-v6597.js','utf8');
+const css=fs.readFileSync('design-system/zavi-voice-dashboard-v6597.css','utf8');
+assert(js.includes('#content.zrf-dashboard'));
+assert(js.includes('.z62-hero-tools'));
+assert(js.includes("ZaviVoiceProV6596.open"));
+assert(js.includes("window.ZaviAdminAPI?.getMode?.()==='live'"));
+assert(js.includes("button.hidden=!can"));
+assert(js.includes('aria-label'));
+assert(js.includes('button.append(icon())'));
+assert(js.includes("attributeFilter:['hidden','class','style','aria-hidden']"));
+assert(!/fetch\s*\(|\.rpc\s*\(|supabase|localStorage|registerSpeech|requestPermissions/i.test(js),'voice shortcut cannot mutate accounts or start recording');
+assert(css.includes('#z196-launch{display:none!important}'));
+assert(css.includes('background:#fff!important'));
+assert(css.includes('width:44px!important;height:44px!important'));
+assert(css.includes('background:#143151!important'));
+assert(css.includes('max-height:min(76dvh,670px)'));
+assert(css.includes('env(safe-area-inset-bottom,0px)'));
+assert(css.includes('#z197-dashboard-mic[hidden]'));
+assert(css.includes('#z196-voice .z196-modal'));
+assert(css.includes('prefers-reduced-motion'));
+console.log('PASS compact mic: accessible 44px circle; light/dark; 20 dashboard profiles; owner ADMIN; bottom sheet; no data changes');

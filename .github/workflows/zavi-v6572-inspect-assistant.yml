@@ -1,0 +1,39 @@
+name: Inspect original store assistant and admin UI hooks
+on:
+  push:
+    branches: [zavi-v6572-trial7-offline-accounting-assistant-20261026]
+    paths: ['.github/workflows/zavi-v6572-inspect-assistant.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract static app and examine safe UI symbols only
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/z72/store /tmp/z72/admin
+          base64 -d windows-build/admin-v145-responsive-web.zip.base64 >/tmp/z72/admin.zip
+          unzip -oq /tmp/z72/admin.zip -d /tmp/z72/admin
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          root=Path('/tmp/z72/admin')
+          for p in root.rglob('*'):
+            if p.is_file() and p.suffix in ('.js','.html'):
+              src=p.read_text(errors='replace')
+              patterns=['trial','demo','7 days','7-day','zavi_admin_list_workspaces','zavi_admin_renew_annual','ZaviAdminAPI','getRows','getMode','role="dialog"','z70-launch']
+              found=[(n,src.lower().count(n.lower())) for n in patterns if n.lower() in src.lower()]
+              if found: print('ADMIN',p.name,len(src),found[:14])
+          PY
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          for p in Path('android-build/patches').glob('*.js'):
+            s=p.read_text(errors='replace')
+            needles=['assistant','دستیار','هوش مصنوعی','aiAssistant','offlineAi','AI']
+            counts=[(x,s.lower().count(x.lower())) for x in needles if x.lower() in s.lower()]
+            if counts:print('PATCH',p.name,counts[:6])
+          PY

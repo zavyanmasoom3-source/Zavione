@@ -1,0 +1,67 @@
+name: ZAVI ONE — one combined ZIP of all 20 verified industry Android QA APKs
+on:
+  push:
+    branches: [zavi-v6573-industry-editions-20261026]
+    paths: ['.github/workflows/zavi-v6573-bundle-all-apks.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for 20 independently verified Android edition deliveries
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          p=json.load(open('industry-build/industry-profiles.json'))
+          assert len(p['profiles'])==20
+          with open('industry-ids.txt','w') as out:
+           for item in p['profiles']:out.write(item['id']+'\n')
+          PY
+          for cycle in $(seq 1 280);do
+            ready=0
+            while read -r type;do
+              if git ls-remote --heads origin "zavi-v6573-apk-$type-qa" | grep -q .;then ready=$((ready+1));fi
+            done < industry-ids.txt
+            echo "ready=$ready/20 at cycle=$cycle"
+            if [ "$ready" -eq 20 ];then break;fi
+            sleep 8
+          done
+          test "$ready" -eq 20
+      - name: Verify all 20 signed APKs and make one checksum-verified installer ZIP
+        run: |
+          set -euo pipefail
+          mkdir -p industry-bundle
+          while read -r type;do
+            branch="zavi-v6573-apk-$type-qa"
+            git fetch --depth=1 origin "$branch:refs/remotes/origin/$branch"
+            apk="$(printf 'ZAVI_ONE_%s_V65_73_QA.apk' "$type")"
+            git show "origin/$branch:industry-delivery/$apk" > "industry-bundle/$apk"
+            git show "origin/$branch:industry-delivery/$apk.sha256" > "industry-bundle/$apk.sha256"
+            (cd industry-bundle && sha256sum -c "$apk.sha256")
+            unzip -t "industry-bundle/$apk" | tail -n1
+            unzip -Z1 "industry-bundle/$apk" | grep -Fx assets/zavi-edition-ui.js
+            unzip -Z1 "industry-bundle/$apk" | grep -Fx assets/zavi-v6572-offline-accounting-assistant.js
+          done < industry-ids.txt
+          cp industry-build/README_DARI.md industry-bundle/
+          cp industry-build/industry-profiles.json industry-bundle/
+          (cd industry-bundle && zip -9 -q -r ../ZAVI_ONE_ALL_20_BUSINESS_ANDROID_V65_73_QA.zip .)
+          test "$(unzip -Z1 ZAVI_ONE_ALL_20_BUSINESS_ANDROID_V65_73_QA.zip | grep -c '\.apk$')" -eq 20
+          test "$(stat -c%s ZAVI_ONE_ALL_20_BUSINESS_ANDROID_V65_73_QA.zip)" -lt 104857600
+          sha256sum ZAVI_ONE_ALL_20_BUSINESS_ANDROID_V65_73_QA.zip > ZAVI_ONE_ALL_20_BUSINESS_ANDROID_V65_73_QA.zip.sha256
+      - name: Save the combined direct-download ZIP in a separate branch
+        run: |
+          set -euo pipefail
+          git config user.name "ZAVI Edition Pack QA"
+          git config user.email "zavi-packaging-ci@users.noreply.github.com"
+          git checkout -B zavi-v6573-all-20-android-apks-qa
+          mkdir -p industry-delivery
+          cp ZAVI_ONE_ALL_20_BUSINESS_ANDROID_V65_73_QA.zip* industry-delivery/
+          git add -f industry-delivery/ZAVI_ONE_ALL_20_BUSINESS_ANDROID_V65_73_QA.zip*
+          git commit -m 'artifact(android): bundle 20 separately signed industry editions as one SHA-verified QA ZIP'
+          git push origin HEAD:refs/heads/zavi-v6573-all-20-android-apks-qa
+          echo "PASS: complete direct ZIP branch for all 20 APKs."

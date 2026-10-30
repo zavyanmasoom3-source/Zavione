@@ -1,0 +1,91 @@
+name: ZAVI ONE 65.68 and ADMIN 1.4.15 Browser-Audited QA Bundle
+on:
+  push:
+    branches: [zavi-v6568-production-readiness-audit-20261025]
+    paths:
+      - ".github/workflows/zavi-v6568-combined-qa-zip.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bundle:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_TAG: zavi-v6568-browser-tested-qa-20261025
+      DEST_TAG: zavi-v6568-both-browser-qa-bundle-20261025
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify latest APK files and real browser QA
+        run: |
+          set -euo pipefail
+          mkdir -p package
+          # Both APKs must pass their independent browser smoke checks first.
+          for attempt in $(seq 1 30);do
+            n="$(gh release view "$SOURCE_TAG" --json assets -q '.assets[].name' | grep -E '^(ZAVI_ONE_V65_68_BROWSER_AUDIT_QA.apk|ZAVI_ONE_ADMIN_V1_4_15_BROWSER_AUDIT_QA.apk|ZAVI_BROWSER_QA_one.zip|ZAVI_BROWSER_QA_admin.zip)$' | wc -l)"
+            if [ "$n" -eq 4 ];then break;fi
+            echo "Waiting for verified QA assets, available=$n"
+            sleep 7
+          done
+          gh release download "$SOURCE_TAG" --pattern "ZAVI_ONE_V65_68_BROWSER_AUDIT_QA.apk*" --dir package
+          gh release download "$SOURCE_TAG" --pattern "ZAVI_ONE_ADMIN_V1_4_15_BROWSER_AUDIT_QA.apk*" --dir package
+          gh release download "$SOURCE_TAG" --pattern "ZAVI_BROWSER_QA_*.zip" --dir package
+          cd package
+          for apk in ZAVI_ONE_V65_68_BROWSER_AUDIT_QA.apk ZAVI_ONE_ADMIN_V1_4_15_BROWSER_AUDIT_QA.apk;do
+            expect="$(awk 'NR==1{print $1}' "$apk.sha256")"
+            printf '%s  %s\n' "$expect" "$apk" | sha256sum -c -
+            unzip -t "$apk" | tail -1
+            unzip -Z1 "$apk" | grep -Fx classes.dex
+            unzip -Z1 "$apk" | grep -Fx assets/index.html
+          done
+          unzip -Z1 ZAVI_ONE_V65_68_BROWSER_AUDIT_QA.apk | grep -Fx assets/zavi-v6567-sections-readable.js
+          unzip -Z1 ZAVI_ONE_ADMIN_V1_4_15_BROWSER_AUDIT_QA.apk | grep -Fx assets/zavi-admin-v1414-one-matched.js
+          for z in ZAVI_BROWSER_QA_admin.zip ZAVI_BROWSER_QA_one.zip;do
+            unzip -t "$z" | tail -1
+            unzip -p "$z" qa.json | python3 -c 'import sys,json;p=json.load(sys.stdin);assert p["fail_count"]==0 and len(p["checks"])>8; print("PASS BROWSER",p["mode"],p["pass_count"])'
+          done
+          sha256sum ZAVI_ONE_V65_68_BROWSER_AUDIT_QA.apk ZAVI_ONE_ADMIN_V1_4_15_BROWSER_AUDIT_QA.apk > SHA256_CHECKSUMS.txt
+          cat > README_DARI.txt <<'EOF'
+          ZAVI ONE V65.68 + ZAVI ONE ADMIN V1.4.15
+          بستۀ آزمایشی با آزمون مرورگری مستقل. هر دو APK و شواهد QA ضمیمه‌اند.
+
+          اصلاحات:
+          - خوانایی متن‌ها و اسکرول منوی «همه بخش‌ها» در هر دو برنامه
+          - ۱۱ بخش ADMIN، رابط تنظیمات و دو حالت تیره/روشن
+          - ورود ADMIN قبل از تأیید حساب محتوا را نشان نمی‌دهد
+          - نرخ امروز، فاکتور و لینک‌های موجود همان منطق برنامه قبلی را دارند
+          - حساب جدید بدون بخش فعال، پیام راهنما دارد
+
+          اخطار: این فایل‌ها APK آزمایشی با شناسه جداگانه‌اند.
+          نصب آنها داده‌های محلی نسخه اصلی را خودکار منتقل نمی‌کند.
+          نسخه اصلی خود را پاک نکنید. معاملات آفلاین ارسال‌نشده را حفظ کنید.
+
+          برای انتشار عمومی نیاز است:
+          ۱) کلید امضای پایدار رسمی و شناسه نصب اصلی هر برنامه؛
+          ۲) آزمون واقعی مالک / همکار و محدودیت ADMIN؛
+          ۳) انتقال دستگاه، ذخیره و همگام‌سازی داده آفلاین؛
+          ۴) بارکد دوربین، چاپ و فاکتور در موبایل و ویندوز؛
+          ۵) بررسی هشدارهای امنیت دیتابیس و سیاست رمزهای عبور.
+          آزمون محلی و ساخت موفق ضمانت بدون خطا بودن در دستگاه مشتری نیست.
+          EOF
+          cd ..
+          zip -9 -q -j ZAVI_ONE_6568_ADMIN_1415_BROWSER_QA_BOTH_APKS.zip \
+            package/ZAVI_ONE_V65_68_BROWSER_AUDIT_QA.apk \
+            package/ZAVI_ONE_ADMIN_V1_4_15_BROWSER_AUDIT_QA.apk \
+            package/ZAVI_BROWSER_QA_one.zip \
+            package/ZAVI_BROWSER_QA_admin.zip \
+            package/SHA256_CHECKSUMS.txt package/README_DARI.txt
+          unzip -t ZAVI_ONE_6568_ADMIN_1415_BROWSER_QA_BOTH_APKS.zip | tail -1
+          sha256sum ZAVI_ONE_6568_ADMIN_1415_BROWSER_QA_BOTH_APKS.zip > ZAVI_ONE_6568_ADMIN_1415_BROWSER_QA_BOTH_APKS.zip.sha256
+      - name: Publish pre-release QA ZIP, never mislabeled as production
+        run: |
+          set -euo pipefail
+          if ! gh release view "$DEST_TAG" >/dev/null 2>&1;then
+            gh release create "$DEST_TAG" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE 65.68 + ADMIN 1.4.15 — Browser-Tested QA Bundle" \
+              --notes "Two signed QA Android apps + browser smoke evidence and checksum. Not a public-production certificate; stable signing keys and live user/account tests remain required."
+          fi
+          gh release upload "$DEST_TAG" \
+            ZAVI_ONE_6568_ADMIN_1415_BROWSER_QA_BOTH_APKS.zip \
+            ZAVI_ONE_6568_ADMIN_1415_BROWSER_QA_BOTH_APKS.zip.sha256 --clobber

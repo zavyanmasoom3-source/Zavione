@@ -1,0 +1,1 @@
+Android QA APK: V65.83 fixes store client denying trial plan despite valid cloud subscription, seven-day policy and signed lease: online access guards, seven-day display, and ES256 ready-event workspace binding. Signed lease and device validation remain mandatory; mobile hardware QA still pending.

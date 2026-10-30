@@ -1,0 +1,283 @@
+name: ZAVI ONE 65.62 Dashboard Clean and Contrast Android QA
+on:
+  push:
+    branches: [zavi-dashboard-polish-v6562-20261025]
+    paths:
+      - ".github/workflows/zavi-dashboard-polish-apk-20261025.yml"
+      - "android-build/patches/zavi-reference-*.css"
+      - "android-build/patches/zavi-reference-*.js"
+      - "android-build/patches/zavi-final-settings-*.js"
+      - "android-build/patches/zavi-final-settings-*.css"
+      - "android-build/patches/zavi-cinematic-v2.css"
+      - "android-build/patches/zavi-cinematic-v2.js"
+      - "android-build/patches/zavi-final-reference-*.css"
+      - "android-build/patches/zavi-final-reference-*.js"
+      - "android-build/patches/zavi-dashboard-polish-v6562.css"
+      - "android-build/patches/zavi-dashboard-polish-v6562.js"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  prepare:
+    name: Prepare direct GitHub Release (no Actions artifact quota)
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Create QA release before independent APK builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-dashboard-polish-v6562-release-20261025
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1;then
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+              --title "ZAVI ONE 65.62 — Fixed Dashboard Welcome, Date, Sale, Light/Dark Contrast" \
+              --notes "Store v65.62 visual QA built on original v65.54 accounting logic with all prior UI fixes. Restores trade-specific Welcome + native date + real New Sale action to top of Home. Removes health launcher from DASHBOARD only, retains in Settings. Improves light/dark contrast, chart/report cards, responsive mobile and landscape. No live data, auth or offline logic changed. Separate QA application identifier and temporary QA signature. Physical phone, auth, print, barcode and offline transfer still need acceptance testing."
+          fi
+  build:
+    needs: prepare
+    name: "Dashboard-polished Android APK — ${{ matrix.mode }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: one
+            app: ZAVI ONE
+            pkg: com.zavione.one.polishqa
+            name: ZAVI_ONE_V65_62_DASHBOARD_POLISHED_QA.apk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.13"
+      - name: Install Android platform and signing verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ];then SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -n1)";fi
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+      - name: Stage exact newest store and central ADMIN web applications
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p staging android-build/app/src/main/assets
+          if [ "${{ matrix.mode }}" = "one" ];then
+            gh release download zavi-web-v6554-responsive-20261024 --pattern 'ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip*' --dir staging
+            cd staging
+            sha256sum -c 'ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip.sha256'
+            cd ..
+            unzip -oq staging/ZAVI_ONE_WEB_V65_54_RESPONSIVE_MOBILE_DESKTOP_QA.zip -d android-build/app/src/main/assets
+            test "$(find android-build/app/src/main/assets -type f | wc -l)" -ge 170
+            grep -q 'usdRateDashboardForm' android-build/app/src/main/assets/index.html
+            grep -q 'zavi-web-responsive-v1.css' android-build/app/src/main/assets/index.html
+          else
+            base64 -d windows-build/admin-v145-responsive-web.zip.base64 > staging/admin-source.zip
+            echo '06258f551304e7d147022ff4eaa881b99c68670d767f7816d833ccae958e3c03  staging/admin-source.zip' | sha256sum -c -
+            unzip -oq staging/admin-source.zip -d android-build/app/src/main/assets
+            test "$(find android-build/app/src/main/assets -type f | wc -l)" -ge 90
+            for f in index.html app.js account-control.js admin-portal.js zavi-admin-recovery-v141.js zavi-admin-service-whatsapp-v139.js;do test -s android-build/app/src/main/assets/"$f";done
+          fi
+          test -s android-build/app/src/main/assets/index.html
+          echo "Original frontend staged without replacing business or authentication logic."
+      - name: Add approved light/dark visual shell, preserve all original routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,re
+          mode='''${{ matrix.mode }}'''
+          root=Path('android-build/app/src/main/assets')
+          html=root/'index.html'
+          s=html.read_text(encoding='utf8')
+          assert '</head>' in s and '</body>' in s
+          assert 'zavi-reference-store-v6557.css' not in s and 'zavi-reference-admin-v148.css' not in s
+          if mode=='one':
+            style='zavi-reference-store-v6557.css'
+            js='zavi-reference-store-v6557.js'
+            for name in (style,js): (root/name).write_bytes((Path('android-build/patches')/name).read_bytes())
+            assert 'usdRateDashboardForm' in s
+            s=s.replace('</head>',f'<link rel="stylesheet" href="./{style}?v=65.59"></head>',1)
+            i=s.rfind('</body>')
+            s=s[:i]+f'<script defer src="./{js}?v=65.59"></script>'+s[i:]
+            assert 'zavi-web-responsive-v1.css' in s
+          else:
+            style='zavi-reference-admin-v148.css'
+            admin_script='zavi-reference-admin-v149.js'
+            (root/style).write_bytes((Path('android-build/patches')/style).read_bytes())
+            (root/admin_script).write_bytes((Path('android-build/patches')/admin_script).read_bytes())
+            assert 'account-control.js' in s and 'admin-portal.js' in s
+            s=s.replace('</head>',f'<link rel="stylesheet" href="./{style}?v=1.4.10"></head>',1)
+            i=s.rfind('</body>')
+            s=s[:i]+f'<script defer src="./{admin_script}?v=1.4.10"></script>'+s[i:]
+          # Attach searchable, categorized Settings without removing original fields or module handlers.
+          common='zavi-final-settings-common-v1.css'
+          control='zavi-final-settings-store-v6559.js' if mode=='one' else 'zavi-final-settings-admin-v1410.js'
+          for fname in (common,control):
+            (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+          s=s.replace('</head>',f'<link rel="stylesheet" href="./{common}?v=20261025-final"></head>',1)
+          idx=s.rfind('</body>')
+          s=s[:idx]+f'<script defer src="./{control}?v=20261025-final"></script>'+s[idx:]
+          assert s.count(control)==1 and s.count(common)==1
+          if mode=='one':
+            assert 'id="zaviEnableAllFeatures"' in s
+            assert 'function renderSettings()' in s
+          else:
+            assert (root/'app.js').is_file()
+            assert 'renderSettings' in (root/'app.js').read_text(encoding='utf8')
+          # Cinematic layer: additive only, maintain existing account/device/finance handlers.
+          for fname in ('zavi-cinematic-v2.css','zavi-cinematic-v2.js'):
+            assert fname not in s
+            (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+          s=s.replace('</head>','<link rel="stylesheet" href="./zavi-cinematic-v2.css?v=20261025-cinematic"></head>',1)
+          at=s.rfind('</body>')
+          s=s[:at]+'<script defer src="./zavi-cinematic-v2.js?v=20261025-cinematic"></script>'+s[at:]
+          # New responsive reference layouts – only UI, never replace original application scripts.
+          if mode=='one':
+            visual_files=('zavi-final-reference-store.css','zavi-final-reference-store.js')
+          else:
+            visual_files=('zavi-final-reference-admin.css',)
+          for fname in visual_files:
+            assert fname not in s
+            (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+          for fname in visual_files:
+            if fname.endswith('.css'):
+              s=s.replace('</head>',f'<link rel="stylesheet" href="./{fname}?v=ref-20261025"></head>',1)
+            else:
+              at=s.rfind('</body>')
+              s=s[:at]+f'<script defer src="./{fname}?v=ref-20261025"></script>'+s[at:]
+          if mode=='one':
+            # Only one original Dashboard call is removed; Settings health remains unchanged.
+            # Remove only the call inside renderDashboard(), not the same feature in Settings.
+            marker='${z6524CareLauncher()}'
+            dashboard_start=s.find('function renderDashboard')
+            target=s.find(marker,dashboard_start) if dashboard_start>=0 else -1
+            if target>=dashboard_start and target-dashboard_start<20000 and s.count(marker)>=2:
+              s=s[:target]+s[target+len(marker):]
+              print('PASS: native dashboard health call removed; Settings still has health feature')
+            else:
+              print('WARNING: health launcher template differs; isolated dashboard-only CSS hide retained')
+            for fname in ('zavi-dashboard-polish-v6562.css','zavi-dashboard-polish-v6562.js'):
+              assert fname not in s
+              (root/fname).write_bytes((Path('android-build/patches')/fname).read_bytes())
+            s=s.replace('</head>','<link rel="stylesheet" href="./zavi-dashboard-polish-v6562.css?v=65.62"></head>',1)
+            at=s.rfind('</body>')
+            s=s[:at]+'<script defer src="./zavi-dashboard-polish-v6562.js?v=65.62"></script>'+s[at:]
+          html.write_text(s,encoding='utf8')
+          assert s.count(style)==1
+          print('PASS: image-inspired styles added to exact current application, original business modules retained',mode)
+          PY
+          if [ "${{ matrix.mode }}" = "one" ];then
+            node --check android-build/app/src/main/assets/zavi-reference-store-v6557.js
+            node --check android-build/app/src/main/assets/zavi-dashboard-polish-v6562.js
+          else
+            node --check android-build/app/src/main/assets/app.js
+            node --check android-build/app/src/main/assets/zavi-reference-admin-v149.js
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+          root=Path('android-build/app/src/main/assets')
+          s=(root/'index.html').read_text()
+          missing=[]
+          for href in re.findall(r'(?:href|src)\s*=\s*["\x27](\./[^"\x27]+)',s):
+            path=href.split('?',1)[0][2:]
+            if not (root/path).is_file():missing.append(path)
+          assert not missing, 'Missing relative assets: '+str(missing[:20])
+          files=list(root.glob('*.js'))
+          for f in files:
+            p=subprocess.run(['node','--check',str(f)],capture_output=True,text=True)
+            assert p.returncode==0, f'{f.name}: {p.stderr[:300]}'
+          print('PASS: missing linked files=0; JS parsed=',len(files))
+          PY
+      - name: Install original ZAVI launcher and compile complete Android APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('android-build/app/build.gradle')
+          s=p.read_text()
+          changes=[
+            ("admin ? 'com.zavione.one.admin' : 'com.zavione.one'", "admin ? 'com.zavione.one.admin.finaldesignqa' : 'com.zavione.one.polishqa'"),
+            ("versionCode admin ? 4127 : 6554", "versionCode admin ? 4152 : 6562"),
+            ("versionName admin ? '1.3.7' : '65.54'", "versionName admin ? '1.4.12-reference-qa' : '65.62-dashboard-qa'"),
+            ("admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'", "admin ? 'ZAVI ADMIN REFERENCE QA' : 'ZAVI ONE DASHBOARD QA'")
+          ]
+          for old,new in changes:
+            assert old in s, 'Android config mismatch: '+old
+            s=s.replace(old,new,1)
+          p.write_text(s)
+          print('PREVIEW IDs: separate from original, no uninstall needed')
+          PY
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          cp android-build/icons/${{ matrix.mode }}.webp android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+          cd android-build
+          gradle --no-daemon --stacktrace -PzaviApp=${{ matrix.mode }} :app:assembleRelease
+      - name: Verify real signed APK, included latest theme and module files
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=android-build/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK" > signature.txt
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > badging.txt
+          grep -F "package: name='${{ matrix.pkg }}'" badging.txt
+          grep -F "sdkVersion:'26'" badging.txt
+          grep -F "targetSdkVersion:'36'" badging.txt
+          unzip -t "$APK" | tail -n1
+          unzip -Z1 "$APK" | grep -Fx assets/index.html
+          unzip -Z1 "$APK" | grep -Fx classes.dex
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-cinematic-v2.css
+          unzip -Z1 "$APK" | grep -Fx assets/zavi-cinematic-v2.js
+          if [ "${{ matrix.mode }}" = "one" ]; then
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-final-reference-store.css
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-final-reference-store.js
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-dashboard-polish-v6562.css
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-dashboard-polish-v6562.js
+            unzip -p "$APK" assets/index.html | grep -q "zavi-dashboard-polish-v6562.js"
+            unzip -p "$APK" assets/index.html | grep -Fq 'zavi-dashboard-polish-v6562.css'
+            unzip -p "$APK" assets/index.html | grep -q 'zavi-final-reference-store.js'
+          else
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-final-reference-admin.css
+            unzip -p "$APK" assets/index.html | grep -q 'zavi-final-reference-admin.css'
+          fi
+          unzip -p "$APK" assets/index.html | grep -q 'zavi-cinematic-v2.css'
+          unzip -p "$APK" assets/index.html | grep -q 'zavi-cinematic-v2.js'
+          if [ "${{ matrix.mode }}" = "one" ];then
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-reference-store-v6557.css
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-reference-store-v6557.js
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-final-settings-store-v6559.js
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-final-settings-common-v1.css
+            unzip -p "$APK" assets/index.html | grep -q usdRateDashboardForm
+          else
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-reference-admin-v148.css
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-reference-admin-v149.js
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-final-settings-admin-v1410.js
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-final-settings-common-v1.css
+            unzip -Z1 "$APK" | grep -Fx assets/account-control.js
+            unzip -Z1 "$APK" | grep -Fx assets/zavi-admin-recovery-v141.js
+          fi
+          mkdir -p dist
+          cp "$APK" 'dist/${{ matrix.name }}'
+          sha256sum 'dist/${{ matrix.name }}' > 'dist/${{ matrix.name }}.sha256'
+          echo "PASS: APK assembled, signed, full frontend packaged. This is QA-signed; existing installations may have a different signing identity."
+      - name: Publish independently verified APK straight to GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: zavi-dashboard-polish-v6562-release-20261025
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" "dist/${{ matrix.name }}" "dist/${{ matrix.name }}.sha256" \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          echo "PASS: signed APK directly published to Release"

@@ -1,0 +1,1 @@
+Android QA APK: owner-created seven-day trial automatically activates store 7-day offline policy on the cloud; signed ES256 licence refreshes and offline files prepare automatically. Simple clear status, readable retry/help. Twenty trades and server-safe device transfer preserved. Keep original app installed; QA signature; iPad PWA ZIP is separate.

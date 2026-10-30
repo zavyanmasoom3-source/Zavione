@@ -19,3 +19,14 @@ html[data-zavi-theme="light"] #z605-panel :is(.z605-content,.z605-tabs),html[dat
 html[data-zavi-theme="light"] #z605-panel :is(.z605-title b,.z605-locale label,#z605-type-label,.z605-feedback,.z605-safe),html[data-theme="light"] #z605-panel :is(.z605-title b,.z605-locale label,#z605-type-label,.z605-feedback,.z605-safe){color:#19344f!important;-webkit-text-fill-color:#19344f!important}
 html[data-zavi-theme="light"] #z605-panel #z605-type,html[data-theme="light"] #z605-panel #z605-type{background:white!important;color:#15314b!important;-webkit-text-fill-color:#15314b!important}
 @media(max-width:480px){#z199-voice [role="dialog"],#z196-voice [role="dialog"]{width:min(94vw,390px)!important;max-height:80dvh!important;overflow-y:auto!important;padding:14px!important}}
+
+
+/* Compact PIN entry: leave original authentication and recovery handlers intact. */
+html :is(#loginScreen,#zaviPrivateGate,[id*="PrivateGate"]) :is(.login-card,.gate-card,.zavi-private-card,.zavi-gate-card,.z20-gate-card){width:min(90vw,340px)!important;max-width:340px!important;padding:16px!important;border-radius:18px!important}
+html :is(#loginScreen,#zaviPrivateGate,[id*="PrivateGate"]) :is(.logo,.brand-logo,img){max-height:49px!important}
+html :is(#loginScreen,#zaviPrivateGate,[id*="PrivateGate"]) :is(h1,h2){font-size:19px!important;margin:5px 0 8px!important}
+html :is(#loginScreen,#zaviPrivateGate,[id*="PrivateGate"]) :is(input[type="password"],input[type="text"],input[type="number"]){min-height:42px!important;font-size:15px!important;letter-spacing:normal!important}
+html :is(#loginScreen,#zaviPrivateGate,[id*="PrivateGate"]) :is(button[type="submit"],.btn-primary,.primary){min-height:43px!important}
+html :is(#loginScreen,#zaviPrivateGate,[id*="PrivateGate"]) :is([id*="forgot"],[class*="forgot"],[id*="Forgot"],[class*="Forgot"]){font-size:13px!important;line-height:1.5!important;min-height:36px!important;max-width:100%!important;white-space:normal!important}
+html[data-zavi-theme="dark"] :is(#loginScreen,#zaviPrivateGate) :is(label,p,small),html[data-theme="dark"] :is(#loginScreen,#zaviPrivateGate) :is(label,p,small){color:#e1eaf6!important;-webkit-text-fill-color:#e1eaf6!important}
+html[data-zavi-theme="light"] :is(#loginScreen,#zaviPrivateGate) :is(label,p,small),html[data-theme="light"] :is(#loginScreen,#zaviPrivateGate) :is(label,p,small){color:#263e56!important;-webkit-text-fill-color:#263e56!important}

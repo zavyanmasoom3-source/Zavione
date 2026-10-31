@@ -1,4 +1,4 @@
-name: ZAVI V66.06 logo and offline transfer QA APKs
+name: ZAVI V66.16 separated AI and mic QA APKs
 on:
   push:
     branches: [fix/assistant-launcher-v6608-review]
@@ -115,8 +115,11 @@ jobs:
           s=html.read_text(encoding='utf-8')
           s=s.replace('</head>',f'<link rel="stylesheet" href="./{mic_css}?v=66.16"></head>',1)
           html.write_text(s,encoding='utf-8')
-          print('Applied compact login, recovery presentation and duplicate-star fix')
+          assert '✦' not in command.read_text(encoding='utf-8').split("launcher=create('button','z605-launch',",1)[1].split(')',1)[0]
+          assert '#z637AiButton,.z637-ai-button{display:none' not in (assets/'zavi-actual-login-star-v6612.css').read_text(encoding='utf-8')
+          print('Preserved AI assistant; separated microphone with voice and text commands')
           PY
+          node --check android-build/app/src/main/assets/zavi-dual-command-v6605.js
           node --check android-build/app/src/main/assets/zavi-single-assistant-fix-v6608.js
           if [ '${{ matrix.app }}' = 'one' ]; then node --check android-build/app/src/main/assets/zavi-transfer-auto-lease-v6615.js; fi
       - name: Reject malformed HTML before building APK

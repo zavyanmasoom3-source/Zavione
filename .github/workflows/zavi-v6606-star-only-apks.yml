@@ -57,6 +57,43 @@ jobs:
             target.parent.mkdir(parents=True,exist_ok=True)
             target.write_bytes(z.read(name))
           assert (dst/"index.html").exists()
+          # The previously distributed store APK contains malformed inline HTML.
+          # Recover the original page from a source archive when it passes the
+          # same structural safety gate; never ship the corrupt extracted page.
+          if '${{ matrix.app }}' == 'one':
+           from html.parser import HTMLParser
+           class Visible(HTMLParser):
+            def __init__(self):super().__init__();self.hidden=0;self.blocks=[]
+            def handle_starttag(self,t,a):
+             if t in ('script','style'):self.hidden+=1
+            def handle_endtag(self,t):
+             if t in ('script','style'):self.hidden=max(0,self.hidden-1)
+            def handle_data(self,d):
+             if not self.hidden and d.strip():self.blocks.append(d.strip())
+           def clean(page):
+            v=Visible();v.feed(page)
+            bad=[x for x in v.blocks if len(x)>250 and ('function ' in x or 'const ' in x or 'document.' in x)]
+            return not bad
+           current=(dst/'index.html').read_text(encoding='utf-8')
+           if not clean(current):
+            candidates=[]
+            for archive in (Path('industry-delivery/ZAVI_ONE_V65_83_IPAD_WEB_PWA_QA.zip'),Path('ZAVI_ANDROID_GITHUB_SOURCES_V31.zip')):
+             if not archive.exists():continue
+             with zipfile.ZipFile(archive) as src:
+              for n in src.namelist():
+               if n.endswith('/index.html') or n=='index.html':
+                try:page=src.read(n).decode('utf-8')
+                except UnicodeError:continue
+                if len(page)>80000 and clean(page):
+                 candidates.append((len(page),archive,n,page))
+            print('Recovery candidates:',[(n,str(a),p) for n,a,p,_ in candidates])
+            if candidates:
+             candidates.sort(reverse=True)
+             _,archive,name,page=candidates[0]
+             (dst/'index.html').write_text(page,encoding='utf-8')
+             print('Restored clean source HTML from',archive,name)
+            else:
+             print('No verified clean HTML in source archives; refusing release')
           print("Staged",len(names),"original assets")
           PY
       - name: Apply assistant, recovery and login fixes

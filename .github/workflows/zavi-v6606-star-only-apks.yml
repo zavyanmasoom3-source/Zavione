@@ -1,0 +1,97 @@
+name: ZAVI V66.06 star-only QA APKs
+on:
+  push:
+    branches: [fix/assistant-launcher-v6608-review]
+    paths: [.github/workflows/zavi-v6606-star-only-apks.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: one
+            file: ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk
+            sha: 6918f35169083dd1ebf52ea7c90d622d7488f8748b51d1c64900664d81b73cc6
+          - app: admin
+            file: ZAVI_ONE_ADMIN_V1_4_52_INDEPENDENT_COMMAND_QA.apk
+            sha: 8669b9a02488136dac68deeaf4bff074114c0f3c38e9c90e74387db36ab6445f
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Download and validate original APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p original
+          gh release download zavi-migration-v6606 --repo "${{ github.repository }}" --pattern "${{ matrix.file }}" --dir original
+          echo "${{ matrix.sha }}  original/${{ matrix.file }}" | sha256sum -c -
+      - name: Stage original web assets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile,shutil
+          apk=Path("original/${{ matrix.file }}")
+          dst=Path("android-build/app/src/main/assets")
+          if dst.exists():shutil.rmtree(dst)
+          dst.mkdir(parents=True)
+          with zipfile.ZipFile(apk) as z:
+           assert z.testzip() is None
+           names=[n for n in z.namelist() if n.startswith("assets/") and not n.endswith("/")]
+           assert len(names)>100, len(names)
+           for name in names:
+            rel=Path(name).relative_to("assets")
+            assert ".." not in rel.parts
+            target=dst/rel
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(z.read(name))
+          assert (dst/"index.html").exists()
+          print("Staged",len(names),"original assets")
+          PY
+      - name: Apply only decorative star fix
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          assets=Path("android-build/app/src/main/assets")
+          html=assets/"index.html"
+          s=html.read_text(encoding="utf-8")
+          name="zavi-single-assistant-fix-v6608.js"
+          shutil.copy2(Path("design-system")/name,assets/name)
+          marker='<script defer src="./'+name+'?v=66.08"></script>'
+          assert marker not in s
+          pos=s.lower().rfind("</body>")
+          assert pos!=-1
+          s=s[:pos]+marker+s[pos:]
+          html.write_text(s,encoding="utf-8")
+          print("Applied star-only CSS; original command handlers untouched")
+          PY
+          node --check android-build/app/src/main/assets/zavi-single-assistant-fix-v6608.js
+      - name: Install Android SDK
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Build and verify APK
+        working-directory: android-build
+        run: |
+          gradle --no-daemon :app:assembleRelease -PzaviApp=${{ matrix.app }}
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify app/build/outputs/apk/release/app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_${{ matrix.app }}_V6606_STAR_ONLY_QA
+          path: android-build/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14

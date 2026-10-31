@@ -150,6 +150,20 @@ jobs:
            if len(block)>250 and ('function ' in block or 'const ' in block):
             print('LEAK PREFIX:',repr(block[:350]))
             break
+          if suspicious:
+           from html.parser import HTMLParser
+           class ScriptBoundaries(HTMLParser):
+            def __init__(self):super().__init__();self.start=None;self.ended=[]
+            def handle_starttag(self,tag,attrs):
+             if tag=='script':self.start=self.getpos()
+            def handle_endtag(self,tag):
+             if tag=='script':self.ended.append((self.start,self.getpos()))
+           b=ScriptBoundaries();b.feed(s)
+           print('SCRIPT TAG COUNT',len(b.ended))
+           for m in list(re.finditer(r'</script\\s*>',s,re.I))[:60]:
+            before=s[max(0,m.start()-220):m.start()]
+            after=s[m.end():m.end()+220]
+            print('SCRIPT CLOSE',m.start(),'BEFORE',repr(before[-180:]),'AFTER',repr(after[:180]))
           assert not suspicious,'Visible JavaScript source detected in app HTML: refuse APK release'
           PY
       - name: Browser smoke test - reject broken accounting screen

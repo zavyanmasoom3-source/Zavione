@@ -82,7 +82,14 @@ jobs:
           assert head>=0
           s=s[:head]+f'<link rel="stylesheet" href="./{css}?v=66.11">'+s[head:]
           html.write_text(s,encoding='utf-8')
-          print('Applied floating-star and compact-login CSS')
+          extra='zavi-actual-login-star-v6612.css'
+          shutil.copy2(Path('design-system')/extra,assets/extra)
+          s=html.read_text(encoding='utf-8')
+          head=s.lower().find('</head>')
+          assert head>=0
+          s=s[:head]+f'<link rel="stylesheet" href="./{extra}?v=66.12">'+s[head:]
+          html.write_text(s,encoding='utf-8')
+          print('Applied verified login selector and star removal')
           PY
           node --check android-build/app/src/main/assets/zavi-single-assistant-fix-v6608.js
       - name: Install Android SDK

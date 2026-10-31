@@ -7,8 +7,8 @@
     <application
         android:allowBackup="false"
         android:usesCleartextTraffic="false"
-        android:icon="@drawable/zavi_launcher_image"
-        android:roundIcon="@drawable/zavi_launcher_image"
+        android:icon="@drawable/zavi_owner_logo"
+        android:roundIcon="@drawable/zavi_owner_logo"
         android:label="@string/app_name"
         android:theme="@style/ZaviTheme"
         android:supportsRtl="true">

@@ -160,8 +160,8 @@ jobs:
               await page.waitForTimeout(3500);
               const result=await page.evaluate(()=>{
                 const body=document.body?.innerText||'';
-                const code=(body.match(/(?:\\bconst\\s+[A-Za-z_$]|\\bfunction\\s+[A-Za-z_$]|\\bdocument\\.querySelector|\\breturn\\s+false|\\baddEventListener\\s*\\()/g)||[]).length;
-                const unresolved=(body.match(/\\{(?:fmtDate|faDigits|countToday|[^{}]*\\.map\\()/g)||[]).length;
+                const code=['const ','function ','document.querySelector','return false','addEventListener('].reduce((n,term)=>n+body.split(term).length-1,0);
+                const unresolved=['{fmtDate','{faDigits','{countToday'].reduce((n,term)=>n+body.split(term).length-1,0);
                 return {length:body.length,code,unresolved,sample:body.slice(0,700)};
               });
               await page.screenshot({path:'zavi-screen-smoke.png',fullPage:true});

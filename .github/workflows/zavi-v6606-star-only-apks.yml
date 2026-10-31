@@ -142,6 +142,41 @@ jobs:
           print('HTML bytes:',len(s),'visible code blocks:',len(suspicious),'examples:',suspicious[:3])
           assert not suspicious,'Visible JavaScript source detected in app HTML: refuse APK release'
           PY
+      - name: Browser smoke test - reject broken accounting screen
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node <<'JS'
+          const {chromium}=require('playwright');
+          const path=require('path');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e).slice(0,500)));
+            try {
+              await page.goto('file://'+path.resolve('android-build/app/src/main/assets/index.html'),{waitUntil:'domcontentloaded',timeout:30000});
+              await page.waitForTimeout(3500);
+              const result=await page.evaluate(()=>{
+                const body=document.body?.innerText||'';
+                const code=(body.match(/(?:\\bconst\\s+[A-Za-z_$]|\\bfunction\\s+[A-Za-z_$]|\\bdocument\\.querySelector|\\breturn\\s+false|\\baddEventListener\\s*\\()/g)||[]).length;
+                const unresolved=(body.match(/\\{(?:fmtDate|faDigits|countToday|[^{}]*\\.map\\()/g)||[]).length;
+                return {length:body.length,code,unresolved,sample:body.slice(0,700)};
+              });
+              await page.screenshot({path:'zavi-screen-smoke.png',fullPage:true});
+              console.log(JSON.stringify({result,errors:errors.slice(0,10)},null,2));
+              if(result.code>=3 || result.unresolved>=2 || result.length<80)throw Error('Broken visible accounting screen: JavaScript/template source leaked into UI');
+            }finally{await browser.close()}
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ZAVI_${{ matrix.app }}_SCREEN_DIAGNOSTIC
+          path: zavi-screen-smoke.png
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Stage distinct ZAVI launcher icons
         run: |
           mkdir -p android-build/app/src/main/res/drawable-nodpi

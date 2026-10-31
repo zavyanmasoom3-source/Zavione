@@ -84,6 +84,10 @@ jobs:
           set -euo pipefail
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore required Android launcher resource
+        run: |
+          mkdir -p android-build/app/src/main/res/drawable
+          cp android-build/app/src/main/res/drawable/ic_launcher.xml android-build/app/src/main/res/drawable/zavi_launcher_image.xml
       - name: Build and verify APK
         working-directory: android-build
         run: |

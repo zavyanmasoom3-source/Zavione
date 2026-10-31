@@ -48,7 +48,7 @@ jobs:
           dst.mkdir(parents=True)
           with zipfile.ZipFile(apk) as z:
            assert z.testzip() is None
-           names=[n for n in z.namelist() if n.startswith("assets/") and not n.endswith("/")]
+           names=[n for n in z.namelist() if n.startswith("assets/") and not n.endswith("/") and not n.startswith("assets/dexopt/")]
            assert len(names)>100, len(names)
            for name in names:
             rel=Path(name).relative_to("assets")

@@ -1,0 +1,32 @@
+name: ZAVI ONE Complete GitHub Source Backup
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/zavi-source-backup.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  archive-source:
+    name: Backup private ZAVI ONE source
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create reproducible source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _exported
+          zip -qry _exported/ZAVI_ONE_GITHUB_SOURCE_BACKUP.zip .             -x './.git/*' './_exported/*' '*/node_modules/*' '*/.gradle/*' '*/build/*'
+          unzip -tq _exported/ZAVI_ONE_GITHUB_SOURCE_BACKUP.zip | tail -1
+          sha256sum _exported/ZAVI_ONE_GITHUB_SOURCE_BACKUP.zip > _exported/ZAVI_ONE_GITHUB_SOURCE_BACKUP.zip.sha256
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ONE_Private_GitHub_Source_Complete
+          path: _exported/*
+          if-no-files-found: error
+          retention-days: 30

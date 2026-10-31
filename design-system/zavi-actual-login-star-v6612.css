@@ -1,6 +1,6 @@
 /* V66.12: target actual HTML IDs/classes observed in V66.06 assets. */
-#z637AiButton,.z637-ai-button{display:block!important;visibility:visible!important;pointer-events:auto!important}
-#z637AiSide{display:block!important}
+#z637AiButton,.z637-ai-button{display:none!important;visibility:hidden!important;pointer-events:none!important}
+
 @media(max-width:650px){
 #zawiPrivateGate.zawi-lock-screen{padding:8px!important;overflow-y:auto!important;align-items:center!important;justify-content:center!important}
 #zawiPrivateGate .zawi-auth-card{box-sizing:border-box!important;width:min(88vw,330px)!important;max-width:330px!important;min-width:0!important;padding:12px 14px!important;margin:8px auto!important;max-height:calc(100dvh - 16px)!important;overflow-y:auto!important;border-radius:19px!important}

@@ -87,7 +87,7 @@ jobs:
           s=html.read_text(encoding='utf-8')
           head=s.lower().find('</head>')
           assert head>=0
-          s=s[:head]+f'<link rel="stylesheet" href="./{extra}?v=66.12">'+s[head:]
+          s=s[:head]+f'<link rel="stylesheet" href="./{extra}?v=66.13">'+s[head:]
           html.write_text(s,encoding='utf-8')
           print('Applied verified login selector and star removal')
           PY

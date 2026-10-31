@@ -96,9 +96,15 @@ jobs:
            s=s.replace('</head>','<link rel="stylesheet" href="./zavi-store-recovery-v6594.css?v=66.14"></head>',1)
            s=s.replace('</body>','<script defer src="./zavi-store-recovery-v6594.js?v=66.14"></script></body>',1)
            html.write_text(s,encoding='utf-8')
+           name='zavi-transfer-auto-lease-v6615.js'
+           shutil.copy2(Path('design-system')/name,assets/name)
+           s=html.read_text(encoding='utf-8')
+           s=s.replace('</body>',f'<script defer src="./{name}?v=66.15"></script></body>',1)
+           html.write_text(s,encoding='utf-8')
           print('Applied compact login, recovery presentation and duplicate-star fix')
           PY
           node --check android-build/app/src/main/assets/zavi-single-assistant-fix-v6608.js
+          if [ '${{ matrix.app }}' = 'one' ]; then node --check android-build/app/src/main/assets/zavi-transfer-auto-lease-v6615.js; fi
       - name: Stage distinct ZAVI launcher icons
         run: |
           mkdir -p android-build/app/src/main/res/drawable-nodpi

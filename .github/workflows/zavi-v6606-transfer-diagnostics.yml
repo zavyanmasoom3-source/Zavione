@@ -1,0 +1,46 @@
+name: Inspect V66.06 device transfer blocker
+on:
+  push:
+    branches: [fix/assistant-launcher-v6608-review]
+    paths: [.github/workflows/zavi-v6606-transfer-diagnostics.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original ZAVI ONE APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download zavi-migration-v6606 --pattern ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk --dir /tmp
+      - name: Inspect transfer failure paths without credentials
+        run: |
+          python3 - <<'PY'
+          from zipfile import ZipFile
+          from pathlib import Path
+          import re
+          apk='/tmp/ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk'
+          patterns=['PREVIOUS_DEVICE_SYNC_NOT_VERIFIED','zavi_v41_owner_replace_device','transferMainDevice','safeToTransfer','replacePrimary','zaviSecureOfflineLicense','zavi_v26_register_device']
+          with ZipFile(apk) as z:
+           files=[n for n in z.namelist() if n.startswith('assets/') and n.endswith(('.js','.html'))]
+           print('SCANNED_FILES',len(files))
+           for p in patterns:
+            print('SEARCH',p)
+            hits=0
+            for f in files:
+             t=z.read(f).decode('utf-8','replace')
+             for m in list(re.finditer(re.escape(p),t,re.I))[:3]:
+              # Print structural context only, never values/tokens/URLs
+              context=t[max(0,m.start()-150):m.end()+250]
+              context=re.sub(r'https?://[^\s\"\x27<>]+','[URL]',context)
+              context=re.sub(r'eyJ[A-Za-z0-9._-]{20,}','[TOKEN]',context)
+              context=re.sub(r'[A-Za-z0-9+/]{80,}={0,2}','[REDACTED]',context)
+              print('FILE',f,'OFFSET',m.start(),'CONTEXT',re.sub(r'\s+',' ',context)[:430])
+              hits+=1
+              if hits>=12:break
+             if hits>=12:break
+            print('MATCHES_SHOWN',hits)
+          PY

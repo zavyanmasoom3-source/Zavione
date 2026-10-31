@@ -140,6 +140,16 @@ jobs:
           v=Visible();v.feed(s)
           suspicious=[x[:160] for x in v.blocks if ('function ' in x or 'const ' in x or '=>{' in x or 'document.' in x) and len(x)>250]
           print('HTML bytes:',len(s),'visible code blocks:',len(suspicious),'examples:',suspicious[:3])
+          # Pinpoint the exact malformed script boundaries before any repair.
+          import re
+          for match in list(re.finditer(r'</script\\s*>',s,re.I))[:250]:
+           after=s[match.end():match.end()+150]
+           if re.search(r'\\b(?:function|const|let|return)\\b',after):
+            print('SUSPECT SCRIPT CLOSE at',match.start(),'before=',repr(s[max(0,match.start()-130):match.start()]),'after=',repr(after))
+          for block in v.blocks:
+           if len(block)>250 and ('function ' in block or 'const ' in block):
+            print('LEAK PREFIX:',repr(block[:350]))
+            break
           assert not suspicious,'Visible JavaScript source detected in app HTML: refuse APK release'
           PY
       - name: Browser smoke test - reject broken accounting screen

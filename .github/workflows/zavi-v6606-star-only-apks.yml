@@ -101,6 +101,20 @@ jobs:
            s=html.read_text(encoding='utf-8')
            s=s.replace('</body>',f'<script defer src="./{name}?v=66.15"></script></body>',1)
            html.write_text(s,encoding='utf-8')
+          # The star belongs to the command launcher's own JS, not to the AI assistant.
+          # Keep the original AI assistant untouched; expose a separate mic launcher.
+          command=assets/'zavi-dual-command-v6605.js'
+          assert command.exists(), 'Missing original voice/text command center'
+          source=command.read_text(encoding='utf-8')
+          old="launcher=create('button','z605-launch','✦')"
+          assert source.count(old)==1, 'Voice launcher signature changed'
+          source=source.replace(old,"launcher=create('button','z605-launch','🎙️')",1)
+          command.write_text(source,encoding='utf-8')
+          mic_css='zavi-separated-ai-mic-v6616.css'
+          shutil.copy2(Path('design-system')/mic_css,assets/mic_css)
+          s=html.read_text(encoding='utf-8')
+          s=s.replace('</head>',f'<link rel="stylesheet" href="./{mic_css}?v=66.16"></head>',1)
+          html.write_text(s,encoding='utf-8')
           print('Applied compact login, recovery presentation and duplicate-star fix')
           PY
           node --check android-build/app/src/main/assets/zavi-single-assistant-fix-v6608.js

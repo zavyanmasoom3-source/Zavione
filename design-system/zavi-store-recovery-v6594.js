@@ -5,9 +5,9 @@
 (()=>{'use strict';
 const lang=()=>{const s=String(document.querySelector('#zaviTopLanguage,#zaviSettingsLanguage')?.value||document.documentElement.lang||'fa').toLowerCase();return s.startsWith('en')?'en':s.startsWith('ps')?'ps':'fa'};
 const copy={
- fa:{forgot:'فراموشی رمز؟',back:'بازگشت به ورود',reset:'درخواست بازیابی',check:'بررسی پاسخ',finish:'ساخت رمز جدید',title:'بازیابی آسان رمز خصوصی',guide:'۱. به حساب ابری وارد شوید.  ۲. دوکان را انتخاب و درخواست بفرستید.  ۳. پس از تأیید مدیریت، رمز تازه بسازید.',sub:'برای امنیت، تأیید مالک توسط مدیریت الزامی است.'},
- ps:{forgot:'رمز مو هېر شوی؟',back:'ننوتلو ته ستنېدل',reset:'د بېرته ترلاسه کولو غوښتنه',check:'ځواب کتل',finish:'نوی رمز جوړول',title:'د شخصي رمز بېرته ترلاسه کول',guide:'۱. کلاوډ حساب ته ننوځئ.  ۲. خپل دوکان وټاکئ او غوښتنه واستوئ.  ۳. له تایید وروسته نوی رمز جوړ کړئ.',sub:'د امنیت لپاره د مالک تایید اړین دی.'},
- en:{forgot:'Forgot private password?',back:'Back to sign in',reset:'Request recovery',check:'Check approval',finish:'Create new password',title:'Recover private password',guide:'1. Sign in to your cloud account.  2. Select your shop and request recovery.  3. After admin approval, create a new password.',sub:'Owner verification by administration is required for security.'}
+ fa:{forgot:'فراموشی رمز؟',back:'بازگشت به ورود',reset:'درخواست بازیابی',check:'بررسی پاسخ',finish:'ساخت رمز جدید',title:'بازیابی رمز',guide:'وارد حساب شوید، دوکان را انتخاب کنید و درخواست بفرستید.',sub:'ساخت رمز جدید پس از تأیید مالک امکان‌پذیر است.'},
+ ps:{forgot:'رمز مو هېر شوی؟',back:'ننوتلو ته ستنېدل',reset:'د بېرته ترلاسه کولو غوښتنه',check:'ځواب کتل',finish:'نوی رمز جوړول',title:'د رمز بېرته ترلاسه کول',guide:'خپل حساب ته ننوځئ، دوکان وټاکئ او غوښتنه ولېږئ.',sub:'نوی رمز د مالک له تایید وروسته جوړېږي.'},
+ en:{forgot:'Forgot private password?',back:'Back to sign in',reset:'Request recovery',check:'Check approval',finish:'Create new password',title:'Recover password',guide:'Sign in, select your shop, and request recovery.',sub:'A new password requires owner approval.'}
 };
 const dict=()=>copy[lang()];
 const txt=(el)=>String(el?.textContent||'').replace(/\s+/g,' ').trim();

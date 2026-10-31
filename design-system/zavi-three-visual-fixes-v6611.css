@@ -1,6 +1,4 @@
 /* QA: remove only obsolete floating star launcher; preserve AI panels and commands. */
-#z637AiButton,.z637-ai-button{display:none!important;visibility:hidden!important;pointer-events:none!important}
-.z637-ai-side::after{content:none!important}
 #z605-panel .z605-badge{display:none!important}
 /* Compact mobile login without changing authentication logic */
 @media(max-width:600px){

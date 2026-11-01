@@ -1,4 +1,4 @@
-name: ZAVI V66.24 premium clean interface QA
+name: ZAVI V66.24 premium clean interface Gradle fix QA
 on:
   push:
     branches: [fix/assistant-launcher-v6608-review]

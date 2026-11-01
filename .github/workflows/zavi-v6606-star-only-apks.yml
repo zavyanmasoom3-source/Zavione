@@ -291,6 +291,18 @@ jobs:
           else
             cp android-build/icons/one.webp android-build/app/src/main/res/drawable-nodpi/zavi_owner_logo.webp
           fi
+          # The manifest previously pointed to the generic vector ic_launcher.
+          # Point both launcher variants to the app-specific icon copied above.
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest=Path('android-build/app/src/main/AndroidManifest.xml')
+          source=manifest.read_text(encoding='utf-8')
+          assert source.count('android:icon="@drawable/ic_launcher"')==1
+          assert source.count('android:roundIcon="@drawable/ic_launcher"')==1
+          source=source.replace('android:icon="@drawable/ic_launcher"','android:icon="@drawable/zavi_owner_logo"')
+          source=source.replace('android:roundIcon="@drawable/ic_launcher"','android:roundIcon="@drawable/zavi_owner_logo"')
+          manifest.write_text(source,encoding='utf-8')
+          PY
       - name: Install Android SDK
         run: |
           set -euo pipefail

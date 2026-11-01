@@ -182,3 +182,53 @@ html[data-zavi-theme] body :is(.invoice-page,.invoices,.reports-page,.debtors-pa
  }
  #zavi-theme-controls{display:none!important}
 }
+
+/* V66.29: unified financial UI across both apps, including legacy markup.
+   Do not style native print receipts, barcode overlays or business calculations. */
+html[data-zavi-theme] body :is(main,[role="main"],.app-content,.page-content,.content-area,.screen,.view,.page){
+ min-width:0;box-sizing:border-box;
+}
+html[data-zavi-theme] body :is(
+ .card,.panel,.widget,.tile,.box-card,.info-card,.stat-card,.summary-card,
+ .invoice-card,.customer-card,.product-card,.report-card,.setting-card,
+ .settings-card,.dashboard-card,.menu-card,.account-card,.balance-card
+){
+ background:var(--zavi-surface);color:var(--zavi-text);
+ border:1px solid var(--zavi-border);border-radius:18px;
+ box-shadow:var(--zavi-shadow);min-width:0;box-sizing:border-box;
+}
+html[data-zavi-theme] body :is(
+ .card,.panel,.widget,.tile,.invoice-card,.customer-card,.product-card,
+ .report-card,.settings-card,.dashboard-card
+) :is(h1,h2,h3,h4,p,small,label){overflow-wrap:break-word}
+html[data-zavi-theme] body :is(
+ .page,.screen,.dashboard,.invoice-page,.sales-page,.purchase-page,
+ .inventory-page,.reports-page,.settings-page,.admin-page
+) :is(button:not(.unstyled),input:not([type="checkbox"]):not([type="radio"]),select,textarea){
+ box-sizing:border-box;max-width:100%;font:inherit;
+}
+html[data-zavi-theme] body :is(
+ .page,.screen,.dashboard,.invoice-page,.sales-page,.purchase-page,
+ .inventory-page,.reports-page,.settings-page,.admin-page
+) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){
+ border-radius:12px;border:1px solid var(--zavi-border);
+}
+html[data-zavi-theme] body :is(.invoice-page,.sales-page,.purchase-page,.reports-page,.inventory-page,.customers-page)
+ :is(.table-container,.table-responsive,.table-wrapper){max-width:100%;overflow-x:auto}
+html[data-zavi-theme] body :is(.sidebar,.nav-menu,.bottom-nav,.toolbar,.topbar,.header-bar){
+ box-sizing:border-box;
+}
+@media(max-width:600px){
+ html[data-zavi-theme] body :is(.page,.screen,.dashboard,.invoice-page,.reports-page,.settings-page,.admin-page){
+  max-width:100%;min-width:0;
+ }
+ html[data-zavi-theme] body :is(.card,.panel,.widget,.tile,.invoice-card,.customer-card,.product-card,.report-card){
+  border-radius:15px;
+ }
+}
+@media print{
+ html[data-zavi-theme] body :is(.card,.panel,.widget,.tile,.invoice-card,.report-card){
+  background:#fff!important;color:#000!important;box-shadow:none!important;
+  border-color:#ccc!important;backdrop-filter:none!important;
+ }
+}

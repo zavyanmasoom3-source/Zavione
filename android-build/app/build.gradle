@@ -3,15 +3,31 @@ plugins { id 'com.android.application' }
 String appVariant = providers.gradleProperty("zaviApp").getOrElse("one")
 if (!(appVariant in ["one", "admin"])) throw new GradleException("zaviApp must be one or admin")
 boolean admin = appVariant == "admin"
+boolean productionMode = providers.gradleProperty("zaviProduction").getOrElse("false").toBoolean()
+if (productionMode) {
+    for (String name : ["ZAVI_KEYSTORE_PATH","ZAVI_KEYSTORE_PASSWORD","ZAVI_KEY_ALIAS","ZAVI_KEY_PASSWORD"]) {
+        if (!System.getenv(name)) throw new GradleException("Production signing missing: " + name)
+    }
+}
 android {
+    signingConfigs {
+        production {
+            if (productionMode) {
+                storeFile file(System.getenv("ZAVI_KEYSTORE_PATH"))
+                storePassword System.getenv("ZAVI_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ZAVI_KEY_ALIAS")
+                keyPassword System.getenv("ZAVI_KEY_PASSWORD")
+            }
+        }
+    }
     namespace 'com.zavione.mobile'
     compileSdk 36
     defaultConfig {
         applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
         minSdk 26
         targetSdk 36
-        versionCode admin ? 4127 : 6554
-        versionName admin ? '1.3.7' : '65.54'
+        versionCode admin ? 4154 : 6623
+        versionName admin ? '1.4.54' : '66.23'
         resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
     }
     buildTypes {
@@ -21,7 +37,7 @@ android {
             debuggable false
             // Interim distribution: the GitHub runner's generated debug certificate.
             // For commercial production updates, replace with persistent secure release signing.
-            signingConfig signingConfigs.debug
+            signingConfig productionMode ? signingConfigs.production : signingConfigs.debug
         }
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }

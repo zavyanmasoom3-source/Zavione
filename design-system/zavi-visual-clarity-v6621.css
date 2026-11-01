@@ -1,0 +1,25 @@
+/* V66.21 visual clarity pass: compact readable cards, without hiding app features. */
+@media (max-width: 600px) {
+ html,body { max-width:100%; overflow-x:hidden; }
+ body :is(button,input,select,textarea) { font-family:inherit; }
+ body :is(.card,.panel,.tile,.dashboard-card,.menu-card) {
+   min-width:0; max-width:100%; box-sizing:border-box;
+ }
+ body :is(.card,.panel,.tile,.dashboard-card,.menu-card) :is(h1,h2,h3,h4,p,span,label) {
+   overflow-wrap:anywhere; writing-mode:horizontal-tb;
+ }
+ body :is(.dashboard-card,.menu-card) { padding:12px; }
+ body :is(.dashboard-card,.menu-card) :is(h2,h3) { line-height:1.35; }
+ body :is(.dashboard-card,.menu-card) p { line-height:1.55; }
+ body :is(.dashboard-card,.menu-card) button { min-height:40px; }
+ body :is(.dashboard-card,.menu-card) :is(.row,.flex) { min-width:0; }
+ #zavi-assistant-settings { max-width:100%; overflow:visible; }
+ #zavi-assistant-settings label { line-height:1.5; }
+}
+/* Avoid the earlier vertically stacked text bug on narrow two-column tiles. */
+@media (max-width: 420px) {
+ body :is(.menu-card,.dashboard-card) { min-width:0; }
+ body :is(.menu-card,.dashboard-card) :is(h2,h3,h4) {
+   word-break:normal; overflow-wrap:break-word;
+ }
+}

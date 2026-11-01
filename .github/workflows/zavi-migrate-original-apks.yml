@@ -1,0 +1,31 @@
+name: Migrate original ZAVI APKs securely
+on:
+  push:
+    branches: [fix/assistant-launcher-v6608-review]
+    paths: [.github/workflows/zavi-migrate-original-apks.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Download original release APKs
+        env:
+          GH_TOKEN: ${{ secrets.ZAVI_SOURCE_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN" || { echo "ZAVI_SOURCE_TOKEN missing"; exit 1; }
+          mkdir -p original-apks
+          gh release download zavi-v6606-admin1452-independent-command-qa-20261028 -R zavyanmasoom6-glitch/Zavione --pattern '*.apk' --dir original-apks
+          test -s original-apks/ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk
+          test -s original-apks/ZAVI_ONE_ADMIN_V1_4_52_INDEPENDENT_COMMAND_QA.apk
+          sha256sum original-apks/*.apk > original-apks/SHA256SUMS.txt
+          ls -lh original-apks/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ORIGINAL_V6606_ADMIN1452
+          path: original-apks/
+          retention-days: 7
+          if-no-files-found: error

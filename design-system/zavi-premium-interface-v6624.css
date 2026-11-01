@@ -1,0 +1,29 @@
+/* ZAVI ONE / ADMIN visual refinement 66.24: additive, reversible, no business logic changes */
+:root{--zavi-ui-radius:16px;--zavi-ui-gap:12px}
+body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card){
+ box-sizing:border-box;min-width:0;border-radius:var(--zavi-ui-radius);
+}
+body :is(.settings-card,.dashboard-card,.menu-card) :is(h2,h3,h4){
+ line-height:1.45;letter-spacing:0;overflow-wrap:break-word;word-break:normal;
+}
+body :is(.settings-card,.dashboard-card,.menu-card) :is(p,label,small){
+ line-height:1.65;
+}
+body :is(.settings-card,.dashboard-card,.menu-card) button{
+ min-height:40px;border-radius:11px;
+}
+body :is(.settings-card,.dashboard-card,.menu-card) :is(input,select,textarea){
+ max-width:100%;box-sizing:border-box;
+}
+#zavi-assistant-settings,#zavi-advanced-preference{
+ box-shadow:none!important;max-width:100%;min-width:0;grid-column:1/-1;
+}
+@media(max-width:600px){
+ body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card){max-width:100%}
+ body :is(.settings-card,.dashboard-card,.menu-card){padding:clamp(10px,3vw,16px)}
+ body :is(.settings-card,.dashboard-card,.menu-card) :is(h2,h3){font-size:clamp(14px,3.8vw,19px)}
+ body :is(.settings-card,.dashboard-card,.menu-card) :is(p,label){font-size:clamp(12px,3.4vw,15px)}
+}
+@media(prefers-reduced-motion:reduce){
+ body :is(.settings-card,.dashboard-card,.menu-card){animation:none!important;transition:none!important}
+}

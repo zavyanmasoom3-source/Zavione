@@ -1,0 +1,141 @@
+name: ZAVI ONE Universal Android APKs (8 to 16+)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'android-build/**'
+      - '.github/workflows/zavi-android-8-16-apks.yml'
+      - 'windows-build/fetch-and-stage.mjs'
+      - 'windows-build/asset-list.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  android-apk:
+    name: Android APK - ${{ matrix.title }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: one
+            folder: ZAVI_ONE
+            title: ZAVI ONE
+            pkg: com.zavione.one
+            artifact: ZAVI_ONE_Android8_to16_Universal_APK
+            apk: ZAVI_ONE_Android_8_to_16_Universal.apk
+          - mode: admin
+            folder: ZAVI_ONE_ADMIN
+            title: ZAVI ONE ADMIN
+            pkg: com.zavione.one.admin
+            artifact: ZAVI_ONE_ADMIN_Android8_to16_Universal_APK
+            apk: ZAVI_ONE_ADMIN_Android_8_to_16_Universal.apk
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Java 17 and Android development tools
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Node.js 22 to stage current published web frontend
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Install Android API 36 for Android 16 compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "SDK=${ANDROID_HOME}"
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n1)"; fi
+          test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Bundle entire latest deployed frontend for offline access
+        shell: bash
+        run: |
+          set -euo pipefail
+          node windows-build/fetch-and-stage.mjs "${{ matrix.mode }}"
+          mkdir -p android-build/app/src/main/assets
+          cp -a "windows-output/${{ matrix.folder }}/web/." android-build/app/src/main/assets/
+          cp "windows-output/${{ matrix.folder }}/BUILD_SOURCE_REPORT.json" android-build/app/FRONTEND_CAPTURE_REPORT.json
+          test -s android-build/app/src/main/assets/index.html
+          echo "Captured $(find android-build/app/src/main/assets -type f | wc -l) frontend files."
+
+      - name: Repair ZAVI ONE mobile chart and low-stock cards (APK only)
+        if: matrix.mode == 'one'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 android-build/patches/apply_zavi_one_mobilefix.py android-build/app/src/main/assets
+          grep -q 'zavi-apk-dashboard-cards' android-build/app/src/main/assets/index.html
+          grep -q 'minmax(0,1fr)' android-build/app/src/main/assets/zavi-apk-mobile-dashboard.css
+
+      - name: Apply user-supplied launcher logo only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          cp "android-build/icons/${{ matrix.mode }}.webp" android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+          test -s android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+          echo "Installed icon source: android-build/icons/${{ matrix.mode }}.webp"
+
+      - name: Build non-debuggable signed universal APK
+        shell: bash
+        working-directory: android-build
+        run: gradle --no-daemon --stacktrace -PzaviApp=${{ matrix.mode }} :app:assembleRelease
+
+      - name: Verify minimum Android 8, target Android 16, APK signature and assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android-build/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          "$AAPT" dump badging "$APK" > badging.txt
+          cat badging.txt | grep -E "package: name=|sdkVersion:|targetSdkVersion:"
+          grep -F "package: name='${{ matrix.pkg }}'" badging.txt
+          grep -F "sdkVersion:'26'" badging.txt
+          grep -F "targetSdkVersion:'36'" badging.txt
+          "$APKSIGNER" verify --verbose --print-certs --min-sdk-version 26 "$APK" > apk-signature.txt
+          unzip -Z1 "$APK" | grep -Fx 'assets/index.html'
+          unzip -Z1 "$APK" | grep -Fx 'classes.dex'
+          if [ "${{ matrix.mode }}" = "one" ]; then
+            unzip -Z1 "$APK" | grep -Fx 'assets/zavi-apk-mobile-dashboard.css'
+            unzip -p "$APK" assets/index.html | grep -q 'zavi-apk-dashboard-cards'
+          fi
+          mkdir -p dist
+          cp "$APK" "dist/${{ matrix.apk }}"
+          sha256sum "dist/${{ matrix.apk }}" > "dist/${{ matrix.apk }}.sha256"
+          cp android-build/app/FRONTEND_CAPTURE_REPORT.json "dist/${{ matrix.apk }}.source.json"
+          echo "CHECK: Android 8(API26) to Android 16(API36) declared supported; universal ABI-independent WebView application."
+          echo "NOTE: release APK uses runner debug certificate; preserve a dedicated production keystore for public distribution and updates."
+
+      - name: Upload real APK and verification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist/${{ matrix.apk }}
+            dist/${{ matrix.apk }}.sha256
+            dist/${{ matrix.apk }}.source.json
+            badging.txt
+            apk-signature.txt
+          if-no-files-found: error
+          retention-days: 30

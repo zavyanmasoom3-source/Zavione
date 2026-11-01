@@ -38,7 +38,7 @@ function mount(){
  if(root.querySelector('#zavi-assistant-settings'))return;
  const box=document.createElement('section');box.id='zavi-assistant-settings';box.className='zavi-settings-visible';
  const heading=document.createElement('strong');heading.textContent='نمایش دستیارها';box.appendChild(heading);
- for(const [key,label,def] of [[V,'نمایش آیکن دستیار صوتی',false],[A,'نمایش آیکن هوش مصنوعی',true]]){
+ for(const [key,label,def] of [[V,'نمایش دستیار صوتی',false],[A,'نمایش دستیار هوشمند',true]]){
   const row=document.createElement('label'),span=document.createElement('span'),input=document.createElement('input');
   span.textContent=label;input.type='checkbox';input.checked=get(key,def);input.setAttribute('aria-label',label);
   input.addEventListener('change',()=>save(key,input.checked));row.append(span,input);box.appendChild(row);

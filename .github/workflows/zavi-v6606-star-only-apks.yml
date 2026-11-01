@@ -1,4 +1,4 @@
-name: ZAVI V66.21 mobile clarity QA APKs
+name: ZAVI V66.22 assistant toggles in real settings QA
 on:
   push:
     branches: [fix/assistant-launcher-v6608-review]

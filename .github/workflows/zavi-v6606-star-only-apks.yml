@@ -123,39 +123,45 @@ jobs:
           import shutil
           assets=Path("android-build/app/src/main/assets")
           html=assets/"index.html"
+          from html.parser import HTMLParser
+          class EndTags(HTMLParser):
+           def __init__(self):super().__init__();self.end={}
+           def handle_endtag(self,tag):
+            if tag in ('head','body'):self.end[tag]=self.getpos()
+          def insert_before_end(source,tag,fragment):
+           parser=EndTags();parser.feed(source)
+           assert tag in parser.end,'Missing structural '+tag+' end tag'
+           line,col=parser.end[tag]
+           offset=sum(len(x) for x in source.splitlines(keepends=True)[:line-1])+col
+           assert source[offset:offset+len(tag)+3].lower()=='</'+tag+'>'
+           return source[:offset]+fragment+source[offset:]
           s=html.read_text(encoding="utf-8")
           name="zavi-single-assistant-fix-v6608.js"
           shutil.copy2(Path("design-system")/name,assets/name)
           marker='<script defer src="./'+name+'?v=66.08"></script>'
           assert marker not in s
-          pos=s.lower().rfind("</body>")
-          assert pos!=-1
-          s=s[:pos]+marker+s[pos:]
+          s=insert_before_end(s,'body',marker)
           html.write_text(s,encoding="utf-8")
           css='zavi-three-visual-fixes-v6611.css'
           shutil.copy2(Path('design-system')/css,assets/css)
-          head=s.lower().find('</head>')
-          assert head>=0
-          s=s[:head]+f'<link rel="stylesheet" href="./{css}?v=66.11">'+s[head:]
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{css}?v=66.11">')
           html.write_text(s,encoding='utf-8')
           extra='zavi-actual-login-star-v6612.css'
           shutil.copy2(Path('design-system')/extra,assets/extra)
           s=html.read_text(encoding='utf-8')
-          head=s.lower().find('</head>')
-          assert head>=0
-          s=s[:head]+f'<link rel="stylesheet" href="./{extra}?v=66.13">'+s[head:]
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{extra}?v=66.13">')
           html.write_text(s,encoding='utf-8')
           if '${{ matrix.app }}' == 'one':
            for name in ('zavi-store-recovery-v6594.css','zavi-store-recovery-v6594.js'):
             shutil.copy2(Path('design-system')/name,assets/name)
            s=html.read_text(encoding='utf-8')
-           s=s.replace('</head>','<link rel="stylesheet" href="./zavi-store-recovery-v6594.css?v=66.14"></head>',1)
-           s=s.replace('</body>','<script defer src="./zavi-store-recovery-v6594.js?v=66.14"></script></body>',1)
+           s=insert_before_end(s,'head','<link rel="stylesheet" href="./zavi-store-recovery-v6594.css?v=66.14">')
+           s=insert_before_end(s,'body','<script defer src="./zavi-store-recovery-v6594.js?v=66.14"></script>')
            html.write_text(s,encoding='utf-8')
            name='zavi-transfer-auto-lease-v6615.js'
            shutil.copy2(Path('design-system')/name,assets/name)
            s=html.read_text(encoding='utf-8')
-           s=s.replace('</body>',f'<script defer src="./{name}?v=66.15"></script></body>',1)
+           s=insert_before_end(s,'body',f'<script defer src="./{name}?v=66.15"></script>')
            html.write_text(s,encoding='utf-8')
           # The star belongs to the command launcher's own JS, not to the AI assistant.
           # Keep the original AI assistant untouched; expose a separate mic launcher.
@@ -169,7 +175,7 @@ jobs:
           mic_css='zavi-separated-ai-mic-v6616.css'
           shutil.copy2(Path('design-system')/mic_css,assets/mic_css)
           s=html.read_text(encoding='utf-8')
-          s=s.replace('</head>',f'<link rel="stylesheet" href="./{mic_css}?v=66.16"></head>',1)
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{mic_css}?v=66.16">')
           html.write_text(s,encoding='utf-8')
           assert '✦' not in command.read_text(encoding='utf-8').split("launcher=create('button','z605-launch',",1)[1].split(')',1)[0]
           assert '#z637AiButton,.z637-ai-button{display:none' not in (assets/'zavi-actual-login-star-v6612.css').read_text(encoding='utf-8')

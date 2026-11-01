@@ -1,4 +1,4 @@
-name: ZAVI V66.20 settings-only assistants QA APKs
+name: ZAVI V66.21 mobile clarity QA APKs
 on:
   push:
     branches: [fix/assistant-launcher-v6608-review]
@@ -186,6 +186,12 @@ jobs:
           shutil.copy2(Path('design-system')/visibility,assets/visibility)
           s=html.read_text(encoding='utf-8')
           s=insert_before_end(s,'body',f'<script defer src="./{visibility}?v=66.19"></script>')
+          html.write_text(s,encoding='utf-8')
+          # Conservative responsive polish for crowded cards and narrow mobile layouts.
+          polish='zavi-visual-clarity-v6621.css'
+          shutil.copy2(Path('design-system')/polish,assets/polish)
+          s=html.read_text(encoding='utf-8')
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{polish}?v=66.21">')
           html.write_text(s,encoding='utf-8')
           # Shorten the password recovery screen without touching login or RPC logic.
           recovery=assets/'pin-recovery.js'

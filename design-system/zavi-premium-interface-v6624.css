@@ -82,3 +82,22 @@ html:is([data-zavi-theme="glass"],.zavi-theme-glass) body :is(.settings-card,.da
  body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card,.tile):hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(17,29,75,.22)}
 }
 @media(prefers-reduced-motion:reduce){body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card,.tile){transition:none!important}}
+
+/* Shared compact labels/layout, mobile + desktop. Never truncate invoices, amounts, or alerts. */
+body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card,.tile) :is(button,.btn,[role="button"],label){
+ min-width:0;max-width:100%;overflow-wrap:break-word;word-break:normal;
+}
+body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card,.tile) :is(button,.btn,[role="button"]){
+ display:inline-flex;align-items:center;justify-content:center;gap:.4em;
+ padding-inline:clamp(9px,1.2vw,16px);line-height:1.35;
+}
+body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card,.tile) :is(.description,.subtitle,.helper-text,.hint){
+ font-size:clamp(12px,1.05vw,14px);line-height:1.45;
+}
+body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card,.tile) :is(.grid,.row,.flex){
+ min-width:0;max-width:100%;
+}
+@media(max-width:420px){
+ body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card,.tile) :is(button,.btn,[role="button"]){font-size:clamp(12px,3.3vw,14px)}
+ body :is(.settings-card,.dashboard-card,.menu-card,.panel,.card,.tile) :is(.description,.subtitle,.helper-text,.hint){font-size:12px}
+}

@@ -12,9 +12,9 @@ function mount(){
  if(!card||card.querySelector('#zavi-advanced-preference'))return;
  const label=document.createElement('label');
  label.id='zavi-advanced-preference';label.className='zavi-advanced-preference';
- const name=document.createElement('span');name.textContent='نمایش ابزارهای پیشرفته';
+ const name=document.createElement('span');name.textContent='ابزارهای پیشرفته';
  const input=document.createElement('input');input.type='checkbox';input.checked=read();
- input.setAttribute('aria-label','نمایش ابزارهای پیشرفته');
+ input.setAttribute('aria-label','ابزارهای پیشرفته');
  input.addEventListener('change',()=>{
   try{localStorage.setItem(KEY,String(input.checked))}catch(_){}
   document.documentElement.classList.toggle('zavi-advanced-visible',input.checked);

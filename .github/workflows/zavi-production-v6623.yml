@@ -1,4 +1,4 @@
-name: ZAVI unified theme V66.29 QA
+name: ZAVI financial UI V66.30 QA
 on:
   workflow_dispatch:
   push:
@@ -238,6 +238,16 @@ jobs:
           node --check android-build/app/src/main/assets/zavi-assistant-visibility-v6619.js
           if [ '${{ matrix.app }}' = 'one' ]; then node --check android-build/app/src/main/assets/pin-recovery.js; fi
           if [ '${{ matrix.app }}' = 'one' ]; then node --check android-build/app/src/main/assets/zavi-transfer-auto-lease-v6615.js; fi
+      - name: Patch debtors and cashbox from actual financial state
+        if: matrix.app == 'one'
+        run: |
+          python3 design-system/patch-financial-ui-v6630.py android-build/app/src/main/assets/index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('android-build/app/src/main/assets/index.html').read_text()
+          assert "stat('صندوق نقدی',cash[account.id]||0" in s
+          assert "filter(c=>money(b[c.id]?.receivable||0)>0.001)" in s
+          PY
       - name: Reject malformed HTML before building APK
         run: |
           python3 - <<'PY'
@@ -448,7 +458,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6629_UNIFIED_THEME_QA
+          name: ZAVI_${{ matrix.app }}_V6630_FINANCIAL_UI_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

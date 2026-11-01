@@ -1,4 +1,4 @@
-name: ZAVI compact-text APKs V66.25 QA
+name: ZAVI three-theme foundation V66.26 QA
 on:
   workflow_dispatch:
   push:
@@ -442,7 +442,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6625_COMPACT_TEXT_QA
+          name: ZAVI_${{ matrix.app }}_V6626_THEME_FOUNDATION_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

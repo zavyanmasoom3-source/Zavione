@@ -336,10 +336,10 @@ jobs:
           cp android-build/app/src/main/res/drawable/ic_launcher.xml android-build/app/src/main/res/drawable/zavi_launcher_image.xml
       - name: Load persistent production signing key
         env:
-          ZAVI_KEYSTORE_B64: ${{ secrets.ZAVI_RELEASE_KEYSTORE_BASE64 }}
-          ZAVI_KEYSTORE_PASSWORD: ${{ secrets.ZAVI_RELEASE_STORE_PASSWORD }}
-          ZAVI_KEY_ALIAS: ${{ secrets.ZAVI_RELEASE_KEY_ALIAS }}
-          ZAVI_KEY_PASSWORD: ${{ secrets.ZAVI_RELEASE_KEY_PASSWORD }}
+          ZAVI_KEYSTORE_B64: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEYSTORE_BASE64 || secrets.ZAVI_ADMIN_KEYSTORE_BASE64 }}
+          ZAVI_KEYSTORE_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
+          ZAVI_KEY_ALIAS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_ALIAS || secrets.ZAVI_ADMIN_KEY_ALIAS }}
+          ZAVI_KEY_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_PASSWORD || secrets.ZAVI_ADMIN_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           test -n "$ZAVI_KEYSTORE_B64" || { echo "Missing permanent release keystore secret"; exit 1; }
@@ -352,9 +352,9 @@ jobs:
       - name: Build and verify production signed APK
         working-directory: android-build
         env:
-          ZAVI_KEYSTORE_PASSWORD: ${{ secrets.ZAVI_RELEASE_STORE_PASSWORD }}
-          ZAVI_KEY_ALIAS: ${{ secrets.ZAVI_RELEASE_KEY_ALIAS }}
-          ZAVI_KEY_PASSWORD: ${{ secrets.ZAVI_RELEASE_KEY_PASSWORD }}
+          ZAVI_KEYSTORE_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
+          ZAVI_KEY_ALIAS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_ALIAS || secrets.ZAVI_ADMIN_KEY_ALIAS }}
+          ZAVI_KEY_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_PASSWORD || secrets.ZAVI_ADMIN_KEY_PASSWORD }}
         run: |
           set -euo pipefail
           gradle --no-daemon :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviProduction=true

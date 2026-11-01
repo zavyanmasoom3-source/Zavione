@@ -1,0 +1,371 @@
+name: ZAVI production signed APKs V66.24
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: one
+            file: ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk
+            sha: 6918f35169083dd1ebf52ea7c90d622d7488f8748b51d1c64900664d81b73cc6
+          - app: admin
+            file: ZAVI_ONE_ADMIN_V1_4_52_INDEPENDENT_COMMAND_QA.apk
+            sha: 8669b9a02488136dac68deeaf4bff074114c0f3c38e9c90e74387db36ab6445f
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/assistant-launcher-v6608-review
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Download and validate original APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p original
+          gh release download zavi-migration-v6606 --repo "${{ github.repository }}" --pattern "${{ matrix.file }}" --dir original
+          echo "${{ matrix.sha }}  original/${{ matrix.file }}" | sha256sum -c -
+      - name: Stage original web assets
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile,shutil
+          apk=Path("original/${{ matrix.file }}")
+          dst=Path("android-build/app/src/main/assets")
+          if dst.exists():shutil.rmtree(dst)
+          dst.mkdir(parents=True)
+          with zipfile.ZipFile(apk) as z:
+           assert z.testzip() is None
+           names=[n for n in z.namelist() if n.startswith("assets/") and not n.endswith("/") and not n.startswith("assets/dexopt/")]
+           assert len(names)>100, len(names)
+           for name in names:
+            rel=Path(name).relative_to("assets")
+            assert ".." not in rel.parts
+            target=dst/rel
+            target.parent.mkdir(parents=True,exist_ok=True)
+            target.write_bytes(z.read(name))
+          assert (dst/"index.html").exists()
+          # The previously distributed store APK contains malformed inline HTML.
+          # Recover the original page from a source archive when it passes the
+          # same structural safety gate; never ship the corrupt extracted page.
+          if '${{ matrix.app }}' == 'one':
+           from html.parser import HTMLParser
+           class Visible(HTMLParser):
+            def __init__(self):super().__init__();self.hidden=0;self.blocks=[]
+            def handle_starttag(self,t,a):
+             if t in ('script','style'):self.hidden+=1
+            def handle_endtag(self,t):
+             if t in ('script','style'):self.hidden=max(0,self.hidden-1)
+            def handle_data(self,d):
+             if not self.hidden and d.strip():self.blocks.append(d.strip())
+           def clean(page):
+            v=Visible();v.feed(page)
+            bad=[x for x in v.blocks if len(x)>250 and ('function ' in x or 'const ' in x or 'document.' in x)]
+            return not bad
+           current=(dst/'index.html').read_text(encoding='utf-8')
+           if not clean(current):
+            candidates=[]
+            for archive in (Path('industry-delivery/ZAVI_ONE_V65_83_IPAD_WEB_PWA_QA.zip'),Path('ZAVI_ANDROID_GITHUB_SOURCES_V31.zip')):
+             if not archive.exists():continue
+             with zipfile.ZipFile(archive) as src:
+              for n in src.namelist():
+               if n.endswith('/index.html') or n=='index.html':
+                try:page=src.read(n).decode('utf-8')
+                except UnicodeError:continue
+                if len(page)>80000 and clean(page):
+                 candidates.append((len(page),archive,n,page))
+            print('Recovery candidates:',[(n,str(a),p) for n,a,p,_ in candidates])
+            if candidates:
+             candidates.sort(reverse=True)
+             _,archive,name,page=candidates[0]
+             (dst/'index.html').write_text(page,encoding='utf-8')
+             print('Restored clean source HTML from',archive,name)
+            else:
+             print('No verified clean HTML in source archives; refusing release')
+          print("Staged",len(names),"original assets")
+          PY
+      - name: Verify staged HTML before applying modifications
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Visible(HTMLParser):
+           def __init__(self):super().__init__();self.depth=0;self.parts=[]
+           def handle_starttag(self,t,a):
+            if t in ('script','style'):self.depth+=1
+           def handle_endtag(self,t):
+            if t in ('script','style'):self.depth=max(0,self.depth-1)
+           def handle_data(self,d):
+            if not self.depth and d.strip():self.parts.append(d)
+          p=Path('android-build/app/src/main/assets/index.html')
+          v=Visible();v.feed(p.read_text(encoding='utf-8'))
+          bad=[x for x in v.parts if len(x)>250 and any(k in x for k in ('function ','const ','document.'))]
+          print('Unmodified staged HTML leaked JavaScript blocks:',len(bad))
+          assert not bad,'Base HTML already broken; patches cannot repair it'
+          PY
+      - name: Apply assistant, recovery and login fixes
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil
+          assets=Path("android-build/app/src/main/assets")
+          html=assets/"index.html"
+          from html.parser import HTMLParser
+          class EndTags(HTMLParser):
+           def __init__(self):super().__init__();self.end={}
+           def handle_endtag(self,tag):
+            if tag in ('head','body'):self.end[tag]=self.getpos()
+          def insert_before_end(source,tag,fragment):
+           parser=EndTags();parser.feed(source)
+           assert tag in parser.end,'Missing structural '+tag+' end tag'
+           line,col=parser.end[tag]
+           offset=sum(len(x) for x in source.splitlines(keepends=True)[:line-1])+col
+           assert source[offset:offset+len(tag)+3].lower()=='</'+tag+'>'
+           return source[:offset]+fragment+source[offset:]
+          s=html.read_text(encoding="utf-8")
+          name="zavi-single-assistant-fix-v6608.js"
+          shutil.copy2(Path("design-system")/name,assets/name)
+          marker='<script defer src="./'+name+'?v=66.08"></script>'
+          assert marker not in s
+          s=insert_before_end(s,'body',marker)
+          html.write_text(s,encoding="utf-8")
+          css='zavi-three-visual-fixes-v6611.css'
+          shutil.copy2(Path('design-system')/css,assets/css)
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{css}?v=66.11">')
+          html.write_text(s,encoding='utf-8')
+          extra='zavi-actual-login-star-v6612.css'
+          shutil.copy2(Path('design-system')/extra,assets/extra)
+          s=html.read_text(encoding='utf-8')
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{extra}?v=66.13">')
+          html.write_text(s,encoding='utf-8')
+          if '${{ matrix.app }}' == 'one':
+           for name in ('zavi-store-recovery-v6594.css','zavi-store-recovery-v6594.js'):
+            shutil.copy2(Path('design-system')/name,assets/name)
+           s=html.read_text(encoding='utf-8')
+           s=insert_before_end(s,'head','<link rel="stylesheet" href="./zavi-store-recovery-v6594.css?v=66.14">')
+           s=insert_before_end(s,'body','<script defer src="./zavi-store-recovery-v6594.js?v=66.14"></script>')
+           html.write_text(s,encoding='utf-8')
+           name='zavi-transfer-auto-lease-v6615.js'
+           shutil.copy2(Path('design-system')/name,assets/name)
+           s=html.read_text(encoding='utf-8')
+           s=insert_before_end(s,'body',f'<script defer src="./{name}?v=66.15"></script>')
+           html.write_text(s,encoding='utf-8')
+          # The star belongs to the command launcher's own JS, not to the AI assistant.
+          # Keep the original AI assistant untouched; expose a separate mic launcher.
+          command=assets/'zavi-dual-command-v6605.js'
+          assert command.exists(), 'Missing original voice/text command center'
+          source=command.read_text(encoding='utf-8')
+          old="launcher=create('button','z605-launch','✦')"
+          assert source.count(old)==1, 'Voice launcher signature changed'
+          source=source.replace(old,"launcher=create('button','z605-launch','🎙️')",1)
+          command.write_text(source,encoding='utf-8')
+          # Remove only the redundant floating microphone. Keep voice/text
+          # command implementation and the original AI assistant unchanged.
+          mic_css='zavi-separated-ai-mic-v6616.css'
+          shutil.copy2(Path('design-system')/mic_css,assets/mic_css)
+          with (assets/mic_css).open('a',encoding='utf-8') as f:
+           f.write('\\n#z605-launch{display:none!important}\\n')
+          s=html.read_text(encoding='utf-8')
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{mic_css}?v=66.17">')
+          html.write_text(s,encoding='utf-8')
+          # Install independent persisted switches for the two existing launchers.
+          visibility='zavi-assistant-visibility-v6619.js'
+          shutil.copy2(Path('design-system')/visibility,assets/visibility)
+          s=html.read_text(encoding='utf-8')
+          s=insert_before_end(s,'body',f'<script defer src="./{visibility}?v=66.19"></script>')
+          html.write_text(s,encoding='utf-8')
+          # Conservative responsive polish for crowded cards and narrow mobile layouts.
+          polish='zavi-visual-clarity-v6621.css'
+          shutil.copy2(Path('design-system')/polish,assets/polish)
+          s=html.read_text(encoding='utf-8')
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{polish}?v=66.21">')
+          html.write_text(s,encoding='utf-8')
+          # Release must include the exact premium UI assets validated by QA.
+          premium='zavi-premium-interface-v6624.css'
+          shutil.copy2(Path('design-system')/premium,assets/premium)
+          s=html.read_text(encoding='utf-8')
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{premium}?v=66.24">')
+          html.write_text(s,encoding='utf-8')
+          if '${{ matrix.app }}' == 'one':
+           advanced='zavi-progressive-interface-v6624.js'
+           shutil.copy2(Path('design-system')/advanced,assets/advanced)
+           s=html.read_text(encoding='utf-8')
+           s=insert_before_end(s,'body',f'<script defer src="./{advanced}?v=66.24"></script>')
+           html.write_text(s,encoding='utf-8')
+          # Shorten the password recovery screen without touching login or RPC logic.
+          recovery=assets/'pin-recovery.js'
+          if recovery.exists():
+           rs=recovery.read_text(encoding='utf-8')
+           changes={
+            '🔐 بازیابی رمز شخصی ZAVI ONE':'بازیابی رمز',
+            'تأیید مالک نرم‌افزار + ورود با حساب آنلاین • رمز قبلی نزد مدیریت ثبت نمی‌شود.':'رمز جدید پس از تأیید مالک ساخته می‌شود.',
+            'اول با <b>ایمیل و رمز حساب ابری خودتان</b> وارد شوید، بعد نام دوکان را انتخاب کنید و درخواست بازیابی بفرستید. مدیریت پس از بررسی هویت شما، مجوز یک‌بارمصرف صادر می‌کند. رمز تازه فقط روی همین دستگاه تنظیم می‌شود.':'با حساب ابری وارد شوید، دوکان را انتخاب کنید و درخواست بفرستید.',
+            'رمز حساب آنلاین (نه رمز ۶ رقمی برنامه)':'رمز حساب آنلاین'
+           }
+           for before,after in changes.items():
+            assert before in rs,'Recovery text changed: '+before[:35]
+            rs=rs.replace(before,after)
+           recovery.write_text(rs,encoding='utf-8')
+          print('Removed floating microphone; shortened recovery instructions')
+          assert '✦' not in command.read_text(encoding='utf-8').split("launcher=create('button','z605-launch',",1)[1].split(')',1)[0]
+          assert '#z637AiButton,.z637-ai-button{display:none' not in (assets/'zavi-actual-login-star-v6612.css').read_text(encoding='utf-8')
+          print('Preserved AI assistant; separated microphone with voice and text commands')
+          PY
+          node --check android-build/app/src/main/assets/zavi-dual-command-v6605.js
+          node --check android-build/app/src/main/assets/zavi-single-assistant-fix-v6608.js
+          node --check android-build/app/src/main/assets/zavi-assistant-visibility-v6619.js
+          if [ '${{ matrix.app }}' = 'one' ]; then node --check android-build/app/src/main/assets/pin-recovery.js; fi
+          if [ '${{ matrix.app }}' = 'one' ]; then node --check android-build/app/src/main/assets/zavi-transfer-auto-lease-v6615.js; fi
+      - name: Reject malformed HTML before building APK
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from html.parser import HTMLParser
+          class Visible(HTMLParser):
+           def __init__(self): super().__init__(); self.hidden=0; self.blocks=[]
+           def handle_starttag(self,t,a):
+            if t in ('script','style'):self.hidden+=1
+           def handle_endtag(self,t):
+            if t in ('script','style'):self.hidden=max(0,self.hidden-1)
+           def handle_data(self,d):
+            if not self.hidden and d.strip():self.blocks.append(d.strip())
+          p=Path('android-build/app/src/main/assets/index.html')
+          s=p.read_text(encoding='utf-8')
+          v=Visible();v.feed(s)
+          suspicious=[x[:160] for x in v.blocks if ('function ' in x or 'const ' in x or '=>{' in x or 'document.' in x) and len(x)>250]
+          print('HTML bytes:',len(s),'visible code blocks:',len(suspicious),'examples:',suspicious[:3])
+          # Pinpoint the exact malformed script boundaries before any repair.
+          import re
+          for match in list(re.finditer(r'</script\\s*>',s,re.I))[:250]:
+           after=s[match.end():match.end()+150]
+           if re.search(r'\\b(?:function|const|let|return)\\b',after):
+            print('SUSPECT SCRIPT CLOSE at',match.start(),'before=',repr(s[max(0,match.start()-130):match.start()]),'after=',repr(after))
+          for block in v.blocks:
+           if len(block)>250 and ('function ' in block or 'const ' in block):
+            print('LEAK PREFIX:',repr(block[:350]))
+            break
+          if suspicious:
+           from html.parser import HTMLParser
+           class ScriptBoundaries(HTMLParser):
+            def __init__(self):super().__init__();self.start=None;self.ended=[]
+            def handle_starttag(self,tag,attrs):
+             if tag=='script':self.start=self.getpos()
+            def handle_endtag(self,tag):
+             if tag=='script':self.ended.append((self.start,self.getpos()))
+           b=ScriptBoundaries();b.feed(s)
+           print('SCRIPT TAG COUNT',len(b.ended))
+           for m in list(re.finditer(r'</script\\s*>',s,re.I))[:60]:
+            before=s[max(0,m.start()-220):m.start()]
+            after=s[m.end():m.end()+220]
+            print('SCRIPT CLOSE',m.start(),'BEFORE',repr(before[-180:]),'AFTER',repr(after[:180]))
+          assert not suspicious,'Visible JavaScript source detected in app HTML: refuse APK release'
+          PY
+      - name: Browser smoke test - reject broken accounting screen
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node <<'JS'
+          const {chromium}=require('playwright');
+          const path=require('path');
+          (async()=>{
+            const browser=await chromium.launch({headless:true});
+            const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+            const errors=[];
+            page.on('pageerror',e=>errors.push(String(e).slice(0,500)));
+            try {
+              await page.goto('file://'+path.resolve('android-build/app/src/main/assets/index.html'),{waitUntil:'domcontentloaded',timeout:30000});
+              await page.waitForTimeout(3500);
+              const result=await page.evaluate(()=>{
+                const body=document.body?.innerText||'';
+                const code=['const ','function ','document.querySelector','return false','addEventListener('].reduce((n,term)=>n+body.split(term).length-1,0);
+                const unresolved=['{fmtDate','{faDigits','{countToday'].reduce((n,term)=>n+body.split(term).length-1,0);
+                return {length:body.length,code,unresolved,sample:body.slice(0,700)};
+              });
+              await page.screenshot({path:'zavi-screen-smoke.png',fullPage:true});
+              console.log(JSON.stringify({result,errors:errors.slice(0,10)},null,2));
+              if(result.code>=3 || result.unresolved>=2 || result.length<80)throw Error('Broken visible accounting screen: JavaScript/template source leaked into UI');
+            }finally{await browser.close()}
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ZAVI_${{ matrix.app }}_SCREEN_DIAGNOSTIC
+          path: zavi-screen-smoke.png
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Stage distinct ZAVI launcher icons
+        run: |
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          if [ '${{ matrix.app }}' = 'admin' ]; then
+            cp android-build/icons/admin.webp android-build/app/src/main/res/drawable-nodpi/zavi_owner_logo.webp
+          else
+            cp android-build/icons/one.webp android-build/app/src/main/res/drawable-nodpi/zavi_owner_logo.webp
+          fi
+          # The manifest previously pointed to the generic vector ic_launcher.
+          # Point both launcher variants to the app-specific icon copied above.
+          python3 - <<'PY'
+          from pathlib import Path
+          manifest=Path('android-build/app/src/main/AndroidManifest.xml')
+          source=manifest.read_text(encoding='utf-8')
+          assert source.count('android:icon="@drawable/ic_launcher"')==1
+          assert source.count('android:roundIcon="@drawable/ic_launcher"')==1
+          source=source.replace('android:icon="@drawable/ic_launcher"','android:icon="@drawable/zavi_owner_logo"')
+          source=source.replace('android:roundIcon="@drawable/ic_launcher"','android:roundIcon="@drawable/zavi_owner_logo"')
+          manifest.write_text(source,encoding='utf-8')
+          PY
+      - name: Install Android SDK
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Restore required Android launcher resource
+        run: |
+          mkdir -p android-build/app/src/main/res/drawable
+          cp android-build/app/src/main/res/drawable/ic_launcher.xml android-build/app/src/main/res/drawable/zavi_launcher_image.xml
+      - name: Load persistent production signing key
+        env:
+          ZAVI_KEYSTORE_B64: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEYSTORE_BASE64 || secrets.ZAVI_ADMIN_KEYSTORE_BASE64 }}
+          ZAVI_KEYSTORE_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
+          ZAVI_KEY_ALIAS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_ALIAS || secrets.ZAVI_ADMIN_KEY_ALIAS }}
+          ZAVI_KEY_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_PASSWORD || secrets.ZAVI_ADMIN_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$ZAVI_KEYSTORE_B64" || { echo "Missing permanent release keystore secret"; exit 1; }
+          test -n "$ZAVI_KEYSTORE_PASSWORD"
+          test -n "$ZAVI_KEY_ALIAS"
+          test -n "$ZAVI_KEY_PASSWORD"
+          umask 077
+          printf '%s' "$ZAVI_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/zavi-release.jks"
+          echo "ZAVI_KEYSTORE_PATH=$RUNNER_TEMP/zavi-release.jks" >> "$GITHUB_ENV"
+      - name: Build and verify production signed APK
+        working-directory: android-build
+        env:
+          ZAVI_KEYSTORE_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
+          ZAVI_KEY_ALIAS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_ALIAS || secrets.ZAVI_ADMIN_KEY_ALIAS }}
+          ZAVI_KEY_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_PASSWORD || secrets.ZAVI_ADMIN_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          gradle --no-daemon :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviProduction=true
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk
+          sha256sum app/build/outputs/apk/release/app-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_${{ matrix.app }}_V6624_PRODUCTION_SIGNED
+          path: android-build/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14

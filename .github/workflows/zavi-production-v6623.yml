@@ -354,6 +354,29 @@ jobs:
           # Report only non-sensitive diagnostics, never file contents or passwords.
           bytes=$(wc -c < "$RUNNER_TEMP/zavi-release.jks")
           echo "Decoded signing file size: ${bytes} bytes"
+          # The user originally stored the Base64 of the complete private ZIP.
+          # Accept that container and safely extract ONLY this app's named keystore.
+          python3 - <<'PY'
+          import os,zipfile
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"zavi-release.jks"
+          if zipfile.is_zipfile(p):
+              expected={"one":"ZAVI_ONE_100_YEAR_RELEASE.jks","admin":"ZAVI_ONE_ADMIN_100_YEAR_RELEASE.jks"}["${{ matrix.app }}"]
+              with zipfile.ZipFile(p) as archive:
+                  matches=[i for i in archive.infolist() if i.filename==expected and not i.is_dir()]
+                  if len(matches)!=1:
+                      print("::error title=Missing keystore in ZIP::Expected exactly one matching keystore in the saved ZIP.")
+                      raise SystemExit(1)
+                  if matches[0].file_size>1024*1024:
+                      print("::error title=Oversized keystore::Unexpected signing file size.")
+                      raise SystemExit(1)
+                  key=archive.read(matches[0])
+              if len(key)<1000:
+                  print("::error title=Invalid keystore::Extracted signing file is too small.")
+                  raise SystemExit(1)
+              p.write_bytes(key)
+              print("Safely extracted the matching app keystore from the saved ZIP.")
+          PY
           # Inspect only the public container signature; never print private key bytes.
           python3 - <<'PY'
           import os

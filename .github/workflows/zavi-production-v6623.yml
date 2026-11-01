@@ -1,6 +1,10 @@
-name: ZAVI production signed APKs V66.24
+name: ZAVI compact-text APKs V66.25 QA
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/zavi-production-v6623.yml'
 permissions:
   contents: read
 jobs:
@@ -424,7 +428,7 @@ jobs:
           fi
           rm -f "$RUNNER_TEMP/zavi-key-check.p12"
           echo "ZAVI_KEYSTORE_PATH=$RUNNER_TEMP/zavi-release.jks" >> "$GITHUB_ENV"
-      - name: Build and verify production signed APK
+      - name: Build and verify signed QA APK
         working-directory: android-build
         env:
           ZAVI_KEYSTORE_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
@@ -438,7 +442,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6624_PRODUCTION_SIGNED
+          name: ZAVI_${{ matrix.app }}_V6625_COMPACT_TEXT_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

@@ -172,17 +172,37 @@ jobs:
           assert source.count(old)==1, 'Voice launcher signature changed'
           source=source.replace(old,"launcher=create('button','z605-launch','🎙️')",1)
           command.write_text(source,encoding='utf-8')
+          # Remove only the redundant floating microphone. Keep voice/text
+          # command implementation and the original AI assistant unchanged.
           mic_css='zavi-separated-ai-mic-v6616.css'
           shutil.copy2(Path('design-system')/mic_css,assets/mic_css)
+          with (assets/mic_css).open('a',encoding='utf-8') as f:
+           f.write('\\n#z605-launch{display:none!important}\\n')
           s=html.read_text(encoding='utf-8')
-          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{mic_css}?v=66.16">')
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{mic_css}?v=66.17">')
           html.write_text(s,encoding='utf-8')
+          # Shorten the password recovery screen without touching login or RPC logic.
+          recovery=assets/'pin-recovery.js'
+          if recovery.exists():
+           rs=recovery.read_text(encoding='utf-8')
+           changes={
+            '🔐 بازیابی رمز شخصی ZAVI ONE':'بازیابی رمز',
+            'تأیید مالک نرم‌افزار + ورود با حساب آنلاین • رمز قبلی نزد مدیریت ثبت نمی‌شود.':'رمز جدید پس از تأیید مالک ساخته می‌شود.',
+            'اول با <b>ایمیل و رمز حساب ابری خودتان</b> وارد شوید، بعد نام دوکان را انتخاب کنید و درخواست بازیابی بفرستید. مدیریت پس از بررسی هویت شما، مجوز یک‌بارمصرف صادر می‌کند. رمز تازه فقط روی همین دستگاه تنظیم می‌شود.':'با حساب ابری وارد شوید، دوکان را انتخاب کنید و درخواست بفرستید.',
+            'رمز حساب آنلاین (نه رمز ۶ رقمی برنامه)':'رمز حساب آنلاین'
+           }
+           for before,after in changes.items():
+            assert before in rs,'Recovery text changed: '+before[:35]
+            rs=rs.replace(before,after)
+           recovery.write_text(rs,encoding='utf-8')
+          print('Removed floating microphone; shortened recovery instructions')
           assert '✦' not in command.read_text(encoding='utf-8').split("launcher=create('button','z605-launch',",1)[1].split(')',1)[0]
           assert '#z637AiButton,.z637-ai-button{display:none' not in (assets/'zavi-actual-login-star-v6612.css').read_text(encoding='utf-8')
           print('Preserved AI assistant; separated microphone with voice and text commands')
           PY
           node --check android-build/app/src/main/assets/zavi-dual-command-v6605.js
           node --check android-build/app/src/main/assets/zavi-single-assistant-fix-v6608.js
+          if [ '${{ matrix.app }}' = 'one' ]; then node --check android-build/app/src/main/assets/pin-recovery.js; fi
           if [ '${{ matrix.app }}' = 'one' ]; then node --check android-build/app/src/main/assets/zavi-transfer-auto-lease-v6615.js; fi
       - name: Reject malformed HTML before building APK
         run: |

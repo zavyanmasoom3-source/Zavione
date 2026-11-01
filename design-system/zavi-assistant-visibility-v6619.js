@@ -1,4 +1,4 @@
-/* V66.20: Settings-only assistant controls, no dashboard overlay. */
+/* V66.22: Anchor switches to ZAVI ONE actual Settings language card only. */
 (()=>{'use strict';
 const V='zavi.showVoiceLauncher',A='zavi.showAiLauncher';
 const style=document.createElement('style');style.id='zavi-assistant-visibility-css';
@@ -18,13 +18,14 @@ function apply(){document.body.classList.toggle('zavi-show-voice',get(V,false));
 function save(k,v){try{localStorage.setItem(k,String(v))}catch(_){ }apply()}
 function visible(el){return !!(el&&el.getClientRects().length&&getComputedStyle(el).visibility!=='hidden')}
 function settingsRoot(){
- // Require an exact visible SETTINGS heading, never infer settings from a dashboard containing a link.
- const headings=[...document.querySelectorAll('h1,h2,h3,h4,[role="heading"],.page-title,.section-title')];
- const heading=headings.find(el=>visible(el)&&/^(تنظیمات|Settings|امستنې)$/.test((el.textContent||'').trim()));
- if(!heading)return null;
- const root=heading.closest('section,.settings-page,.page,.screen,.view,[role="tabpanel"]');
- if(!root||!visible(root)||root===document.body)return null;
- return root;
+ // ZAVI ONE's real Settings page contains its language selector.
+ // Do not use heading text: dashboards and menu cards may also say "تنظیمات".
+ const language=document.querySelector('#zaviSettingsLanguage');
+ const content=document.getElementById('content');
+ if(!language||!content||!content.contains(language)||!visible(language))return null;
+ const card=language.closest('.settings-card');
+ if(!card||!content.contains(card)||!visible(card))return null;
+ return card;
 }
 function mount(){
  apply();

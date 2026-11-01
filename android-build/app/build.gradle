@@ -3,8 +3,8 @@ plugins { id 'com.android.application' }
 String appVariant = providers.gradleProperty("zaviApp").getOrElse("one")
 if (!(appVariant in ["one", "admin"])) throw new GradleException("zaviApp must be one or admin")
 boolean admin = appVariant == "admin"
-boolean production = providers.gradleProperty("zaviProduction").getOrElse("false").toBoolean()
-if (production) {
+boolean productionMode = providers.gradleProperty("zaviProduction").getOrElse("false").toBoolean()
+if (productionMode) {
     for (String name : ["ZAVI_KEYSTORE_PATH","ZAVI_KEYSTORE_PASSWORD","ZAVI_KEY_ALIAS","ZAVI_KEY_PASSWORD"]) {
         if (!System.getenv(name)) throw new GradleException("Production signing missing: " + name)
     }
@@ -12,7 +12,7 @@ if (production) {
 android {
     signingConfigs {
         production {
-            if (production) {
+            if (productionMode) {
                 storeFile file(System.getenv("ZAVI_KEYSTORE_PATH"))
                 storePassword System.getenv("ZAVI_KEYSTORE_PASSWORD")
                 keyAlias System.getenv("ZAVI_KEY_ALIAS")
@@ -37,7 +37,7 @@ android {
             debuggable false
             // Interim distribution: the GitHub runner's generated debug certificate.
             // For commercial production updates, replace with persistent secure release signing.
-            signingConfig production ? signingConfigs.production : signingConfigs.debug
+            signingConfig productionMode ? signingConfigs.production : signingConfigs.debug
         }
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }

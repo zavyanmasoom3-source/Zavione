@@ -1,4 +1,4 @@
-name: ZAVI production signed APKs V66.23
+name: ZAVI production signed APKs V66.24
 on:
   workflow_dispatch:
 permissions:
@@ -190,6 +190,18 @@ jobs:
           s=html.read_text(encoding='utf-8')
           s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{polish}?v=66.21">')
           html.write_text(s,encoding='utf-8')
+          # Release must include the exact premium UI assets validated by QA.
+          premium='zavi-premium-interface-v6624.css'
+          shutil.copy2(Path('design-system')/premium,assets/premium)
+          s=html.read_text(encoding='utf-8')
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{premium}?v=66.24">')
+          html.write_text(s,encoding='utf-8')
+          if '${{ matrix.app }}' == 'one':
+           advanced='zavi-progressive-interface-v6624.js'
+           shutil.copy2(Path('design-system')/advanced,assets/advanced)
+           s=html.read_text(encoding='utf-8')
+           s=insert_before_end(s,'body',f'<script defer src="./{advanced}?v=66.24"></script>')
+           html.write_text(s,encoding='utf-8')
           # Shorten the password recovery screen without touching login or RPC logic.
           recovery=assets/'pin-recovery.js'
           if recovery.exists():
@@ -351,7 +363,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6623_PRODUCTION_SIGNED
+          name: ZAVI_${{ matrix.app }}_V6624_PRODUCTION_SIGNED
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

@@ -96,6 +96,25 @@ jobs:
              print('No verified clean HTML in source archives; refusing release')
           print("Staged",len(names),"original assets")
           PY
+      - name: Verify staged HTML before applying modifications
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Visible(HTMLParser):
+           def __init__(self):super().__init__();self.depth=0;self.parts=[]
+           def handle_starttag(self,t,a):
+            if t in ('script','style'):self.depth+=1
+           def handle_endtag(self,t):
+            if t in ('script','style'):self.depth=max(0,self.depth-1)
+           def handle_data(self,d):
+            if not self.depth and d.strip():self.parts.append(d)
+          p=Path('android-build/app/src/main/assets/index.html')
+          v=Visible();v.feed(p.read_text(encoding='utf-8'))
+          bad=[x for x in v.parts if len(x)>250 and any(k in x for k in ('function ','const ','document.'))]
+          print('Unmodified staged HTML leaked JavaScript blocks:',len(bad))
+          assert not bad,'Base HTML already broken; patches cannot repair it'
+          PY
       - name: Apply assistant, recovery and login fixes
         run: |
           set -euo pipefail

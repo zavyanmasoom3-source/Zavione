@@ -1,4 +1,4 @@
-name: ZAVI settings polish V66.28 QA
+name: ZAVI unified theme V66.29 QA
 on:
   workflow_dispatch:
   push:
@@ -448,7 +448,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6628_SETTINGS_POLISH_QA
+          name: ZAVI_${{ matrix.app }}_V6629_UNIFIED_THEME_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

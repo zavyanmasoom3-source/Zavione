@@ -354,6 +354,27 @@ jobs:
           # Report only non-sensitive diagnostics, never file contents or passwords.
           bytes=$(wc -c < "$RUNNER_TEMP/zavi-release.jks")
           echo "Decoded signing file size: ${bytes} bytes"
+          # Inspect only the public container signature; never print private key bytes.
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"zavi-release.jks"
+          with p.open("rb") as f: signature=f.read(4)
+          if signature==bytes.fromhex("feedfeed"):
+              kind="JKS"
+          elif signature[:2]==b"PK":
+              kind="ZIP archive (not an extracted keystore)"
+          elif signature[:1]==bytes.fromhex("30"):
+              kind="ASN.1 / likely PKCS12"
+          elif signature[:1] in (b"{",b"[",b"<"):
+              kind="text or document (not a keystore)"
+          else:
+              kind="unrecognized binary format"
+          print("Signing file container type:",kind)
+          if signature[:2]==b"PK":
+              print("::error title=ZIP uploaded instead of keystore::Decode the extracted .jks or .p12 file itself, not its enclosing ZIP archive.")
+              raise SystemExit(1)
+          PY
           if [ "$bytes" -lt 1000 ]; then
             echo "::error title=Invalid signing file::Decoded keystore is too small. Verify that KEYSTORE_BASE64 contains the original extracted .jks file, not the ZIP or a text document."
             exit 1

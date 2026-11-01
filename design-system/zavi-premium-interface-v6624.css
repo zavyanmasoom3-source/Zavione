@@ -148,3 +148,37 @@ body :is(#settings,.settings-page,[data-page="settings"]) :is(input,select,texta
  body :is(#settings,.settings-page,[data-page="settings"]) :is(.settings-card,.settings-section){padding:12px;margin-block:8px}
  body :is(#settings,.settings-page,[data-page="settings"]) :is(.setting-row,.settings-row){flex-wrap:wrap}
 }
+
+/* Shared visual language across dashboard, invoice, stock, customers, reports and settings.
+   Keep data tables readable, printing unmodified and accessible contrast. */
+html[data-zavi-theme] body :is(
+ .dashboard,.dashboard-page,.invoice,.invoice-page,.invoices,.sales-page,
+ .purchase-page,.customers-page,.debtors-page,.inventory-page,.reports-page,
+ .settings-page,.admin-page,.daily-management,.cashbox,.cash-box
+){min-width:0;max-width:100%;box-sizing:border-box}
+html[data-zavi-theme] body :is(
+ .dashboard,.dashboard-page,.invoice-page,.invoices,.sales-page,.purchase-page,
+ .customers-page,.debtors-page,.inventory-page,.reports-page,.settings-page,.admin-page
+) :is(.card,.panel,.tile,.stat-card,.summary-card,.report-card,.invoice-card,.customer-card,.settings-card){
+ border-radius:18px;border:1px solid var(--zavi-border);
+ box-shadow:var(--zavi-shadow);background:var(--zavi-surface);color:var(--zavi-text);
+}
+html[data-zavi-theme] body :is(.dashboard,.dashboard-page,.settings-page,.reports-page,.invoice-page,.admin-page)
+ :is(.section-title,.card-title,h2,h3){line-height:1.4;letter-spacing:0;overflow-wrap:break-word}
+html[data-zavi-theme] body :is(.dashboard,.dashboard-page,.settings-page,.reports-page,.invoice-page,.admin-page)
+ :is(.icon-button,.quick-action,.action-tile){border-radius:14px;min-height:42px}
+html[data-zavi-theme] body :is(.invoice-page,.invoices,.reports-page,.debtors-page,.customers-page)
+ :is(table,.table){width:100%;border-collapse:separate;border-spacing:0}
+html[data-zavi-theme] body :is(.invoice-page,.invoices,.reports-page,.debtors-page,.customers-page)
+ :is(th,td){overflow-wrap:break-word;vertical-align:middle}
+@media(max-width:600px){
+ html[data-zavi-theme] body :is(.invoice-page,.invoices,.reports-page,.debtors-page,.customers-page)
+ :is(.table-wrap,.table-responsive){overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+}
+@media print{
+ html[data-zavi-theme] body :is(.invoice,.invoice-page,.invoices,.report-card,.invoice-card){
+  box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  background:#fff!important;color:#000!important;border-color:#bbb!important
+ }
+ #zavi-theme-controls{display:none!important}
+}

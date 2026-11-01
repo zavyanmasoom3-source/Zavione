@@ -36,14 +36,25 @@ public final class ZaviLocalWhisper {
   locale=lang;if(!running.compareAndSet(false,true))return;executor.execute(this::capture);
  }
  private File model()throws IOException{
-  File dst=new File(activity.getFilesDir(),"zavi-ggml-base-q5_1.bin");
-  if(dst.isFile()&&dst.length()>55000000L&&dst.length()<65000000L)return dst;
-  File tmp=new File(activity.getFilesDir(),"zavi-model.tmp");
-  try(InputStream in=activity.getAssets().open("models/ggml-base-q5_1.bin");OutputStream out=new FileOutputStream(tmp)){
-   byte[] b=new byte[65536];int n;while((n=in.read(b))!=-1)out.write(b,0,n);
+  // Prefer the smaller multilingual model, but retain the existing model as a
+  // fallback until device-level Dari/Pashto recognition quality is verified.
+  final String[] names={"ggml-tiny-q5_1.bin","ggml-base-q5_1.bin"};
+  for(String name:names){
+   File dst=new File(activity.getFilesDir(),"zavi-"+name);
+   long minimum=name.contains("tiny")?18000000L:55000000L;
+   long maximum=name.contains("tiny")?50000000L:65000000L;
+   if(dst.isFile()&&dst.length()>minimum&&dst.length()<maximum)return dst;
+   File tmp=new File(activity.getFilesDir(),"zavi-model.tmp");
+   if(tmp.exists()&&!tmp.delete())throw new IOException("Temporary model locked");
+   try(InputStream in=activity.getAssets().open("models/"+name);
+       OutputStream out=new FileOutputStream(tmp)){
+    byte[] b=new byte[65536];int n;while((n=in.read(b))!=-1)out.write(b,0,n);
+   }catch(FileNotFoundException missing){continue;}
+   if(tmp.length()<=minimum||tmp.length()>=maximum||!tmp.renameTo(dst))
+    throw new IOException("Model incomplete: "+name);
+   return dst;
   }
-  if(tmp.length()<=55000000L||tmp.length()>=65000000L||!tmp.renameTo(dst))throw new IOException("Model incomplete");
-  return dst;
+  throw new IOException("No compatible offline voice model installed");
  }
  private void capture(){
   AudioRecord audio=null;

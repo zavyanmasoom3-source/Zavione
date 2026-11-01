@@ -1,4 +1,4 @@
-name: ZAVI V66.22 assistant toggles in real settings QA
+name: ZAVI V66.24 premium clean interface QA
 on:
   push:
     branches: [fix/assistant-launcher-v6608-review]
@@ -193,6 +193,18 @@ jobs:
           s=html.read_text(encoding='utf-8')
           s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{polish}?v=66.21">')
           html.write_text(s,encoding='utf-8')
+          premium='zavi-premium-interface-v6624.css'
+          shutil.copy2(Path('design-system')/premium,assets/premium)
+          s=html.read_text(encoding='utf-8')
+          s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{premium}?v=66.24">')
+          html.write_text(s,encoding='utf-8')
+          # Advanced controls are optional and mounted only in the store's real Settings.
+          if '${{ matrix.app }}' == 'one':
+           advanced='zavi-progressive-interface-v6624.js'
+           shutil.copy2(Path('design-system')/advanced,assets/advanced)
+           s=html.read_text(encoding='utf-8')
+           s=insert_before_end(s,'body',f'<script defer src="./{advanced}?v=66.24"></script>')
+           html.write_text(s,encoding='utf-8')
           # Shorten the password recovery screen without touching login or RPC logic.
           recovery=assets/'pin-recovery.js'
           if recovery.exists():

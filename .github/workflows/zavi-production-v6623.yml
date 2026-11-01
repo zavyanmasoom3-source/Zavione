@@ -1,4 +1,4 @@
-name: ZAVI three-theme foundation V66.26 QA
+name: ZAVI three-theme selector V66.27 QA
 on:
   workflow_dispatch:
   push:
@@ -202,6 +202,11 @@ jobs:
           s=html.read_text(encoding='utf-8')
           s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{premium}?v=66.24">')
           html.write_text(s,encoding='utf-8')
+          theme='zavi-three-theme-v6627.js'
+          shutil.copy2(Path('design-system')/theme,assets/theme)
+          s=html.read_text(encoding='utf-8')
+          s=insert_before_end(s,'body',f'<script defer src="./{theme}?v=66.27"></script>')
+          html.write_text(s,encoding='utf-8')
           if '${{ matrix.app }}' == 'one':
            advanced='zavi-progressive-interface-v6624.js'
            shutil.copy2(Path('design-system')/advanced,assets/advanced)
@@ -227,6 +232,7 @@ jobs:
           assert '#z637AiButton,.z637-ai-button{display:none' not in (assets/'zavi-actual-login-star-v6612.css').read_text(encoding='utf-8')
           print('Preserved AI assistant; separated microphone with voice and text commands')
           PY
+          node --check android-build/app/src/main/assets/zavi-three-theme-v6627.js
           node --check android-build/app/src/main/assets/zavi-dual-command-v6605.js
           node --check android-build/app/src/main/assets/zavi-single-assistant-fix-v6608.js
           node --check android-build/app/src/main/assets/zavi-assistant-visibility-v6619.js
@@ -442,7 +448,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6626_THEME_FOUNDATION_QA
+          name: ZAVI_${{ matrix.app }}_V6627_THEME_SELECTOR_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

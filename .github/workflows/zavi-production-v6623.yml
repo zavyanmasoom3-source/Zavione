@@ -350,6 +350,21 @@ jobs:
           test -n "$ZAVI_KEY_PASSWORD"
           umask 077
           printf '%s' "$ZAVI_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/zavi-release.jks"
+          # Verify the stored key before the expensive Gradle build. Do not print passwords or private key material.
+          if ! keytool -list -keystore "$RUNNER_TEMP/zavi-release.jks" -storepass "$ZAVI_KEYSTORE_PASSWORD" -storetype PKCS12 >/dev/null 2>&1; then
+            echo "::error title=Keystore verification failed::The saved keystore cannot be opened with its STORE_PASSWORD. Check the .jks file and STORE_PASSWORD secret; do not create a new key."
+            exit 1
+          fi
+          if ! keytool -list -keystore "$RUNNER_TEMP/zavi-release.jks" -storepass "$ZAVI_KEYSTORE_PASSWORD" -storetype PKCS12 -alias "$ZAVI_KEY_ALIAS" >/dev/null 2>&1; then
+            echo "::error title=Signing alias mismatch::The saved KEY_ALIAS does not exist in this keystore. Correct the alias secret."
+            exit 1
+          fi
+          # Test private-key recovery, which also detects an incorrect KEY_PASSWORD.
+          if ! keytool -importkeystore -noprompt -srckeystore "$RUNNER_TEMP/zavi-release.jks" -srcstoretype PKCS12 -srcstorepass "$ZAVI_KEYSTORE_PASSWORD" -srcalias "$ZAVI_KEY_ALIAS" -srckeypass "$ZAVI_KEY_PASSWORD" -destkeystore "$RUNNER_TEMP/zavi-key-check.p12" -deststoretype PKCS12 -deststorepass "$ZAVI_KEYSTORE_PASSWORD" -destkeypass "$ZAVI_KEYSTORE_PASSWORD" >/dev/null 2>&1; then
+            echo "::error title=Signing key password mismatch::The alias exists but its private key cannot be unlocked. Check KEY_PASSWORD and STORE_PASSWORD."
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/zavi-key-check.p12"
           echo "ZAVI_KEYSTORE_PATH=$RUNNER_TEMP/zavi-release.jks" >> "$GITHUB_ENV"
       - name: Build and verify production signed APK
         working-directory: android-build

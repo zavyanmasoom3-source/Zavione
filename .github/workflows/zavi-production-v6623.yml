@@ -350,18 +350,32 @@ jobs:
           test -n "$ZAVI_KEY_PASSWORD"
           umask 077
           printf '%s' "$ZAVI_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/zavi-release.jks"
-          # Verify the stored key before the expensive Gradle build. Do not print passwords or private key material.
-          if ! keytool -list -keystore "$RUNNER_TEMP/zavi-release.jks" -storepass "$ZAVI_KEYSTORE_PASSWORD" -storetype PKCS12 >/dev/null 2>&1; then
-            echo "::error title=Keystore verification failed::The saved keystore cannot be opened with its STORE_PASSWORD. Check the .jks file and STORE_PASSWORD secret; do not create a new key."
+          # Accept both standard Java JKS and PKCS12 keystores.
+          # Report only non-sensitive diagnostics, never file contents or passwords.
+          bytes=$(wc -c < "$RUNNER_TEMP/zavi-release.jks")
+          echo "Decoded signing file size: ${bytes} bytes"
+          if [ "$bytes" -lt 1000 ]; then
+            echo "::error title=Invalid signing file::Decoded keystore is too small. Verify that KEYSTORE_BASE64 contains the original extracted .jks file, not the ZIP or a text document."
             exit 1
           fi
-          if ! keytool -list -keystore "$RUNNER_TEMP/zavi-release.jks" -storepass "$ZAVI_KEYSTORE_PASSWORD" -storetype PKCS12 -alias "$ZAVI_KEY_ALIAS" >/dev/null 2>&1; then
-            echo "::error title=Signing alias mismatch::The saved KEY_ALIAS does not exist in this keystore. Correct the alias secret."
+          found_type=""
+          for candidate in PKCS12 JKS; do
+            if keytool -list -keystore "$RUNNER_TEMP/zavi-release.jks" -storepass "$ZAVI_KEYSTORE_PASSWORD" -storetype "$candidate" >/dev/null 2>&1; then
+              found_type="$candidate"
+              break
+            fi
+          done
+          if [ -z "$found_type" ]; then
+            echo "::error title=Keystore cannot be opened::Neither PKCS12 nor JKS can open the decoded file with STORE_PASSWORD. Check the internal keystore password (not the ZIP extraction password) and confirm KEYSTORE_BASE64 was encoded from the extracted keystore."
             exit 1
           fi
-          # Test private-key recovery, which also detects an incorrect KEY_PASSWORD.
-          if ! keytool -importkeystore -noprompt -srckeystore "$RUNNER_TEMP/zavi-release.jks" -srcstoretype PKCS12 -srcstorepass "$ZAVI_KEYSTORE_PASSWORD" -srcalias "$ZAVI_KEY_ALIAS" -srckeypass "$ZAVI_KEY_PASSWORD" -destkeystore "$RUNNER_TEMP/zavi-key-check.p12" -deststoretype PKCS12 -deststorepass "$ZAVI_KEYSTORE_PASSWORD" -destkeypass "$ZAVI_KEYSTORE_PASSWORD" >/dev/null 2>&1; then
-            echo "::error title=Signing key password mismatch::The alias exists but its private key cannot be unlocked. Check KEY_PASSWORD and STORE_PASSWORD."
+          echo "Verified signing store format: $found_type"
+          if ! keytool -list -keystore "$RUNNER_TEMP/zavi-release.jks" -storepass "$ZAVI_KEYSTORE_PASSWORD" -storetype "$found_type" -alias "$ZAVI_KEY_ALIAS" >/dev/null 2>&1; then
+            echo "::error title=Signing alias mismatch::The KEY_ALIAS does not exist in the verified keystore. Use the alias from the keystore's original instructions."
+            exit 1
+          fi
+          if ! keytool -importkeystore -noprompt -srckeystore "$RUNNER_TEMP/zavi-release.jks" -srcstoretype "$found_type" -srcstorepass "$ZAVI_KEYSTORE_PASSWORD" -srcalias "$ZAVI_KEY_ALIAS" -srckeypass "$ZAVI_KEY_PASSWORD" -destkeystore "$RUNNER_TEMP/zavi-key-check.p12" -deststoretype PKCS12 -deststorepass "$ZAVI_KEYSTORE_PASSWORD" -destkeypass "$ZAVI_KEYSTORE_PASSWORD" >/dev/null 2>&1; then
+            echo "::error title=Signing key password mismatch::The alias exists but the private key cannot be unlocked. Check KEY_PASSWORD against the original keystore instructions."
             exit 1
           fi
           rm -f "$RUNNER_TEMP/zavi-key-check.p12"

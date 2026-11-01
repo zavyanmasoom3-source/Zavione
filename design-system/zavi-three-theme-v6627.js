@@ -10,6 +10,8 @@
   document.querySelectorAll('[data-zavi-theme-choice]').forEach(function(btn){
    var active=btn.getAttribute('data-zavi-theme-choice')===mode;
    btn.setAttribute('aria-pressed',String(active));
+   btn.style.background=active?'#6376f0':'#ffffff1b';
+   btn.style.borderColor=active?'#d8e1ff':'#ffffff40';
   });
  }
  function init(){
@@ -18,7 +20,7 @@
   if(document.getElementById('zavi-theme-controls'))return;
   var panel=document.createElement('div');panel.id='zavi-theme-controls';
   panel.setAttribute('role','group');panel.setAttribute('aria-label','حالت نمایش');
-  panel.style.cssText='position:fixed;inset-inline-end:12px;bottom:12px;z-index:9998;display:flex;gap:5px;padding:7px;border:1px solid rgba(155,177,235,.45);border-radius:16px;background:rgba(20,33,65,.9);backdrop-filter:blur(12px);box-shadow:0 6px 25px #0003;direction:rtl';
+  panel.style.cssText='position:fixed;inset-inline-end:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:9998;display:flex;gap:5px;padding:7px;border:1px solid rgba(155,177,235,.45);border-radius:16px;background:rgba(20,33,65,.9);backdrop-filter:blur(12px);box-shadow:0 6px 25px #0003;direction:rtl;max-width:calc(100vw - 24px);box-sizing:border-box';
   modes.forEach(function(mode){
    var b=document.createElement('button');b.type='button';b.textContent=names[mode];
    b.setAttribute('data-zavi-theme-choice',mode);b.setAttribute('aria-label','حالت '+names[mode]);

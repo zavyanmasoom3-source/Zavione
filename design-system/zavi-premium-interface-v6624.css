@@ -326,3 +326,55 @@ html[data-zavi-theme] body :is(button,input,select,textarea,a):focus-visible{
   border-color:#ccc!important;backdrop-filter:none!important;
  }
 }
+
+
+/* V66.33: consistent premium controls in every financial screen, not only dashboard. */
+html[data-zavi-theme] body :is(h1,h2,h3,h4){color:var(--zavi-text);letter-spacing:-.015em}
+html[data-zavi-theme] body :is(.page-title,.screen-title,.section-title,.header-title){font-weight:750;line-height:1.4;color:var(--zavi-text)}
+html[data-zavi-theme] body :is(.subtitle,.sub-title,.description,.muted,.text-muted,.helper-text){color:var(--zavi-muted)}
+html[data-zavi-theme] body :is(.modal,.modal-content,.dialog,.dialog-content,.popover,.dropdown-menu,.drawer,.sheet){
+ background:var(--zavi-surface)!important;color:var(--zavi-text)!important;
+ border:1px solid var(--zavi-border);border-radius:18px;box-shadow:var(--zavi-shadow);
+ max-width:calc(100vw - 20px);box-sizing:border-box;
+}
+html[data-zavi-theme] body :is(.list-item,.contact-row,.customer-row,.debtor-row,.invoice-row,.transaction-row,.account-row,.product-row,.settings-row){
+ border-bottom:1px solid var(--zavi-border);padding-block:10px;min-width:0;
+}
+html[data-zavi-theme] body :is(.table,table):not(.calendar){
+ border-collapse:separate;border-spacing:0;width:100%;
+}
+html[data-zavi-theme] body :is(.table,table):not(.calendar) :is(th,td){
+ border-bottom:1px solid var(--zavi-border);padding:10px 12px;text-align:start;
+}
+html[data-zavi-theme] body :is(.table,table):not(.calendar) th{
+ color:var(--zavi-muted);font-weight:700;background:var(--zavi-input);
+}
+html[data-zavi-theme] body :is(.tabs,.tab-bar,.segmented-control,.filter-row){
+ gap:6px;max-width:100%;overflow-x:auto;scrollbar-width:thin;
+}
+html[data-zavi-theme] body :is(.badge,.chip,.status-pill,.tag){
+ border-radius:999px;padding:4px 9px;max-width:100%;overflow-wrap:anywhere;
+}
+html[data-zavi-theme] body :is(.empty-state,.no-data,.placeholder-state){
+ color:var(--zavi-muted);text-align:center;padding:24px 12px;
+}
+html[data-zavi-theme] body :is(.sidebar,.side-menu,.nav-drawer,.bottom-nav,.bottom-navigation){
+ border:1px solid var(--zavi-border);box-shadow:var(--zavi-shadow);
+}
+html[data-zavi-theme] body :is(.sidebar,.side-menu,.nav-drawer,.bottom-nav,.bottom-navigation) :is(a,button){
+ border-radius:12px;min-width:0;
+}
+html[data-zavi-theme] body :is(.form-group,.field-group,.input-group,.settings-row){min-width:0}
+html[data-zavi-theme] body :is(.form-group,.field-group,.input-group) label{display:block;margin-bottom:5px;color:var(--zavi-text)}
+html[data-zavi-theme] body :is(.invoice-page,.purchase-page,.sales-page,.debtors-page,.customers-page,.inventory-page,.reports-page,.settings-page,.admin-page,.daily-management){
+ overflow-wrap:break-word;
+}
+@media(max-width:620px){
+ html[data-zavi-theme] body :is(.modal,.modal-content,.dialog,.dialog-content,.drawer,.sheet){max-height:90dvh;overflow-y:auto}
+ html[data-zavi-theme] body :is(.table,table):not(.calendar) :is(th,td){padding:8px}
+ html[data-zavi-theme] body :is(.page-title,.screen-title){font-size:clamp(18px,5vw,23px)}
+}
+@media print{
+ html[data-zavi-theme] body :is(.bottom-nav,.bottom-navigation,.sidebar,.nav-drawer,#zavi-theme-controls){display:none!important}
+ html[data-zavi-theme] body :is(table,thead,tr,td,th){break-inside:avoid}
+}

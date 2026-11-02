@@ -29,6 +29,17 @@
     if(el && el.getClientRects().length && el.getBoundingClientRect().width>180 && !el.closest('#zavi-theme-controls'))return el;
    }
   }
+  // Fallback for the legacy SPA: find a visible settings heading, never a
+  // navigation label, and mount inside its content section.
+  var headings=document.querySelectorAll('main h1,main h2,main h3,[role="main"] h1,[role="main"] h2,.page h1,.page h2');
+  for(var k=0;k<headings.length;k++){
+   var h=headings[k];
+   if(!h.getClientRects().length)continue;
+   var label=(h.textContent||'').trim();
+   if(!/^(تنظیمات|Settings|امستنې)(\\s|$)/i.test(label))continue;
+   var section=h.closest('section,article,.page,.screen,.content,.panel')||h.parentElement;
+   if(section && section.getBoundingClientRect().width>180)return section;
+  }
   return null;
  }
  function init(){

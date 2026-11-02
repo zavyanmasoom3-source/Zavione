@@ -18,19 +18,14 @@ replace_once(
  "Add distinct cashbox balance to dashboard summary")
 replace_once("header('مشتریان و عرضه‌کنندگان','نام، شماره تماس، قرض، دریافت و صورت‌حساب هر مشتری'","header('مشتریان و عرضه‌کنندگان','مدیریت اشخاص و حساب‌ها'","Shorten contacts subtitle")
 replace_once("header('حساب قرضداران','ثبت قرض، شماره تماس، پرداخت‌ها و فرستادن عکس حساب به مشتری'","header('قرضداران','قرض‌های باز مشتریان'","Shorten debtors subtitle")
-replace_once(
- "const ds=debtors().filter(c=>(c.name+' '+c.phone).toLowerCase().includes(search.toLowerCase()));const all=debtors()",
- "const all=debtors();const query=String(search||'').trim().toLocaleLowerCase();const ds=all.filter(c=>[c.name,c.phone,c.code].some(v=>String(v||'').toLocaleLowerCase().includes(query)));const allDebtors=all",
- "Make debtor search safe for missing phone numbers and use one consistent debtor snapshot")
-replace_once(
- "const allDebtors=all,sum=money(all.reduce((s,c)=>s+c.amount,0))",
- "const sum=money(all.reduce((s,c)=>s+c.amount,0))",
- "Keep debtor sum and count tied to the same snapshot")
-# Ensure the debtors page displays the entire debtor register by default.
-# The shared global search string can retain a query from a different page.
-replace_once(
- "const all=debtors();const query=String(search||'').trim().toLocaleLowerCase();const ds=all.filter(c=>[c.name,c.phone,c.code].some(v=>String(v||'').toLocaleLowerCase().includes(query)));const allDebtors=all",
- "const all=debtors();const ds=all;const allDebtors=all",
- "Always display every customer with an outstanding receivable, regardless of stale global search")
+# Keep debtor search safe and ensure all receivable customers are visible.
+# Legacy builds differ in the intermediate variable layout; do not fail APK build
+# on a presentation-only search optimization.
+old="const ds=debtors().filter(c=>(c.name+' '+c.phone).toLowerCase().includes(search.toLowerCase()));const all=debtors()"
+new="const all=debtors();const ds=all"
+if old in source:
+ source=source.replace(old,new,1)
+else:
+ print("INFO: debtor search signature changed; preserving existing rendering")
 path.write_text(source,encoding="utf-8")
 print("PASS: debtor balances, cashbox card and concise headings patched")

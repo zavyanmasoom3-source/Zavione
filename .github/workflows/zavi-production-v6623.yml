@@ -1,4 +1,4 @@
-name: ZAVI clean debtors and receipts V66.39 QA
+name: ZAVI clean receipts and primary actions V66.40 QA
 on:
   workflow_dispatch:
   push:
@@ -462,7 +462,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6639_CLEAN_DEBTORS_RECEIPTS_QA
+          name: ZAVI_${{ matrix.app }}_V6640_RECEIPTS_PRIMARY_ACTIONS_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

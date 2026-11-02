@@ -16,6 +16,7 @@
  }
  function settingsTarget(){
   var candidates=[
+   '#settingsPanel','#settingsView','#page-settings','.settings-panel','.settings-view',
    '[data-page="settings"]','[data-screen="settings"]',
    '#settings-page','#settingsPage','#settings',
    '.settings-page','.settings-screen','.settings-content',
@@ -25,14 +26,14 @@
    var nodes=document.querySelectorAll(candidates[i]);
    for(var j=0;j<nodes.length;j++){
     var el=nodes[j];
-    if(el && el.getClientRects().length && el.getBoundingClientRect().width>180)return el;
+    if(el && el.getClientRects().length && el.getBoundingClientRect().width>180 && !el.closest('#zavi-theme-controls'))return el;
    }
   }
   return null;
  }
  function init(){
   var saved='';try{saved=localStorage.getItem(KEY)||''}catch(_){}
-  setTheme(modes.indexOf(saved)>=0?saved:'glass');
+  setTheme(modes.indexOf(saved)>=0?saved:'dark');
   var panel=document.getElementById('zavi-theme-controls');
   if(!panel){
    panel=document.createElement('section');panel.id='zavi-theme-controls';

@@ -22,7 +22,7 @@ replace_once("header('حساب قرضداران','ثبت قرض، شماره ت�
 # Legacy builds differ in the intermediate variable layout; do not fail APK build
 # on a presentation-only search optimization.
 old="const ds=debtors().filter(c=>(c.name+' '+c.phone).toLowerCase().includes(search.toLowerCase()));const all=debtors()"
-new="const all=debtors();const ds=all"
+new="const all=debtors();const query=String(search||'').trim().toLocaleLowerCase();const ds=all.filter(c=>[c.name,c.phone,c.code].some(v=>String(v||'').toLocaleLowerCase().includes(query)))"
 if old in source:
  source=source.replace(old,new,1)
 else:

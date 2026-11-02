@@ -18,5 +18,13 @@ replace_once(
  "Add distinct cashbox balance to dashboard summary")
 replace_once("header('مشتریان و عرضه‌کنندگان','نام، شماره تماس، قرض، دریافت و صورت‌حساب هر مشتری'","header('مشتریان و عرضه‌کنندگان','مدیریت اشخاص و حساب‌ها'","Shorten contacts subtitle")
 replace_once("header('حساب قرضداران','ثبت قرض، شماره تماس، پرداخت‌ها و فرستادن عکس حساب به مشتری'","header('قرضداران','قرض‌های باز مشتریان'","Shorten debtors subtitle")
+replace_once(
+ "const ds=debtors().filter(c=>(c.name+' '+c.phone).toLowerCase().includes(search.toLowerCase()));const all=debtors()",
+ "const all=debtors();const query=String(search||'').trim().toLocaleLowerCase();const ds=all.filter(c=>[c.name,c.phone,c.code].some(v=>String(v||'').toLocaleLowerCase().includes(query)));const allDebtors=all",
+ "Make debtor search safe for missing phone numbers and use one consistent debtor snapshot")
+replace_once(
+ "const allDebtors=all,sum=money(all.reduce((s,c)=>s+c.amount,0))",
+ "const sum=money(all.reduce((s,c)=>s+c.amount,0))",
+ "Keep debtor sum and count tied to the same snapshot")
 path.write_text(source,encoding="utf-8")
 print("PASS: debtor balances, cashbox card and concise headings patched")

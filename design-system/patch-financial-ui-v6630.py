@@ -26,5 +26,11 @@ replace_once(
  "const allDebtors=all,sum=money(all.reduce((s,c)=>s+c.amount,0))",
  "const sum=money(all.reduce((s,c)=>s+c.amount,0))",
  "Keep debtor sum and count tied to the same snapshot")
+# Ensure the debtors page displays the entire debtor register by default.
+# The shared global search string can retain a query from a different page.
+replace_once(
+ "const all=debtors();const query=String(search||'').trim().toLocaleLowerCase();const ds=all.filter(c=>[c.name,c.phone,c.code].some(v=>String(v||'').toLocaleLowerCase().includes(query)));const allDebtors=all",
+ "const all=debtors();const ds=all;const allDebtors=all",
+ "Always display every customer with an outstanding receivable, regardless of stale global search")
 path.write_text(source,encoding="utf-8")
 print("PASS: debtor balances, cashbox card and concise headings patched")

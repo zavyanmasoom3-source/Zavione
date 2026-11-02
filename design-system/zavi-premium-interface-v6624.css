@@ -397,3 +397,32 @@ html[data-zavi-theme] body .table-bar{min-width:0;flex-wrap:wrap;gap:10px}
 html[data-zavi-theme] body .searchbox{min-width:0;flex:1 1 220px}
 html[data-zavi-theme] body .searchbox input{width:100%;min-width:0}
 @media(max-width:760px){html[data-zavi-theme] body .debt-cards{grid-template-columns:minmax(0,1fr)!important}html[data-zavi-theme] body .debt-card{padding:15px!important}}
+
+
+/* V66.35: bridge legacy inline design tokens to the approved premium system.
+   The original HTML used --bg/--white/--ink/--line rather than --zavi-*.
+   Rebinding those variables changes every legacy component without deleting
+   its business logic or transaction handlers. */
+html[data-zavi-theme="dark"]{
+ --bg:#09152e;--white:#172849;--ink:#f3f7ff;--muted:#aebedb;
+ --line:#345078;--primary:#608dff;--primary2:#4775e6;
+ --teal:#2bd4b9;--shadow:0 12px 32px rgba(0,6,27,.32);
+}
+html[data-zavi-theme="glass"]{
+ --bg:#111e40;--white:rgba(41,62,111,.83);--ink:#f4f8ff;--muted:#c1d0e9;
+ --line:rgba(167,199,255,.37);--primary:#9aabff;--primary2:#6f86e5;
+ --teal:#3ee0ce;--shadow:0 14px 34px rgba(5,13,47,.35);
+}
+html[data-zavi-theme="light"]{
+ --bg:#edf3ff;--white:#fff;--ink:#172544;--muted:#536685;
+ --line:#d8e3f6;--primary:#385ec9;--primary2:#284cae;
+ --teal:#087c73;--shadow:0 10px 26px rgba(32,73,146,.11);
+}
+html[data-zavi-theme] body :is(.page-head,.page-header,.hero,.summary-box,.summary-panel,.stat,.stat-box,.kpi,.kpi-card,.metric-card,.account-summary,.ledger-intro,.contact-card,.person-card,.data-card){
+ background:var(--zavi-surface)!important;color:var(--zavi-text)!important;
+ border:1px solid var(--zavi-border)!important;border-radius:18px!important;
+ box-shadow:var(--zavi-shadow)!important;
+}
+html[data-zavi-theme] body :is(.ledger-intro,.summary-box,.account-summary) :is(strong,small,span){color:var(--zavi-text)}
+html[data-zavi-theme] body :is(.pill,.badge,.chip){border:1px solid var(--zavi-border)}
+html[data-zavi-theme] body :is(.debt-card,.contact-card,.person-card,.ledger-intro) :is(p,small,label){color:var(--zavi-muted)}

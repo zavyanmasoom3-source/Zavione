@@ -378,3 +378,22 @@ html[data-zavi-theme] body :is(.invoice-page,.purchase-page,.sales-page,.debtors
  html[data-zavi-theme] body :is(.bottom-nav,.bottom-navigation,.sidebar,.nav-drawer,#zavi-theme-controls){display:none!important}
  html[data-zavi-theme] body :is(table,thead,tr,td,th){break-inside:avoid}
 }
+
+
+/* V66.34: replace actual legacy debtors markup and restore scrolling. */
+html[data-zavi-theme] body #content{min-width:0;max-width:100%;overflow-x:hidden;overflow-y:visible;padding-bottom:100px}
+html[data-zavi-theme] body .debt-cards{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;visibility:visible!important;opacity:1!important;height:auto!important;overflow:visible!important;margin:16px 0 28px}
+html[data-zavi-theme] body .debt-card{display:block!important;visibility:visible!important;opacity:1!important;min-height:170px;height:auto!important;overflow:visible!important;padding:18px!important;background:var(--zavi-surface)!important;color:var(--zavi-text)!important;border:1px solid var(--zavi-border)!important;border-radius:20px!important;box-shadow:var(--zavi-shadow)!important}
+html[data-zavi-theme] body .debt-card h3{font-size:17px;font-weight:800;color:var(--zavi-text)!important}
+html[data-zavi-theme] body .debt-card .dc-amount{color:#ff829e!important;font-size:clamp(20px,3vw,28px);font-weight:850}
+html[data-zavi-theme="light"] body .debt-card .dc-amount{color:#b22b55!important}
+html[data-zavi-theme] body .debt-card .dc-contact{color:var(--zavi-muted)!important;font-size:13px;flex-wrap:wrap}
+html[data-zavi-theme] body .debt-card .dc-contact a{color:var(--zavi-accent)!important}
+html[data-zavi-theme] body .debt-card .dc-actions{display:flex!important;flex-wrap:wrap;gap:8px}
+html[data-zavi-theme] body .debt-card .dc-actions .btn{background:var(--zavi-input);color:var(--zavi-text);border:1px solid var(--zavi-border);border-radius:12px;white-space:normal;text-align:center}
+html[data-zavi-theme] body .debt-hero{background:linear-gradient(120deg,#183e82,#344eab 65%,#146d94)!important;color:#fff!important;border:1px solid rgba(152,195,255,.35);border-radius:22px;box-shadow:0 14px 34px rgba(9,31,83,.3)}
+html[data-zavi-theme] body .debt-hero :is(small,strong,span){color:#fff!important}
+html[data-zavi-theme] body .table-bar{min-width:0;flex-wrap:wrap;gap:10px}
+html[data-zavi-theme] body .searchbox{min-width:0;flex:1 1 220px}
+html[data-zavi-theme] body .searchbox input{width:100%;min-width:0}
+@media(max-width:760px){html[data-zavi-theme] body .debt-cards{grid-template-columns:minmax(0,1fr)!important}html[data-zavi-theme] body .debt-card{padding:15px!important}}

@@ -1,4 +1,4 @@
-name: ZAVI all customer accounts V66.38 QA
+name: ZAVI all customer accounts V66.38.1 QA
 on:
   workflow_dispatch:
   push:
@@ -249,7 +249,7 @@ jobs:
           from pathlib import Path
           s=Path('android-build/app/src/main/assets/index.html').read_text()
           assert "stat('صندوق نقدی',cash[account.id]||0" in s
-          assert "filter(c=>money(b[c.id]?.receivable||0)>0.001)" in s
+          assert "c.type==='customer'||c.type==='both'||money(b[c.id]?.receivable||0)>0.001" in s
           PY
       - name: Reject malformed HTML before building APK
         run: |
@@ -461,7 +461,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6638_ALL_CUSTOMER_ACCOUNTS_QA
+          name: ZAVI_${{ matrix.app }}_V66381_ALL_CUSTOMER_ACCOUNTS_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

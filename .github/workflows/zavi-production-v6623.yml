@@ -1,4 +1,4 @@
-name: ZAVI debt register and full visual V66.35 QA
+name: ZAVI warehouse location V66.36 QA
 on:
   workflow_dispatch:
   push:
@@ -202,6 +202,9 @@ jobs:
           s=html.read_text(encoding='utf-8')
           s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{premium}?v=66.24">')
           html.write_text(s,encoding='utf-8')
+          warehouse='zavi-warehouse-locations-v6636.js'
+          shutil.copy2(Path('design-system')/warehouse,assets/warehouse)
+          s=insert_before_end(s,'body',f'<script defer src="./{warehouse}?v=66.36"></script>')
           theme='zavi-three-theme-v6627.js'
           shutil.copy2(Path('design-system')/theme,assets/theme)
           s=html.read_text(encoding='utf-8')
@@ -458,7 +461,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6635_DEBT_REGISTER_VISUAL_QA
+          name: ZAVI_${{ matrix.app }}_V6636_WAREHOUSE_LOCATION_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

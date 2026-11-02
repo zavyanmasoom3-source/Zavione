@@ -8,11 +8,11 @@ function save(v){try{localStorage.setItem(KEY,JSON.stringify(v));return true}cat
 function clean(s){return String(s||'').trim().slice(0,100)}
 function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function mount(){
- var root=document.getElementById('content');if(!root||!root.querySelector('#productCsvImport'))return;
+ var root=document.getElementById('content');if(!root||!root.querySelector('.transaction-table')||!root.textContent.includes('گدام'))return;
  if(root.querySelector('#zavi-location-manager'))return;
- var state=read(),products=window.db&&Array.isArray(window.db.products)?window.db.products:[];
+ var products=(typeof db!=='undefined'&&db&&Array.isArray(db.products))?db.products:[];
  // Access the application's real product register only; never invent inventory quantities.
- if(!products.length){var candidates=Array.from(root.querySelectorAll('.transaction-table tbody tr'));if(!candidates.length)return}
+ if(!products.length)return;
  var box=document.createElement('section');box.id='zavi-location-manager';box.className='card';
  box.style.cssText='margin:14px 0;padding:18px;border-radius:18px';
  box.innerHTML='<h3>موقعیت محصولات در گدام</h3><p class="muted">گدام، بخش و الماری هر محصول را ثبت کنید. این بخش فقط موقعیت جنس را ذخیره می‌کند و موجودی حسابداری را تغییر نمی‌دهد.</p><div class="zavi-location-grid"><label>محصول<select id="zavi-loc-product"></select></label><label>نام گدام<input id="zavi-loc-warehouse" maxlength="100" placeholder="گدام مرکزی"></label><label>بخش / راهرو<input id="zavi-loc-zone" maxlength="100" placeholder="بخش A"></label><label>الماری / قفسه<input id="zavi-loc-shelf" maxlength="100" placeholder="قفسه ۱"></label></div><button type="button" class="btn primary" id="zavi-loc-save">ثبت موقعیت</button><div id="zavi-loc-status" role="status"></div><div class="zavi-loc-list" id="zavi-loc-list"></div>';

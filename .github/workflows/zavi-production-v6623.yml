@@ -1,4 +1,4 @@
-name: ZAVI all customer accounts V66.38.1 QA
+name: ZAVI clean debtors and receipts V66.39 QA
 on:
   workflow_dispatch:
   push:
@@ -245,6 +245,7 @@ jobs:
         if: matrix.app == 'one'
         run: |
           python3 design-system/patch-financial-ui-v6630.py android-build/app/src/main/assets/index.html
+          python3 design-system/patch-debtors-receipts-v6639.py android-build/app/src/main/assets/index.html
           python3 - <<'PY'
           from pathlib import Path
           s=Path('android-build/app/src/main/assets/index.html').read_text()
@@ -461,7 +462,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V66381_ALL_CUSTOMER_ACCOUNTS_QA
+          name: ZAVI_${{ matrix.app }}_V6639_CLEAN_DEBTORS_RECEIPTS_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

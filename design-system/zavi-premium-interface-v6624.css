@@ -232,3 +232,30 @@ html[data-zavi-theme] body :is(.sidebar,.nav-menu,.bottom-nav,.toolbar,.topbar,.
   border-color:#ccc!important;backdrop-filter:none!important;
  }
 }
+
+/* V66.31 reference-aligned premium financial dashboard */
+html[data-zavi-theme="dark"]{color-scheme:dark;--zavi-surface:linear-gradient(145deg,#192d55,#111d3d);--zavi-text:#f4f7ff;--zavi-border:rgba(131,178,255,.33);--zavi-shadow:0 12px 32px rgba(0,4,28,.35)}
+html[data-zavi-theme="glass"]{color-scheme:dark;--zavi-surface:linear-gradient(130deg,rgba(63,83,168,.68),rgba(34,55,117,.5));--zavi-text:#f8faff;--zavi-border:rgba(190,213,255,.45);--zavi-shadow:0 14px 36px rgba(10,16,69,.3)}
+html[data-zavi-theme="light"]{color-scheme:light;--zavi-surface:linear-gradient(145deg,#fff,#f0f6ff);--zavi-text:#172544;--zavi-border:rgba(56,98,176,.2);--zavi-shadow:0 10px 26px rgba(32,73,146,.11)}
+html[data-zavi-theme] body :is(.dashboard-card,.stat-card,.summary-card,.balance-card,.account-card,.report-card,.invoice-card,.customer-card,.settings-card){
+ background:var(--zavi-surface);color:var(--zavi-text);border:1px solid var(--zavi-border);
+ border-radius:18px;box-shadow:var(--zavi-shadow);transition:transform .18s ease,box-shadow .18s ease;
+}
+html[data-zavi-theme] body :is(.dashboard-card,.stat-card,.summary-card,.balance-card,.account-card) :is(.icon,.card-icon,svg){
+ filter:drop-shadow(0 3px 8px rgba(43,125,255,.22));
+}
+html[data-zavi-theme] body :is(.dashboard-card,.stat-card,.summary-card,.balance-card,.account-card):focus-within{
+ outline:2px solid #6cbfff;outline-offset:2px;
+}
+html[data-zavi-theme] body :is(.dashboard,.dashboard-page,.home-page) :is(.stats-grid,.summary-grid,.cards-grid){
+ gap:12px;
+}
+html[data-zavi-theme] body :is(.dashboard,.dashboard-page,.home-page) :is(.stats-grid,.summary-grid,.cards-grid)>*{min-width:0}
+html[data-zavi-theme] body :is(.settings-page,.settings-screen,.settings-content) :is(.settings-card,.setting-card){
+ margin-block:8px;padding:clamp(12px,2vw,18px);
+}
+#zavi-theme-controls[hidden]{display:none!important}
+#zavi-theme-controls{position:static!important;inset:auto!important;bottom:auto!important;z-index:auto!important}
+@media(prefers-reduced-motion:reduce){
+ html[data-zavi-theme] body :is(.dashboard-card,.stat-card,.summary-card,.balance-card,.account-card,.report-card){transition:none}
+}

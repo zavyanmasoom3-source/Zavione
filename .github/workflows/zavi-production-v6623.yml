@@ -1,4 +1,4 @@
-name: ZAVI debtor cards premium V66.34 QA
+name: ZAVI debt register and full visual V66.35 QA
 on:
   workflow_dispatch:
   push:
@@ -458,7 +458,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6634_DEBTOR_CARDS_PREMIUM_QA
+          name: ZAVI_${{ matrix.app }}_V6635_DEBT_REGISTER_VISUAL_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

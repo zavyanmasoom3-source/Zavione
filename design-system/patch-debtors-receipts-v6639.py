@@ -23,11 +23,10 @@ receipts="""function renderCustomerReceipts(){
 }
 """
 once(anchor,receipts+anchor)
-once(' <div class="card" style="margin-bottom:17px"><div class="table-bar">',' ${renderCustomerReceipts()}\n <div class="card" style="margin-bottom:17px"><div class="table-bar">')
-# Keep the two frequent actions visible; group occasional actions under a native details disclosure.
-once('<div class="dc-actions"><button class="btn tiny primary"','<div class="dc-actions"><button class="btn tiny primary"')
-once('${z20Option(\'customerShare\')?`<button class="btn tiny subtle" data-statement=', '<details class="zavi-more-actions"><summary>گزینه‌های بیشتر</summary><div class="zavi-more-actions-inner">${z20Option(\'customerShare\')?`<button class="btn tiny subtle" data-statement=')
-once('${icon(\'arrow\')} واتساپ</button></div></article>','${icon(\'arrow\')} واتساپ</button></div></details></div></article>')
+once(' <div class="card" style="margin-bottom:17px"><div class="table-bar">',' ${renderCustomerReceipts()}\\n <div class="card" style="margin-bottom:17px"><div class="table-bar">')
+old="""<div class="dc-actions"><button class="btn tiny primary" data-ledger="${c.id}">${icon('chart')} صورت‌حساب</button>${z20Option('customerShare')?`<button class="btn tiny subtle" data-statement="${c.id}">${icon('download')} عکس حساب</button>`:''}<button class="btn tiny" data-collect="${c.id}">${icon('check')} گرفتن اوگرایی / وصول قرض</button>${z20Option('debtorOgrai')?`<button type="button" class="btn tiny z660-loan" data-z660-loan="${escapeHtml(c.id)}">↗ دادن اوگرایی</button>`:''}<button class="btn tiny" data-wa="${c.id}">${icon('arrow')} واتساپ</button></div>"""
+new="""<div class="dc-actions"><button class="btn tiny primary" data-ledger="${c.id}">${icon('chart')} صورت‌حساب</button><button class="btn tiny" data-collect="${c.id}">${icon('check')} دریافت پول</button><button class="btn tiny" data-wa="${c.id}">${icon('arrow')} واتساپ</button><details class="zavi-more-actions"><summary>گزینه‌های بیشتر</summary><div class="zavi-more-actions-inner">${z20Option('customerShare')?`<button class="btn tiny subtle" data-statement="${c.id}">${icon('download')} عکس حساب</button>`:''}${z20Option('debtorOgrai')?`<button type="button" class="btn tiny z660-loan" data-z660-loan="${escapeHtml(c.id)}">↗ دادن اوگرایی</button>`:''}</div></details></div>"""
+once(old,new)
 # Clear mobile layout: only receipt summary and account cards, extra actions tucked away.
 style="""<style id="zavi-receipts-clean-ui">
 .zavi-receipts-panel{margin:0 0 14px;padding:14px 16px}
@@ -40,11 +39,11 @@ style="""<style id="zavi-receipts-clean-ui">
 .zavi-more-actions{width:100%;margin-top:5px}
 .zavi-more-actions>summary{cursor:pointer;padding:10px;border:1px solid rgba(140,165,205,.3);border-radius:10px;text-align:center;list-style:none}
 .zavi-more-actions-inner{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px}
-.debt-card .dc-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.debt-card .dc-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .debt-card .dc-actions>.btn{min-width:0;white-space:normal}
 .debt-card .dc-actions .zavi-more-actions{grid-column:1/-1}
 @media(max-width:420px){.zavi-receipt-item{align-items:flex-start}.zavi-more-actions-inner{grid-template-columns:1fr}}
 </style>"""
-once('</head>',style+'\n</head>')
+s=s.replace('</head>',style+'\n</head>',1)
 path.write_text(s,encoding="utf-8")
 print("PASS: receipt ledger and simplified debtor actions")

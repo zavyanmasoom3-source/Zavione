@@ -10,8 +10,8 @@ def replace_once(old,new,label):
  source=source.replace(old,new,1)
 replace_once(
  "return db.contacts.filter(c=>c.type==='customer'||c.type==='both').map(c=>({...c,amount:money(b[c.id]?.receivable||0)})).filter(c=>c.amount>0.001)",
- "return db.contacts.filter(c=>money(b[c.id]?.receivable||0)>0.001).map(c=>({...c,amount:money(b[c.id]?.receivable||0)})).filter(c=>c.amount>0.001)",
- "Show all customers with receivable balances in debtors, regardless of stale contact type")
+ "return db.contacts.filter(c=>c.type==='customer'||c.type==='both'||money(b[c.id]?.receivable||0)>0.001).map(c=>({...c,amount:money(b[c.id]?.receivable||0)}))",
+ "Show all customer accounts including settled accounts and receivables regardless of contact type")
 replace_once(
  "${stat('موجودی حساب‌ها',t.cash,'مجموع صندوق‌ها','wallet','orange')}",
  "${stat('موجودی حساب‌ها',t.cash,'مجموع صندوق‌ها','wallet','orange')}${(()=>{const cash=cashBalances();const account=db.accounts.find(a=>a.id==='a_cash'||/صندوق نقدی|cash/i.test(a.name||''));return account?stat('صندوق نقدی',cash[account.id]||0,'موجودی نقد','wallet','green'):''})()}",
@@ -27,5 +27,10 @@ if old in source:
  source=source.replace(old,new,1)
 else:
  print("INFO: debtor search signature changed; preserving existing rendering")
+# Clearly distinguish customers with outstanding debt from all customer accounts.
+source=source.replace("fmtQty(all.length)} مشتری قرضدار", "fmtQty(all.filter(c=>c.amount>0.001).length)} مشتری قرضدار", 1)
+source=source.replace("fmtQty(ds.length)} قرضدار", "fmtQty(ds.length)} حساب مشتری", 1)
+source=source.replace("هنوز قرضداری ندارید", "هنوز مشتری ثبت نشده است", 1)
+source=source.replace("قرض باز</span>", "حساب مشتری</span>", 1)
 path.write_text(source,encoding="utf-8")
 print("PASS: debtor balances, cashbox card and concise headings patched")

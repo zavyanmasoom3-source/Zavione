@@ -1,4 +1,4 @@
-name: ZAVI three-theme persistence diagnostic V66.48 QA
+name: ZAVI theme storage root-cause diagnostic V66.49 QA
 on:
   workflow_dispatch:
   push:
@@ -348,7 +348,7 @@ jobs:
                   button.click();
                   const active=document.documentElement.getAttribute('data-zavi-theme');
                   const stored=localStorage.getItem('zavi.visual.theme.v1');
-                  if(active!==mode||stored!==mode)throw Error('Theme not applied/persisted: '+mode+' actual='+active+' stored='+stored);
+                  if(active!==mode||stored!==mode){const key='zavi.visual.theme.v1';let direct='';try{localStorage.setItem(key,mode);direct=localStorage.getItem(key)}catch(e){direct='storage-error:'+e.message}throw Error('Theme not applied/persisted: '+mode+' actual='+active+' stored='+stored+' direct='+direct+' storageType='+typeof localStorage.setItem)}
                   const cs=getComputedStyle(document.documentElement);
                   out[mode]={active,stored,ink:cs.getPropertyValue('--zavi-text').trim(),bg:cs.getPropertyValue('--zavi-surface').trim()};
                   if(!out[mode].ink||!out[mode].bg)throw Error('Missing theme tokens: '+mode);
@@ -500,7 +500,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6648_THEME_DIAGNOSTIC_QA
+          name: ZAVI_${{ matrix.app }}_V6649_THEME_DIAGNOSTIC_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

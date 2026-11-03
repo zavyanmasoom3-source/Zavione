@@ -1,4 +1,4 @@
-name: ZAVI three-theme click isolation regression V66.50 QA
+name: ZAVI theme persistence delayed-write regression V66.51 QA
 on:
   workflow_dispatch:
   push:
@@ -340,12 +340,13 @@ jobs:
               const page=await browser.newPage({viewport:{width:390,height:844}});
               await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded'});
               await page.waitForTimeout(1200);
-              const result=await page.evaluate(()=>{
+              const result=await page.evaluate(async()=>{
                 const modes=['light','dark','glass'],out={};
                 for(const mode of modes){
                   const button=document.querySelector('[data-zavi-theme-choice="'+mode+'"]');
                   if(!button)throw Error('Missing settings theme choice: '+mode);
                   button.click();
+                  await new Promise(resolve=>setTimeout(resolve,100));
                   const active=document.documentElement.getAttribute('data-zavi-theme');
                   const stored=localStorage.getItem('zavi.visual.theme.v1');
                   if(active!==mode||stored!==mode){const key='zavi.visual.theme.v1';let direct='';try{localStorage.setItem(key,mode);direct=localStorage.getItem(key)}catch(e){direct='storage-error:'+e.message}throw Error('Theme not applied/persisted: '+mode+' actual='+active+' stored='+stored+' direct='+direct+' storageType='+typeof localStorage.setItem)}
@@ -500,7 +501,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6650_THEME_CLICK_FIX_QA
+          name: ZAVI_${{ matrix.app }}_V6651_THEME_PERSISTENCE_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

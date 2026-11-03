@@ -79,7 +79,10 @@
    }
   }
   if(!panel.parentNode)document.body.appendChild(panel);
-  relocate();setTheme(document.documentElement.getAttribute('data-zavi-theme'));
+  relocate();
+  // Restore the persisted preference without trusting an unrelated DOM attribute.
+  var initial='';try{initial=window.localStorage.getItem(KEY)||''}catch(_){}
+  setTheme(modes.indexOf(initial)>=0?initial:'light');
   // Navigation can be SPA-based; never overlay bottom navigation.
   var queued=false;
   new MutationObserver(function(){

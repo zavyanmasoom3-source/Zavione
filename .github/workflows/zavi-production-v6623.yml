@@ -1,4 +1,4 @@
-name: ZAVI three-theme persistence regression V66.46 QA
+name: ZAVI three-theme persistence regression V66.47 QA
 on:
   workflow_dispatch:
   push:
@@ -327,6 +327,10 @@ jobs:
       - name: Three-theme persistence and contrast QA
         run: |
           set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory android-build/app/src/main/assets >/tmp/zavi-qa-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          sleep 2
           node <<'JS'
           const {chromium}=require('playwright');
           const path=require('path');
@@ -334,7 +338,7 @@ jobs:
             const browser=await chromium.launch({headless:true});
             try{
               const page=await browser.newPage({viewport:{width:390,height:844}});
-              await page.goto('file://'+path.resolve('android-build/app/src/main/assets/index.html'),{waitUntil:'domcontentloaded'});
+              await page.goto('http://127.0.0.1:8765/index.html',{waitUntil:'domcontentloaded'});
               await page.waitForTimeout(1200);
               const result=await page.evaluate(()=>{
                 const modes=['light','dark','glass'],out={};
@@ -346,7 +350,7 @@ jobs:
                   const stored=localStorage.getItem('zavi.visual.theme.v1');
                   if(active!==mode||stored!==mode)throw Error('Theme not applied/persisted: '+mode);
                   const cs=getComputedStyle(document.documentElement);
-                  out[mode]={active,stored,ink:cs.getPropertyValue('--ink').trim(),bg:cs.getPropertyValue('--bg').trim()};
+                  out[mode]={active,stored,ink:cs.getPropertyValue('--zavi-text').trim(),bg:cs.getPropertyValue('--zavi-surface').trim()};
                   if(!out[mode].ink||!out[mode].bg)throw Error('Missing theme tokens: '+mode);
                 }
                 return out;
@@ -496,7 +500,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6646_THEME_REGRESSION_QA
+          name: ZAVI_${{ matrix.app }}_V6647_THEME_REGRESSION_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

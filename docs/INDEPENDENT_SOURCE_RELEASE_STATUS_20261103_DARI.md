@@ -42,3 +42,18 @@
 - آزمون امضای اصلی: Workflow با عنوان Source-only signed candidate and legacy compatibility gate
 
 **قاعده:** هیچ فایل APK قدیمی با تعویض نام نسخه، جدید معرفی نمی‌شود. هر ادعای آماده‌بودن باید به آزمایش مستقل تکیه داشته باشد.
+
+## اصلاحات تکمیلی همین جلسه — ۳ نوامبر ۲۰۲۶
+- مدیریت گدام اکنون علاوه بر ثبت نام و کود، موجودی هر گدام را از نمای RLSدار zavi_warehouse_stock_summary می‌خواند و جدا نمایش می‌دهد. ورود اطلاعات یک tenant دیگر در رابط فیلتر می‌شود؛ بیش از ۲۰۰ سطر فقط با هشدار نمایش داده می‌شود.
+- تست Playwright ثبت و غیرفعال‌سازی گدام، انکار viewer، دقت موجودی و فیلتر tenant را بررسی کرده است. تمام داده‌ها ساختگی‌اند.
+- اسکن بارکد به بسته کاملاً محلی ZXing مجهز شد؛ نبود BarcodeDetector در iPad باعث غیرفعال‌شدن اسکن نمی‌شود. راه‌اندازی دوربین پس از کلیک است و جریان دوربین بعد از تشخیص یا بستن قطع می‌شود. آزمون Chromium با دوربین شبیه‌سازی‌شده پاس شده؛ تست روی iPad و Android واقعی هنوز لازم است.
+- دو Migration اجرا نشده در database/staged برای محافظ موجودی منفی، حذف امتیاز TRUNCATE و ثبت تکرارناپذیر حرکت گدام آماده شده است. تست PostgreSQL 17 روی داده ساختگی برای موجودی منفی، دسترسی مالک، idempotency و دو برداشت همزمان پاس شده؛ هیچ Migration روی دیتابیس مشتریان اجرا نشده.
+- دو APK سورس-only جدید، با شماره ZAVI ONE 66.64-source-qa و ADMIN 1.4.55-source-qa ساخته شدند؛ این دو فقط Debug QA هستند.
+- آزمون ارتقای نصب قبلی به دلیل تفاوت شناسه package و certificate همچنان fail می‌شود. روی برنامه دارای داده مشتری جایگزین نشوند.
+- دستیار آفلاین صوتی، همگام‌سازی کامل موجودی با خریدوفروش، آزمون روی iPad واقعی، WhatsApp، سه زبان کامل، مجوز و انتقال دستگاه و تست نسخه قابل انتشار هنوز تأیید نشده‌اند.
+
+### شواهد تکمیلی
+- ZXing آفلاین: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/41700168128
+- تست بارکد Chromium: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/41701034346
+- تست SQL امنیت و همزمانی PostgreSQL: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/41701613883
+- ساخت APK سورس-only: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/41700560020

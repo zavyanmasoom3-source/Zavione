@@ -25,6 +25,10 @@ jobs:
             package: com.zavione.one.admin
     steps:
       - uses: actions/checkout@v4
+      - name: Do not sign or publish while full feature parity is unverified
+        env:
+          ZAVI_REQUIRE_FULL_PARITY: '1'
+        run: node tests/source-feature-parity.cjs
       - name: Validate source without unpacking any APK
         env:
           ZAVI_APP: ${{ matrix.app }}

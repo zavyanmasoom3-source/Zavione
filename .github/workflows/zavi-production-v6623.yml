@@ -32,6 +32,21 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
+      - name: Verify modern source provenance before any new release
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          # A new public-facing build must not silently reconstruct the UI from
+          # a legacy APK and then present that result as a full source update.
+          source=Path('app-source/index.html')
+          if not source.is_file():
+              print('::error title=Missing current app source::The build still reconstructs its UI from V66.06 APK. Supply and validate app-source/index.html before publishing another updated APK.')
+              raise SystemExit(1)
+          if source.stat().st_size < 80000:
+              print('::error title=Incomplete current app source::Refusing to publish an incomplete UI.')
+              raise SystemExit(1)
+          print('Current application HTML source verified:',source.stat().st_size,'bytes')
+          PY
       - name: Download and validate original APK
         env:
           GH_TOKEN: ${{ github.token }}

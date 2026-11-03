@@ -13,6 +13,7 @@ const core={
   permissions:['zavi-staff-v648-core.js','offline-license-secure.js','zavi-store-v6579-auto-signed-offline.js'],
   locale:['zavi-i18n-v22.js','zavi-i18n-v6541-verified.js'],
   command:['zavi-dual-command-v6605.js','zavi-dual-command-v6605.css'],
+  whatsapp:['zavi-whatsapp-v1.js'],
   restoredDisplay:['zavi-three-sizes-v6588.js','zavi-three-sizes-v6588.css','zavi-landscape-v6589.js','zavi-landscape-v6589.css','zavi-mobile-rescue-v6590.js','zavi-mobile-rescue-v6590.css'],
   recovery:['zavi-store-recovery-v6594.js','zavi-store-recovery-v6594.css'],
   print:['invoice.html','receipt-ui.js'],

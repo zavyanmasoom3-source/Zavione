@@ -1,4 +1,4 @@
-name: ZAVI theme storage root-cause diagnostic V66.49 QA
+name: ZAVI three-theme click isolation regression V66.50 QA
 on:
   workflow_dispatch:
   push:
@@ -500,7 +500,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6649_THEME_DIAGNOSTIC_QA
+          name: ZAVI_${{ matrix.app }}_V6650_THEME_CLICK_FIX_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

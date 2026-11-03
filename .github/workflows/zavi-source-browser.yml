@@ -16,6 +16,8 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/purchase-finance.test.cjs
+      - name: Verify Dari WhatsApp messages and international phone normalization
+        run: node --test tests/whatsapp.test.cjs
       - name: Audit legacy feature source and local assets
         run: node tests/source-feature-parity.cjs
       - run: npm install --no-save playwright@1.56.1

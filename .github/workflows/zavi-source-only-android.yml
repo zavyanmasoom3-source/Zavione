@@ -21,7 +21,7 @@ jobs:
       - name: Verify original source references, purchase and WhatsApp invariants
         run: |
           node tests/source-feature-parity.cjs
-          node --test tests/purchase-finance.test.cjs tests/whatsapp.test.cjs
+          node --test tests/purchase-finance.test.cjs tests/whatsapp.test.cjs tests/backup-integrity.test.cjs
           python3 -m unittest discover -s tests -v
       - name: Install pinned browser test runtime
         run: |

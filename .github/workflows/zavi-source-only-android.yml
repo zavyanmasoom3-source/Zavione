@@ -1,0 +1,73 @@
+name: ZAVI source-only Android build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app-source/**'
+      - 'android-build/**'
+      - '.github/workflows/zavi-source-only-android.yml'
+permissions:
+  contents: read
+jobs:
+  source-only:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [one, admin]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require complete independent source (never extract a legacy APK)
+        env:
+          ZAVI_APP: ${{ matrix.app }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          app=os.environ['ZAVI_APP']
+          root=Path('app-source')/app
+          page=root/'index.html'
+          if not page.is_file() or page.stat().st_size<80000:
+              raise SystemExit(f'ERROR: Independent source missing: {page}. Do not release a repackaged old APK.')
+          html=page.read_text(encoding='utf-8')
+          for required in ('</html>','</body>'):
+              if required not in html.lower(): raise SystemExit('Incomplete HTML source')
+          print('Verified independent source',page,page.stat().st_size)
+          PY
+      - name: Stage independent application source
+        env:
+          ZAVI_APP: ${{ matrix.app }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,shutil
+          src=Path('app-source')/os.environ['ZAVI_APP']
+          dst=Path('android-build/app/src/main/assets')
+          if dst.exists(): shutil.rmtree(dst)
+          shutil.copytree(src,dst)
+          assert (dst/'index.html').is_file()
+          PY
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Install Android SDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Build and verify source-only APK
+        working-directory: android-build
+        run: |
+          set -euo pipefail
+          cp app/src/main/res/drawable/ic_launcher.xml app/src/main/res/drawable/zavi_launcher_image.xml
+          gradle --no-daemon :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviProduction=false
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_${{ matrix.app }}_SOURCE_ONLY_QA_APK
+          path: android-build/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

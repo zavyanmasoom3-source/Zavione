@@ -16,6 +16,8 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/purchase-finance.test.cjs
+      - name: Audit legacy feature source and local assets
+        run: node tests/source-feature-parity.cjs
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - name: Test isolated purchase persistence and both application entry screens
@@ -24,6 +26,7 @@ jobs:
           node tests/browser-source.cjs
           node tests/warehouse-browser.cjs
           node tests/barcode-browser.cjs
+          node tests/command-parity-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -31,3 +34,4 @@ jobs:
           path: |
             qa-*.png
             browser-source-results.json
+            qa-parity-results.json

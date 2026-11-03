@@ -1,0 +1,40 @@
+name: Vendor local offline ZXing for iPad / Android
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths:
+      - .github/workflows/zavi-vendor-offline-zxing.yml
+permissions:
+  contents: write
+jobs:
+  vendor-zxing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/independent-source-release-20261103
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin dependencies and build local browser bundle
+        working-directory: design-system/zxing-vendor
+        run: |
+          set -euo pipefail
+          npm install --package-lock-only --ignore-scripts --no-fund --no-audit
+          npm ci --no-fund --no-audit
+          npm run build
+          test -s ../../app-source/one/zavi-zxing-offline-v1.js
+          node --check ../../app-source/one/zavi-zxing-offline-v1.js
+          sha256sum ../../app-source/one/zavi-zxing-offline-v1.js
+      - name: Commit generated bundle for offline source-only Android and PWA builds
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add design-system/zxing-vendor/package-lock.json app-source/one/zavi-zxing-offline-v1.js
+          if git diff --cached --quiet; then
+            echo "Bundle already current"
+          else
+            git commit -m "build(barcode): vendor pinned ZXing offline browser bundle"
+            git push origin HEAD:fix/independent-source-release-20261103
+          fi

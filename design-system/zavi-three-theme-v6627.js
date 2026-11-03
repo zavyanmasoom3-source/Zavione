@@ -6,7 +6,7 @@
  function setTheme(mode){
   if(modes.indexOf(mode)<0)return;
   document.documentElement.setAttribute('data-zavi-theme',mode);
-  try{localStorage.setItem(KEY,mode)}catch(_){}
+  try{window.localStorage.setItem(KEY,mode)}catch(e){console.warn('ZAVI theme persistence unavailable',e)}
   document.querySelectorAll('[data-zavi-theme-choice]').forEach(function(btn){
    var active=btn.getAttribute('data-zavi-theme-choice')===mode;
    btn.setAttribute('aria-pressed',String(active));

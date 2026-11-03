@@ -73,9 +73,9 @@
    var target=settingsTarget();
    if(target){
     if(panel.parentNode!==target)target.appendChild(panel);
-    panel.hidden=false;
+    if(panel.hidden)panel.hidden=false;
    }else{
-    panel.hidden=true;
+    if(!panel.hidden)panel.hidden=true;
    }
   }
   if(!panel.parentNode)document.body.appendChild(panel);

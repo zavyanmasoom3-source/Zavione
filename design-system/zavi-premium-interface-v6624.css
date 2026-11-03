@@ -456,3 +456,32 @@ body .zavi-receipts-panel>summary{cursor:pointer}
 @media(prefers-reduced-motion:reduce){
  body :is(.card,.debt-card,.dashboard-card,.settings-card,.menu-card,.panel,.btn,button){animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+
+/* V66.44 classic-modern visual system; scoped to existing theme attribute. */
+html[data-zavi-theme]{color-scheme:light}
+html[data-zavi-theme="dark"],html[data-zavi-theme="glass"]{color-scheme:dark}
+html[data-zavi-theme="light"]{--zavi-premium-focus:#2856b7;--zavi-premium-radius:18px}
+html[data-zavi-theme="dark"]{--zavi-premium-focus:#76aaff;--zavi-premium-radius:18px}
+html[data-zavi-theme="glass"]{--zavi-premium-focus:#9eaaff;--zavi-premium-radius:20px}
+html[data-zavi-theme] body :is(.card,.panel,.settings-card,.dashboard-card,.debt-card,.menu-card){
+ border-color:var(--zavi-border,var(--line))!important;
+}
+html[data-zavi-theme] body :is(input,textarea,select){
+ background:var(--zavi-surface,var(--white));color:var(--zavi-text,var(--ink));
+ border:1px solid var(--zavi-border,var(--line));border-radius:12px;
+}
+html[data-zavi-theme] body :is(input,textarea,select)::placeholder{color:var(--zavi-muted,var(--muted));opacity:1}
+html[data-zavi-theme] body :is(input,textarea,select,button,a):focus-visible{
+ outline:2px solid var(--zavi-premium-focus);outline-offset:2px;
+}
+html[data-zavi-theme] body :is(.page,.screen,.content,.settings-content,.dashboard){min-width:0}
+html[data-zavi-theme] body :is(.table-wrap,.table-container,.scroll-table){max-width:100%;overflow-x:auto}
+html[data-zavi-theme] body :is(.card,.panel,.settings-card,.dashboard-card,.debt-card,.menu-card) :is(h1,h2,h3){overflow-wrap:anywhere}
+html[data-zavi-theme="glass"] body :is(.card,.panel,.settings-card,.dashboard-card,.debt-card,.menu-card){
+ backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+@media(max-width:600px){
+ html[data-zavi-theme] body :is(.page,.screen,.content,.settings-content,.dashboard){max-width:100%;overflow-x:clip}
+ html[data-zavi-theme] body :is(.card,.panel,.settings-card,.dashboard-card,.debt-card,.menu-card){border-radius:16px}
+}

@@ -1,8 +1,8 @@
 /* ZAVI visual themes: additive only, no accounting or auth mutations. */
 (function(){
  'use strict';
- var KEY='zavi.visual.theme.v1', modes=['glass','light','dark'];
- var names={glass:'شیشه‌ای',light:'روشن',dark:'سیاه تیره'};
+ var KEY='zavi.visual.theme.v1', modes=['light','dark','glass'];
+ var names={glass:'شیشه‌ای',light:'روشن',dark:'تیره'};
  function setTheme(mode){
   if(modes.indexOf(mode)<0)return;
   document.documentElement.setAttribute('data-zavi-theme',mode);
@@ -49,10 +49,11 @@
   var panel=document.getElementById('zavi-theme-controls');
   if(!panel){
    panel=document.createElement('section');panel.id='zavi-theme-controls';
-   panel.setAttribute('role','group');panel.setAttribute('aria-label','حالت نمایش');
+   panel.setAttribute('role','group');panel.setAttribute('aria-label','حالت نمایش برنامه');
    panel.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;padding:12px;border:1px solid var(--zavi-border,#7789ab);border-radius:14px;background:var(--zavi-surface,#182b4c);direction:rtl;box-sizing:border-box;max-width:100%';
-   var heading=document.createElement('strong');heading.textContent='حالت نمایش';heading.style.cssText='width:100%;color:var(--zavi-text,#fff)';
+   var heading=document.createElement('strong');heading.textContent='حالت نمایش برنامه';heading.style.cssText='width:100%;color:var(--zavi-text,#fff)';
    panel.appendChild(heading);
+   var hint=document.createElement('small');hint.textContent='یکی از سه حالت را انتخاب کنید. تغییر فوری ذخیره می‌شود.';hint.style.cssText='width:100%;color:var(--zavi-muted,#536685)';panel.appendChild(hint);
    modes.forEach(function(mode){
     var button=document.createElement('button');button.type='button';button.textContent=names[mode];
     button.setAttribute('data-zavi-theme-choice',mode);button.setAttribute('aria-label','حالت '+names[mode]);

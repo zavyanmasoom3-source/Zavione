@@ -73,8 +73,16 @@ jobs:
   signing-readiness:
     runs-on: ubuntu-latest
     steps:
-      - name: Check existing signing configuration without exposing secret values
+      - name: Audit existing per-app signing secrets without reading their values
         env:
+          ZAVI_ONE_KEYSTORE_BASE64: ${{ secrets.ZAVI_ONE_KEYSTORE_BASE64 }}
+          ZAVI_ONE_STORE_PASSWORD: ${{ secrets.ZAVI_ONE_STORE_PASSWORD }}
+          ZAVI_ONE_KEY_ALIAS: ${{ secrets.ZAVI_ONE_KEY_ALIAS }}
+          ZAVI_ONE_KEY_PASSWORD: ${{ secrets.ZAVI_ONE_KEY_PASSWORD }}
+          ZAVI_ADMIN_KEYSTORE_BASE64: ${{ secrets.ZAVI_ADMIN_KEYSTORE_BASE64 }}
+          ZAVI_ADMIN_STORE_PASSWORD: ${{ secrets.ZAVI_ADMIN_STORE_PASSWORD }}
+          ZAVI_ADMIN_KEY_ALIAS: ${{ secrets.ZAVI_ADMIN_KEY_ALIAS }}
+          ZAVI_ADMIN_KEY_PASSWORD: ${{ secrets.ZAVI_ADMIN_KEY_PASSWORD }}
           ZAVI_UPLOAD_KEYSTORE_B64: ${{ secrets.ZAVI_UPLOAD_KEYSTORE_B64 }}
           ZAVI_UPLOAD_STORE_PASSWORD: ${{ secrets.ZAVI_UPLOAD_STORE_PASSWORD }}
           ZAVI_UPLOAD_KEY_ALIAS: ${{ secrets.ZAVI_UPLOAD_KEY_ALIAS }}
@@ -82,10 +90,18 @@ jobs:
         run: |
           python3 - <<'PY'
           import os
-          required=['ZAVI_UPLOAD_KEYSTORE_B64','ZAVI_UPLOAD_STORE_PASSWORD','ZAVI_UPLOAD_KEY_ALIAS','ZAVI_UPLOAD_KEY_PASSWORD']
-          missing=[key for key in required if not os.environ.get(key)]
-          if missing:
-              print('RELEASE BLOCKED: missing existing signing configuration: '+', '.join(missing))
-          else:
-              print('Signing inputs configured. Original installed-app certificate compatibility still requires verification.')
+          per_app={
+              'ONE':['ZAVI_ONE_KEYSTORE_BASE64','ZAVI_ONE_STORE_PASSWORD','ZAVI_ONE_KEY_ALIAS','ZAVI_ONE_KEY_PASSWORD'],
+              'ADMIN':['ZAVI_ADMIN_KEYSTORE_BASE64','ZAVI_ADMIN_STORE_PASSWORD','ZAVI_ADMIN_KEY_ALIAS','ZAVI_ADMIN_KEY_PASSWORD'],
+          }
+          shared=['ZAVI_UPLOAD_KEYSTORE_B64','ZAVI_UPLOAD_STORE_PASSWORD','ZAVI_UPLOAD_KEY_ALIAS','ZAVI_UPLOAD_KEY_PASSWORD']
+          for app,names in per_app.items():
+              missing=[k for k in names if not os.getenv(k)]
+              if missing:
+                  print(f'::warning title={app} RELEASE BLOCKED::Missing signing inputs: {", ".join(missing)}')
+              else:
+                  print(f'{app}: signing inputs present; keystore validation and original installation certificate match NOT VERIFIED.')
+          if all(os.getenv(k) for k in shared):
+              print('Shared upload signing inputs also present; do not substitute for per-app keys without certificate matching.')
+          print('THIS RUN PRODUCES DEBUG QA APKS ONLY. This signing audit is NOT an approval to publish or upgrade installations.')
           PY

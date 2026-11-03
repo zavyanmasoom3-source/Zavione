@@ -7,3 +7,11 @@
 .zv-wh-negative{color:#c32e49}
 html[data-zavi-theme="dark"] .zv-wh-manager{color:#eff5fc}
 @media(max-width:420px){.zv-wh-stock-row{grid-template-columns:1fr auto}.zv-wh-stock-row span{grid-column:1 / -1;grid-row:2}}
+
+.zv-wh-history{margin-top:15px;padding-top:12px;border-top:1px solid var(--line)}
+.zv-wh-history h4{font-size:13px;margin:0 0 10px}
+.zv-wh-edit-form{display:grid;grid-template-columns:minmax(110px,1fr) minmax(90px,140px) auto auto;gap:8px;width:100%;align-items:center}
+.zv-wh-edit-form input{width:100%;min-width:0;min-height:38px;padding:7px 8px;border-radius:9px;border:1px solid var(--line);background:var(--white);color:var(--ink)}
+.zv-wh-edit-form button{min-height:38px}
+@media(max-width:600px){.zv-wh-edit-form{grid-template-columns:1fr 1fr}.zv-wh-edit-form button{width:100%}}
+@media(max-width:370px){.zv-wh-edit-form{grid-template-columns:1fr}}

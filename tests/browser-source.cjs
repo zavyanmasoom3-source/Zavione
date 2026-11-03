@@ -40,7 +40,23 @@ const fs=require('node:fs');
    assert.equal(tx.originalPaid,5);assert.equal(state.products.length,1);
    assert.equal(await page.evaluate(()=>stockOf(db.products[0].id)),1.25);
    assert.equal(await page.evaluate(()=>contactBalances()[db.contacts[0].id].payable),1681.56);
-   results.push({app,purchase:'passed',original:tx.originalAmount,accounting:tx.accountingTotal});
+   const atomic=await page.evaluate(()=>{
+    const before=JSON.stringify(db),oldPrice=db.products[0].purchasePrice;
+    openOrder('purchase');
+    const form=document.getElementById('dialogForm');
+    form.elements.freeContactName.value='QA supplier';
+    form.querySelector('[data-field="productName"]').value='QA product';
+    form.querySelector('[data-field="qty"]').value='2';
+    form.querySelector('[data-field="price"]').value='999';
+    const original=Storage.prototype.setItem;
+    Storage.prototype.setItem=function(key,value){if(key==='zavi_qa_isolated')throw new DOMException('Quota','QuotaExceededError');return original.call(this,key,value)};
+    try{form.dispatchEvent(new Event('submit',{cancelable:true,bubbles:true}));}
+    finally{Storage.prototype.setItem=original;}
+    return {unchanged:JSON.stringify(db)===before,oldPrice,newPrice:db.products[0].purchasePrice,count:db.tx.length};
+   });
+   assert.equal(atomic.unchanged,true,'failed storage must leave original ledger and product price untouched');
+   assert.equal(atomic.count,1);assert.equal(atomic.newPrice,atomic.oldPrice);
+   results.push({app,purchase:'passed',failedStorageAtomicity:'passed',original:tx.originalAmount,accounting:tx.accountingTotal});
   }else results.push({app,boot:'passed'});
   assert.equal(errors.length,0,JSON.stringify({app,errors}));
   await context.close();

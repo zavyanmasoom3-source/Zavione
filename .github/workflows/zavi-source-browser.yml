@@ -27,6 +27,7 @@ jobs:
           node tests/warehouse-browser.cjs
           node tests/barcode-browser.cjs
           node tests/command-parity-browser.cjs
+          node tests/display-parity-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

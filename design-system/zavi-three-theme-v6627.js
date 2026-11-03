@@ -65,6 +65,10 @@
      // Keep legacy settings click handlers from resetting this selection.
      event.preventDefault();event.stopPropagation();
      setTheme(mode);
+     // Legacy app event handlers can rewrite localStorage after the button handler.
+     // Reconcile once the current click event and deferred UI handlers have settled.
+     setTimeout(function(){setTheme(mode)},0);
+     setTimeout(function(){setTheme(mode)},80);
     });
     panel.appendChild(button);
    });

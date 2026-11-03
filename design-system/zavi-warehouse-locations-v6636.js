@@ -13,7 +13,7 @@ function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':
 function mount(){
  var root=document.getElementById('content');if(!root)return;
  var heading=Array.from(root.querySelectorAll('h1,h2,h3')).some(function(el){return /محصول و موجودی گدام|محصولات و موجودی|مدیریت محصولات/.test(el.textContent||'')});
- if(!heading)return;
+ if(!heading && !(/محصول و موجودی گدام|محصولات و موجودی|مدیریت محصولات/.test(root.textContent||'')))return;
  if(root.querySelector('#zavi-location-manager'))return;
  var products=(typeof db!=='undefined'&&db&&Array.isArray(db.products))?db.products:[];
  // Access the application's real product register only; never invent inventory quantities.
@@ -64,6 +64,6 @@ function mount(){
  update();
 }
 var queued=false;function schedule(){if(queued)return;queued=true;requestAnimationFrame(function(){queued=false;mount()})}
-function init(){schedule();new MutationObserver(schedule).observe(document.getElementById('content')||document.body,{childList:true,subtree:false})}
+function init(){schedule();new MutationObserver(schedule).observe(document.getElementById('content')||document.body,{childList:true,subtree:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

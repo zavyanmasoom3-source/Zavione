@@ -33,5 +33,18 @@
   const total=gross-d+s;if(p>total)throw Error('پرداخت از مبلغ فاکتور بیشتر است.');
   return {gross:toNumber(gross),discount:toNumber(d),shipping:toNumber(s),total:toNumber(total),paid:toNumber(p),remaining:toNumber(total-p)};
  }
- return Object.freeze({roundMoney,sumLineTotals,invoiceTotals});
+ function convertMoney(amount,rate){
+  const value=cents(amount), fx=scaled(rate,8);
+  if(fx<=0n)throw Error('نرخ تبدیل معتبر وارد کنید.');
+  const product=value*fx, abs=product<0n?-product:product;
+  const rounded=(abs+50000000n)/100000000n;
+  if(rounded>LIMIT)throw Error('مبلغ از حد مجاز بزرگ‌تر است.');
+  return toNumber(product<0n?-rounded:rounded);
+ }
+ function sumMoney(values){
+  const total=values.reduce((sum,x)=>sum+cents(x),0n);
+  if(total>LIMIT||total< -LIMIT)throw Error('مبلغ از حد مجاز بزرگ‌تر است.');
+  return toNumber(total);
+ }
+ return Object.freeze({roundMoney,sumLineTotals,invoiceTotals,convertMoney,sumMoney});
 });

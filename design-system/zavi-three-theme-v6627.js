@@ -10,8 +10,9 @@
   document.querySelectorAll('[data-zavi-theme-choice]').forEach(function(btn){
    var active=btn.getAttribute('data-zavi-theme-choice')===mode;
    btn.setAttribute('aria-pressed',String(active));
-   btn.style.background=active?'#6376f0':'#ffffff1b';
-   btn.style.borderColor=active?'#d8e1ff':'#ffffff40';
+   btn.style.background=active?'var(--zavi-primary,#385ec9)':'var(--zavi-surface,#fff)';
+   btn.style.borderColor=active?'var(--zavi-primary,#385ec9)':'var(--zavi-border,#d8e3f6)';
+   btn.style.color=active?'#fff':'var(--zavi-text,#172544)';
   });
  }
  function settingsTarget(){
@@ -44,7 +45,7 @@
  }
  function init(){
   var saved='';try{saved=localStorage.getItem(KEY)||''}catch(_){}
-  setTheme(modes.indexOf(saved)>=0?saved:'dark');
+  setTheme(modes.indexOf(saved)>=0?saved:'light');
   var panel=document.getElementById('zavi-theme-controls');
   if(!panel){
    panel=document.createElement('section');panel.id='zavi-theme-controls';
@@ -55,7 +56,7 @@
    modes.forEach(function(mode){
     var button=document.createElement('button');button.type='button';button.textContent=names[mode];
     button.setAttribute('data-zavi-theme-choice',mode);button.setAttribute('aria-label','حالت '+names[mode]);
-    button.style.cssText='padding:9px 12px;border-radius:10px;border:1px solid #ffffff40;color:white;background:#ffffff1b;font:inherit;font-size:13px;cursor:pointer;min-height:40px';
+    button.style.cssText='padding:9px 12px;border-radius:10px;border:1px solid var(--zavi-border,#d8e3f6);color:var(--zavi-text,#172544);background:var(--zavi-surface,#fff);font:inherit;font-size:13px;cursor:pointer;min-height:40px';
     button.addEventListener('click',function(){setTheme(mode)});
     panel.appendChild(button);
    });

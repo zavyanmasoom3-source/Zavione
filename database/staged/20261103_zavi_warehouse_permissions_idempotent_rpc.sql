@@ -53,7 +53,7 @@ BEGIN
         SELECT 1 FROM pg_catalog.jsonb_array_elements(
           CASE WHEN pg_catalog.jsonb_typeof(w.payload->'products')='array'
           THEN w.payload->'products' ELSE '[]'::jsonb END
-        ) AS product WHERE product->>'id'=p_product_ref
+        ) AS product(item) WHERE product.item->>'id'=p_product_ref
       )
   ) THEN RAISE EXCEPTION 'Workspace or product unauthorized'; END IF;
   IF p_from_warehouse_id IS NOT NULL AND NOT EXISTS (

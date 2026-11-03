@@ -18,7 +18,7 @@ function mount(){
  if(!products.length)return;
  var box=document.createElement('section');box.id='zavi-location-manager';box.className='card';
  box.style.cssText='margin:14px 0;padding:18px;border-radius:18px';
- box.innerHTML='<h3>موقعیت محصولات در گدام</h3><p class="muted">گدام، بخش و الماری هر محصول را ثبت کنید. این بخش فقط موقعیت جنس را ذخیره می‌کند و موجودی حسابداری را تغییر نمی‌دهد.</p><div class="zavi-location-grid"><label>محصول<select id="zavi-loc-product"></select></label><label>نام گدام<select id="zavi-loc-warehouse-choice"></select></label><label>افزودن گدام<input id="zavi-loc-warehouse" maxlength="100" placeholder="نام گدام جدید (اختیاری)"></label><label>بخش / راهرو<input id="zavi-loc-zone" maxlength="100" placeholder="بخش A"></label><label>الماری / قفسه<input id="zavi-loc-shelf" maxlength="100" placeholder="قفسه ۱"></label></div><button type="button" class="btn primary" id="zavi-loc-save">ثبت موقعیت</button><div id="zavi-loc-status" role="status"></div><div class="zavi-loc-list" id="zavi-loc-list"></div>';
+ box.innerHTML='<h3>موقعیت محصولات در گدام</h3><p class="muted">گدام، بخش و الماری هر محصول را ثبت کنید. این بخش فقط موقعیت جنس را ذخیره می‌کند و موجودی حسابداری را تغییر نمی‌دهد.</p><div class="zavi-location-grid"><label>محصول<select id="zavi-loc-product"></select></label><label>نام گدام<select id="zavi-loc-warehouse-choice"></select></label><label>افزودن گدام<input id="zavi-loc-warehouse" maxlength="100" placeholder="نام گدام جدید (اختیاری)"></label><label>بخش / راهرو<input id="zavi-loc-zone" maxlength="100" placeholder="بخش A"></label><label>الماری / قفسه<input id="zavi-loc-shelf" maxlength="100" placeholder="قفسه ۱"></label></div><div class="zavi-loc-actions"><button type="button" class="btn" id="zavi-warehouse-add">افزودن نام گدام</button> <button type="button" class="btn primary" id="zavi-loc-save">ثبت موقعیت</button></div><div id="zavi-loc-status" role="status"></div><div class="zavi-loc-list" id="zavi-loc-list"></div>';
  var select=box.querySelector('#zavi-loc-product');
  products.forEach(function(p){var o=document.createElement('option');o.value=String(p.id);o.textContent=String(p.name||p.sku||p.id);select.appendChild(o)});
  function warehouses(){
@@ -39,6 +39,15 @@ function mount(){
   box.querySelector('#zavi-loc-list').innerHTML=products.filter(function(p){return v[p.id]}).map(function(p){var a=v[p.id];return '<div class="zavi-loc-row"><strong>'+esc(p.name)+'</strong><span>'+esc(a.warehouse)+' · '+esc(a.zone)+' · '+esc(a.shelf)+'</span></div>'}).join('')||'<p class="muted">هنوز موقعیت محصولی ثبت نشده است.</p>';
  }
  select.addEventListener('change',update);
+ box.querySelector('#zavi-warehouse-add').addEventListener('click',function(){
+  var name=clean(box.querySelector('#zavi-loc-warehouse').value);
+  if(!name){box.querySelector('#zavi-loc-status').textContent='نام گدام جدید را وارد کنید.';return}
+  if(!rememberName(name)){box.querySelector('#zavi-loc-status').textContent='ذخیره نام گدام انجام نشد.';return}
+  update();
+  box.querySelector('#zavi-loc-warehouse-choice').value=name;
+  box.querySelector('#zavi-loc-status').textContent='نام گدام اضافه شد. برای ثبت موقعیت، محصول را انتخاب کنید.';
+ });
+
  box.querySelector('#zavi-loc-save').addEventListener('click',function(){
   var id=select.value;if(!id)return;
   var v=read();var warehouse=clean(box.querySelector('#zavi-loc-warehouse').value)||clean(box.querySelector('#zavi-loc-warehouse-choice').value);

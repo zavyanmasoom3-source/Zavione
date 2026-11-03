@@ -18,7 +18,10 @@ const assert=require('node:assert/strict');
     const url=new URL(input);if(url.hostname!=='warehouse-qa.invalid')return saved.fetch(input,opts);
     if(opts.headers?.Authorization!=='Bearer qa-user-token'||opts.headers?.apikey!=='sb_publishable_test')throw Error('Missing authenticated headers');
     const method=opts.method||'GET';calls.push(method);let value;
-    if(method==='GET')value=url.pathname.endsWith('zavi_warehouse_stock_summary')?
+    if(method==='GET')value=url.pathname.endsWith('zavi_warehouse_movements')?
+      [{workspace_id:workspace,id:'33333333-3333-4333-8333-333333333333',from_warehouse_id:null,to_warehouse_id:'22222222-2222-4222-8222-222222222222',product_ref:'QA-PRODUCT',quantity:'3.5000',reference:'QA receipt',created_at:'2026-11-03T10:00:00Z'},
+       {workspace_id:'99999999-9999-4999-8999-999999999999',id:'44444444-4444-4444-8444-444444444444',from_warehouse_id:null,to_warehouse_id:'22222222-2222-4222-8222-222222222222',product_ref:'SECRET-HISTORY',quantity:'9.0000'}]:
+       url.pathname.endsWith('zavi_warehouse_stock_summary')?
       [{workspace_id:workspace,warehouse_id:'22222222-2222-4222-8222-222222222222',product_ref:'QA-PRODUCT',quantity:'3.5000'},
        {workspace_id:'99999999-9999-4999-8999-999999999999',warehouse_id:'22222222-2222-4222-8222-222222222222',product_ref:'PRIVATE',quantity:'999.0000'}]:
        records.map(x=>({...x}));
@@ -41,7 +44,18 @@ const assert=require('node:assert/strict');
     if(records.length!==1||panel.querySelectorAll('.zv-wh-row').length!==1)throw Error('Create warehouse not persisted in cloud mock');
     if(panel.querySelectorAll('.zv-wh-stock-row').length!==1)throw Error('Stock must be fetched and tenant filtered');
     if(!panel.querySelector('.zv-wh-stock-row').textContent.includes('3.5000'))throw Error('Original stock precision missing');
-    if(panel.textContent.includes('PRIVATE'))throw Error('Cross-tenant stock leaked');
+    if(panel.textContent.includes('PRIVATE')||panel.textContent.includes('SECRET-HISTORY'))throw Error('Cross-tenant warehouse data leaked');
+    if(panel.querySelectorAll('.zv-wh-history .zv-wh-stock-row').length!==1)throw Error('Server movement history missing');
+    const editButton=panel.querySelector('[data-wh-edit]');
+    editButton.click();
+    const editForm=panel.querySelector('[data-wh-edit-form]');
+    if(!editForm)throw Error('Edit warehouse form not shown');
+    editForm.elements.name.value='گدام مرکزی';
+    editForm.elements.code.value='CENTER';
+    editForm.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+    for(let i=0;i<30&&records[0].code!=='CENTER';i++)await new Promise(r=>setTimeout(r,20));
+    if(records[0].code!=='CENTER'||records[0].name!=='گدام مرکزی')throw Error('Warehouse rename not stored');
+    for(let i=0;i<30&&panel.querySelector('[data-wh-edit-form]');i++)await new Promise(r=>setTimeout(r,20));
     const toggle=panel.querySelector('[data-wh-toggle]');
     toggle.click();
     for(let i=0;i<30&&records[0].is_active;i++)await new Promise(r=>setTimeout(r,20));
@@ -49,14 +63,14 @@ const assert=require('node:assert/strict');
     window.zaviCloudRestoreInfo=()=>({workspace,role:'viewer'});
     await window.ZaviWarehouseV1.refresh(panel);
     if(!form.hidden||!panel.textContent.includes('مالک')||panel.querySelectorAll('.zv-wh-stock-row').length)throw Error('Owner-only guard failed');
-    return {create:true,deactivate:true,stockView:true,tenantFilter:true,deniedViewer:true,calls};
+    return {create:true,edit:true,deactivate:true,stockView:true,history:true,tenantFilter:true,deniedViewer:true,calls};
    }finally{
     window.zaviCloudRestoreInfo=saved.state;window.zaviCloudGetPublicConfig=saved.config;
     window.zaviCloudRefreshAuthSession=saved.session;window.fetch=saved.fetch;
    }
   });
-  assert.equal(result.calls.filter(x=>x==='POST').length,1);assert.equal(result.calls.filter(x=>x==='PATCH').length,1);assert.equal(result.calls.filter(x=>x==='GET').length,6);
-  assert.equal(result.create,true);assert.equal(result.deactivate,true);assert.equal(result.stockView,true);assert.equal(result.tenantFilter,true);assert.equal(result.deniedViewer,true);
+  assert.equal(result.calls.filter(x=>x==='POST').length,1);assert.equal(result.calls.filter(x=>x==='PATCH').length,2);assert.equal(result.calls.filter(x=>x==='GET').length,12);
+  assert.equal(result.create,true);assert.equal(result.edit,true);assert.equal(result.deactivate,true);assert.equal(result.history,true);assert.equal(result.stockView,true);assert.equal(result.tenantFilter,true);assert.equal(result.deniedViewer,true);
   console.log('Warehouse owner-only source-browser test passed',result);
   await context.close();
  }finally{await browser.close()}

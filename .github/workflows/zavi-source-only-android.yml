@@ -2,7 +2,7 @@ name: ZAVI source-only Android build
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, fix/independent-source-release-20261103]
     paths:
       - 'app-source/**'
       - 'android-build/**'
@@ -24,16 +24,12 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import os
-          app=os.environ['ZAVI_APP']
-          root=Path('app-source')/app
-          page=root/'index.html'
-          if not page.is_file() or page.stat().st_size<80000:
-              raise SystemExit(f'ERROR: Independent source missing: {page}. Do not release a repackaged old APK.')
-          html=page.read_text(encoding='utf-8')
-          for required in ('</html>','</body>'):
-              if required not in html.lower(): raise SystemExit('Incomplete HTML source')
-          print('Verified independent source',page,page.stat().st_size)
+          import importlib.util, os
+          spec=importlib.util.spec_from_file_location('recovery','scripts/recover-independent-source.py')
+          module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+          root=Path('app-source')/os.environ['ZAVI_APP']
+          module.validate(root)
+          print('Validated independent source and local dependencies:',root)
           PY
       - name: Stage independent application source
         env:

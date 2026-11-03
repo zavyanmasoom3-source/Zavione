@@ -1,4 +1,4 @@
-name: ZAVI ONE and ADMIN Android build V66.53 QA
+name: ZAVI ONE and ADMIN Android build V66.54 QA
 on:
   workflow_dispatch:
   push:
@@ -346,7 +346,7 @@ jobs:
                   const button=document.querySelector('[data-zavi-theme-choice="'+mode+'"]');
                   if(!button)throw Error('Missing settings theme choice: '+mode);
                   button.click();
-                  await new Promise(resolve=>setTimeout(resolve,100));
+                  await new Promise(resolve=>setTimeout(resolve,250));
                   const active=document.documentElement.getAttribute('data-zavi-theme');
                   const stored=localStorage.getItem('zavi.visual.theme.v1');
                   if(active!==mode||stored!==mode){const key='zavi.visual.theme.v1';let direct='';try{localStorage.setItem(key,mode);direct=localStorage.getItem(key)}catch(e){direct='storage-error:'+e.message}throw Error('Theme not applied/persisted: '+mode+' actual='+active+' stored='+stored+' direct='+direct+' storageType='+typeof localStorage.setItem)}
@@ -501,7 +501,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6653_ANDROID_BUILD_QA
+          name: ZAVI_${{ matrix.app }}_V6654_ANDROID_BUILD_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

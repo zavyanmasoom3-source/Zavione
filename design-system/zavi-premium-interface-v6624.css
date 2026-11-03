@@ -426,3 +426,33 @@ html[data-zavi-theme] body :is(.page-head,.page-header,.hero,.summary-box,.summa
 html[data-zavi-theme] body :is(.ledger-intro,.summary-box,.account-summary) :is(strong,small,span){color:var(--zavi-text)}
 html[data-zavi-theme] body :is(.pill,.badge,.chip){border:1px solid var(--zavi-border)}
 html[data-zavi-theme] body :is(.debt-card,.contact-card,.person-card,.ledger-intro) :is(p,small,label){color:var(--zavi-muted)}
+
+
+/* V66.43 unified premium layout: presentation only; accounting and authentication unchanged. */
+:root{--zavi-premium-radius:18px;--zavi-premium-space:14px;--zavi-premium-focus:#5b93ee}
+body :is(.card,.debt-card,.dashboard-card,.settings-card,.menu-card,.panel){
+ border-radius:var(--zavi-premium-radius);min-width:0;overflow-wrap:anywhere;
+}
+body :is(.card,.debt-card,.dashboard-card,.settings-card,.menu-card,.panel):focus-within{
+ outline:1px solid color-mix(in srgb,var(--zavi-premium-focus) 45%,transparent);
+ outline-offset:1px;
+}
+body :is(button,.btn,input,select,textarea){font:inherit;max-width:100%;box-sizing:border-box}
+body :is(button,.btn){min-height:38px;touch-action:manipulation}
+body :is(input,select,textarea){min-height:40px}
+body :is(.debt-card,.settings-card,.dashboard-card) :is(h2,h3,h4){line-height:1.4}
+body .debt-card .dc-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+body .debt-card .dc-actions>.btn{min-width:0;white-space:normal;line-height:1.4}
+body .debt-card .dc-actions>.zavi-more-actions{grid-column:1/-1;min-width:0}
+body .zavi-more-actions>summary{cursor:pointer;min-height:38px;display:flex;justify-content:center;align-items:center;border-radius:12px;border:1px solid currentColor;opacity:.85}
+body .zavi-more-actions-inner{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+body .zavi-receipts-panel>summary{cursor:pointer}
+@media(max-width:480px){
+ body :is(.card,.debt-card,.settings-card,.dashboard-card){padding:clamp(10px,3vw,16px)}
+ body .debt-card .dc-actions{gap:6px}
+ body .debt-card .dc-actions>.btn{font-size:clamp(11px,2.9vw,14px);padding:8px 4px}
+ body .zavi-more-actions-inner{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+ body :is(.card,.debt-card,.dashboard-card,.settings-card,.menu-card,.panel,.btn,button){animation-duration:.01ms!important;transition-duration:.01ms!important}
+}

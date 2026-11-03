@@ -14,7 +14,7 @@ const assert=require('node:assert/strict');
    let stopped=0,entered=0,changed=0;
    input.addEventListener('input',()=>entered++);
    input.addEventListener('change',()=>changed++);
-   const media={getTracks:()=>[{stop(){stopped++}}]};
+   const media=new MediaStream();media.getTracks=()=>[{stop(){stopped++}}];
    Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>media}});
    Object.defineProperty(window,'BarcodeDetector',{configurable:true,value:undefined});
    HTMLMediaElement.prototype.play=async function(){};

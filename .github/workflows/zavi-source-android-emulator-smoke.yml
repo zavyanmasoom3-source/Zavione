@@ -52,10 +52,10 @@ jobs:
       - name: Install and run on clean Android API 35 emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
-          target: google_apis
+          api-level: 34
+          target: default
           arch: x86_64
-          profile: pixel_6
+          profile: pixel_2
           script: |
             set -euo pipefail
             mkdir -p qa-device

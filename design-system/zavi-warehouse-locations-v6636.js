@@ -11,7 +11,9 @@ function save(v){try{localStorage.setItem(KEY,JSON.stringify(v));return true}cat
 function clean(s){return String(s||'').trim().slice(0,100)}
 function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function mount(){
- var root=document.getElementById('content');if(!root||!root.querySelector('.transaction-table')||!root.textContent.includes('گدام'))return;
+ var root=document.getElementById('content');if(!root)return;
+ var heading=Array.from(root.querySelectorAll('h1,h2,h3')).some(function(el){return /محصول و موجودی گدام|محصولات و موجودی|مدیریت محصولات/.test(el.textContent||'')});
+ if(!heading)return;
  if(root.querySelector('#zavi-location-manager'))return;
  var products=(typeof db!=='undefined'&&db&&Array.isArray(db.products))?db.products:[];
  // Access the application's real product register only; never invent inventory quantities.

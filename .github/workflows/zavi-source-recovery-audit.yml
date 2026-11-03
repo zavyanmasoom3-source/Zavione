@@ -1,0 +1,25 @@
+name: Recover and audit independent sources
+on:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths:
+      - '.github/workflows/zavi-source-recovery-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export versioned web archives without APK extraction
+        run: |
+          mkdir -p source-archives
+          cp industry-delivery/ZAVI_ONE_V65_83_IPAD_WEB_PWA_QA.zip source-archives/one-web.zip
+          base64 --decode windows-build/admin-v145-responsive-web.zip.base64 > source-archives/admin-web.zip
+          sha256sum source-archives/*.zip > source-archives/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-web-source-archives
+          path: source-archives/
+          if-no-files-found: error

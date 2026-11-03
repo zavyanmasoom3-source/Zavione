@@ -10,7 +10,46 @@ on:
 permissions:
   contents: read
 jobs:
+  browser-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify original source references, purchase and WhatsApp invariants
+        run: |
+          node tests/source-feature-parity.cjs
+          node --test tests/purchase-finance.test.cjs tests/whatsapp.test.cjs
+          python3 -m unittest discover -s tests -v
+      - name: Install pinned browser test runtime
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Exercise actual app menus, login gates, accounting and device layouts
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory app-source > /tmp/zavi-http.log 2>&1 &
+          node tests/browser-source.cjs
+          node tests/warehouse-browser.cjs
+          node tests/barcode-browser.cjs
+          node tests/command-parity-browser.cjs
+          node tests/display-parity-browser.cjs
+          node tests/admin-owner-panel-browser.cjs
+          node tests/menu-parity-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-only-pre-build-test-evidence
+          path: |
+            browser-source-results.json
+            menu-parity-results.json
+            qa-parity-results.json
+          if-no-files-found: warn
+
   source-only:
+    needs: browser-gate
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

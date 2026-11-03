@@ -18,6 +18,8 @@ jobs:
         app: [one, admin]
     steps:
       - uses: actions/checkout@v4
+      - name: Test recovery safeguards
+        run: python3 -m unittest discover -s tests -v
       - name: Require complete independent source (never extract a legacy APK)
         env:
           ZAVI_APP: ${{ matrix.app }}

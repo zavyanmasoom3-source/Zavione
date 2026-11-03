@@ -15,12 +15,13 @@ function mount(){
  if(root.querySelector('#zavi-location-manager'))return;
  var products=(typeof db!=='undefined'&&db&&Array.isArray(db.products))?db.products:[];
  // Access the application's real product register only; never invent inventory quantities.
- if(!products.length)return;
+ // Allow naming warehouses even before the first product is registered.
  var box=document.createElement('section');box.id='zavi-location-manager';box.className='card';
  box.style.cssText='margin:14px 0;padding:18px;border-radius:18px';
- box.innerHTML='<h3>موقعیت محصولات در گدام</h3><p class="muted">گدام، بخش و الماری هر محصول را ثبت کنید. این بخش فقط موقعیت جنس را ذخیره می‌کند و موجودی حسابداری را تغییر نمی‌دهد.</p><div class="zavi-location-grid"><label>محصول<select id="zavi-loc-product"></select></label><label>نام گدام<select id="zavi-loc-warehouse-choice"></select></label><label>افزودن گدام<input id="zavi-loc-warehouse" maxlength="100" placeholder="نام گدام جدید (اختیاری)"></label><label>بخش / راهرو<input id="zavi-loc-zone" maxlength="100" placeholder="بخش A"></label><label>الماری / قفسه<input id="zavi-loc-shelf" maxlength="100" placeholder="قفسه ۱"></label></div><div class="zavi-loc-actions"><button type="button" class="btn" id="zavi-warehouse-add">افزودن نام گدام</button> <button type="button" class="btn primary" id="zavi-loc-save">ثبت موقعیت</button></div><div id="zavi-loc-status" role="status"></div><div class="zavi-loc-list" id="zavi-loc-list"></div>';
+ box.innerHTML='<h3>مدیریت گدام‌ها</h3><p class="muted">گدام جدید بسازید یا موقعیت محصول را انتخاب کنید. موجودی حسابداری جداگانه مدیریت می‌شود.</p><div class="zavi-location-grid"><label>محصول<select id="zavi-loc-product"></select></label><label>نام گدام<select id="zavi-loc-warehouse-choice"></select></label><label>افزودن گدام<input id="zavi-loc-warehouse" maxlength="100" placeholder="نام گدام جدید (اختیاری)"></label><label>بخش / راهرو<input id="zavi-loc-zone" maxlength="100" placeholder="بخش A"></label><label>الماری / قفسه<input id="zavi-loc-shelf" maxlength="100" placeholder="قفسه ۱"></label></div><div class="zavi-loc-actions"><button type="button" class="btn" id="zavi-warehouse-add">افزودن نام گدام</button> <button type="button" class="btn primary" id="zavi-loc-save">ثبت موقعیت</button></div><div id="zavi-loc-status" role="status"></div><div class="zavi-loc-list" id="zavi-loc-list"></div>';
  var select=box.querySelector('#zavi-loc-product');
  products.forEach(function(p){var o=document.createElement('option');o.value=String(p.id);o.textContent=String(p.name||p.sku||p.id);select.appendChild(o)});
+ if(!products.length){var o=document.createElement('option');o.value='';o.textContent='ابتدا محصول ثبت کنید';select.appendChild(o);box.querySelector('#zavi-loc-save').disabled=true;}
  function warehouses(){
   var values=['گدام مرکزی'].concat(readNames().filter(function(n){return n!=='گدام مرکزی'}));
   Object.keys(read()).forEach(function(id){var w=clean(read()[id]&&read()[id].warehouse);if(w&&values.indexOf(w)<0)values.push(w)});

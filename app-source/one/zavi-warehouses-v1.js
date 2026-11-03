@@ -100,6 +100,8 @@ async function refresh(box){
    if(ticket!==requestNo||!box.isConnected||activeWorkspace!==c.id)return;
    stockRows=[];stockNote=tr('موجودی دریافت نشد: ','موجودي ترلاسه نه شوه: ','Stock unavailable: ')+stockError.message;
   }
+  // Stock is a separate read model; render it immediately, even if audit-history is slow.
+  drawStock(box);
   try{
     const movements=await rest('/rest/v1/zavi_warehouse_movements?select=id,from_warehouse_id,to_warehouse_id,product_ref,quantity,reference,created_at,workspace_id&workspace_id=eq.'+encodeURIComponent(c.id)+'&order=created_at.desc&limit=30','GET');
     if(ticket!==requestNo||!box.isConnected||activeWorkspace!==c.id)return;

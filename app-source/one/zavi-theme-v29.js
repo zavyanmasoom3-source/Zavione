@@ -3,10 +3,17 @@
  */
 (()=>{'use strict';
  const KEY='zavi_theme_preference_v29';
- const isValid=x=>x==='light'||x==='dark';
+ const isValid=x=>x==='light'||x==='dark'||x==='glass';
  let current=document.documentElement.getAttribute('data-zavi-theme');
+ try{current=localStorage.getItem(KEY)||current}catch(_){}
  if(!isValid(current))current='dark';
  function syncControls(){
+  document.querySelectorAll('.zavi-theme-picker').forEach(group=>{
+   if(!group.querySelector('[data-zavi-theme-choice="glass"]')){
+    const button=document.createElement('button');button.type='button';button.className='zavi-theme-choice';button.setAttribute('data-zavi-theme-choice','glass');
+    const lang=document.documentElement.lang;button.textContent=lang==='en'?'Glass':lang==='ps-AF'?'ښیښه‌یي':'شیشه‌ای';group.appendChild(button);
+   }
+  });
   document.querySelectorAll('[data-zavi-theme-choice]').forEach(el=>{
    const active=el.getAttribute('data-zavi-theme-choice')===current;
    if(el.getAttribute('aria-pressed')!==String(active))el.setAttribute('aria-pressed',String(active));
@@ -16,7 +23,8 @@
  function setTheme(next){
   if(!isValid(next))return;
   current=next;
-  document.documentElement.setAttribute('data-zavi-theme',next);
+  document.documentElement.setAttribute('data-zavi-theme',next==='glass'?'dark':next);
+  document.documentElement.setAttribute('data-zavi-appearance',next);
   try{localStorage.setItem(KEY,next)}catch(_){/* private browser mode */}
   syncControls();
   document.dispatchEvent(new CustomEvent('zavi:theme-changed',{detail:{theme:next}}));
@@ -27,7 +35,7 @@
  });
  window.addEventListener('storage',e=>{if(e.key===KEY&&isValid(e.newValue))setTheme(e.newValue)});
  function init(){
-  syncControls();
+  setTheme(current);
   let queued=false;
   const mo=new MutationObserver(mutations=>{
    const hasThemeControls=mutations.some(m=>[...m.addedNodes].some(node=>

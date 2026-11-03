@@ -10,9 +10,20 @@ const fs=require('node:fs');
   const page=await context.newPage();const errors=[];
   page.on('pageerror',e=>errors.push(String(e)));
   await page.goto('http://127.0.0.1:8765/'+app+'/index.html');
-  await page.waitForTimeout(1200);
+  await page.waitForTimeout(1800);
   assert.equal(errors.length,0,JSON.stringify({app,errors}));
-  await page.screenshot({path:'qa-'+app+'-login.png',fullPage:true});
+  for(const [width,height] of [[390,844],[1024,768]]){
+   await page.setViewportSize({width,height});
+   for(const theme of ['light','dark','glass']){
+    await page.evaluate(theme=>window.ZaviThemeV29.set(theme),theme);
+    assert.equal(await page.evaluate(()=>localStorage.getItem('zavi_theme_preference_v29')),theme);
+    assert.equal(await page.evaluate(()=>document.documentElement.getAttribute('data-zavi-appearance')),theme);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true,'no horizontal overflow');
+    if(app==='one')assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.app')).display),'none','locked ledger must not be rendered behind the gate');
+    await page.screenshot({path:`qa-${app}-${theme}-${width}.png`,fullPage:true});
+   }
+  }
+  await page.setViewportSize({width:390,height:844});
   if(app==='one'){
    // Isolated fake workspace; no network, production credentials or server writes.
    await page.evaluate(()=>{

@@ -18,6 +18,8 @@ jobs:
         app: [one, admin]
     steps:
       - uses: actions/checkout@v4
+      - name: Require all known original accounting modules and command entry points
+        run: node tests/source-feature-parity.cjs
       - name: Test recovery safeguards
         run: python3 -m unittest discover -s tests -v
       - name: Require complete independent source (never extract a legacy APK)
@@ -64,6 +66,18 @@ jobs:
           cp app/src/main/res/drawable/ic_launcher.xml app/src/main/res/drawable/zavi_launcher_image.xml
           gradle --no-daemon :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviProduction=false
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify app/build/outputs/apk/debug/app-debug.apk
+      - name: Check exact QA APK size and do not claim it contains offline voice model
+        working-directory: android-build
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          apk=Path('app/build/outputs/apk/debug/app-debug.apk')
+          size=apk.stat().st_size
+          print('QA APK bytes:',size)
+          if size > 6_000_000:
+              raise SystemExit('QA size exceeded 6 MB target; audit new assets; DO NOT remove live features to shrink.')
+          print('Low APK size excludes bundled native offline voice; feature is not production-certified.')
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: ZAVI_${{ matrix.app }}_SOURCE_ONLY_QA_APK

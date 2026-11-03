@@ -13,6 +13,8 @@ const core={
   permissions:['zavi-staff-v648-core.js','offline-license-secure.js','zavi-store-v6579-auto-signed-offline.js'],
   locale:['zavi-i18n-v22.js','zavi-i18n-v6541-verified.js'],
   command:['zavi-dual-command-v6605.js','zavi-dual-command-v6605.css'],
+  restoredDisplay:['zavi-three-sizes-v6588.js','zavi-three-sizes-v6588.css','zavi-landscape-v6589.js','zavi-landscape-v6589.css','zavi-mobile-rescue-v6590.js','zavi-mobile-rescue-v6590.css'],
+  recovery:['zavi-store-recovery-v6594.js','zavi-store-recovery-v6594.css'],
   print:['invoice.html','receipt-ui.js'],
  },
  admin:{
@@ -21,6 +23,8 @@ const core={
   customer:['zavi-admin-services-v15.js','zavi-admin-service-whatsapp-v139.js'],
   locale:['en.json','fa.json','ps.json','zavi-i18n-v22.js'],
   command:['zavi-dual-command-v6605.js','zavi-dual-command-v6605.css'],
+  restoredDisplay:['zavi-three-sizes-v6588.js','zavi-three-sizes-v6588.css','zavi-landscape-v6589.js','zavi-landscape-v6589.css','zavi-mobile-rescue-v6590.js','zavi-mobile-rescue-v6590.css','zavi-admin-ipad-v1438.js','zavi-admin-ipad-v1438.css'],
+  ownerReminders:['zavi-admin-renewal-v1439.js','zavi-admin-congratulations-v1440.js','zavi-admin-theme-congrats-v1440.css','zavi-admin-command-v1441.js'],
   print:['receipt-ui.js'],
  }
 };

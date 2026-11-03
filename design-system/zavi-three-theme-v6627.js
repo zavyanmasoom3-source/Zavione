@@ -40,7 +40,7 @@
    var h=headings[k];
    if(!h.getClientRects().length)continue;
    var label=(h.textContent||'').trim();
-   if(!/^(تنظیمات|Settings|امستنې)(\\s|$)/i.test(label))continue;
+   if(!/^(تنظیمات|Settings|امستنې)(\s|$)/i.test(label))continue;
    var section=h.closest('section,article,.page,.screen,.content,.panel')||h.parentElement;
    if(section && section.getBoundingClientRect().width>180)return section;
   }

@@ -1,0 +1,21 @@
+name: Recover ZAVI independent web source
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover independent source from web archives
+        run: python3 scripts/recover-independent-source.py
+      - name: Verify recovered source
+        run: |
+          test -s app-source/one/index.html
+          wc -c app-source/one/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ONE_INDEPENDENT_SOURCE
+          path: app-source/one/
+          if-no-files-found: error

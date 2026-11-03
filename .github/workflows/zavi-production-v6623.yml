@@ -1,4 +1,4 @@
-name: ZAVI ONE and ADMIN Android build V66.52 QA
+name: ZAVI ONE and ADMIN Android build V66.53 QA
 on:
   workflow_dispatch:
   push:
@@ -501,7 +501,7 @@ jobs:
           sha256sum app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6652_ANDROID_BUILD_QA
+          name: ZAVI_${{ matrix.app }}_V6653_ANDROID_BUILD_QA
           path: android-build/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14

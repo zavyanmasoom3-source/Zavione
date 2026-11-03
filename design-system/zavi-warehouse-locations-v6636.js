@@ -3,6 +3,9 @@
 (function(){
 'use strict';
 var KEY='zavi.warehouse.locations.v1';
+var WAREHOUSE_KEY='zavi.warehouse.names.v1';
+function readNames(){try{var a=JSON.parse(localStorage.getItem(WAREHOUSE_KEY)||'[]');return Array.isArray(a)?a.filter(function(x){return typeof x==='string'&&x.trim()}).slice(0,100):[]}catch(e){return []}}
+function rememberName(name){name=clean(name);if(!name)return true;var a=readNames();if(a.indexOf(name)>=0)return true;a.push(name);try{localStorage.setItem(WAREHOUSE_KEY,JSON.stringify(a));return true}catch(e){return false}}
 function read(){try{var v=JSON.parse(localStorage.getItem(KEY)||'{}');return v&&typeof v==='object'?v:{}}catch(e){return {}}}
 function save(v){try{localStorage.setItem(KEY,JSON.stringify(v));return true}catch(e){return false}}
 function clean(s){return String(s||'').trim().slice(0,100)}
@@ -19,7 +22,7 @@ function mount(){
  var select=box.querySelector('#zavi-loc-product');
  products.forEach(function(p){var o=document.createElement('option');o.value=String(p.id);o.textContent=String(p.name||p.sku||p.id);select.appendChild(o)});
  function warehouses(){
-  var values=['گدام مرکزی'];
+  var values=['گدام مرکزی'].concat(readNames().filter(function(n){return n!=='گدام مرکزی'}));
   Object.keys(read()).forEach(function(id){var w=clean(read()[id]&&read()[id].warehouse);if(w&&values.indexOf(w)<0)values.push(w)});
   return values;
  }
@@ -38,7 +41,10 @@ function mount(){
  select.addEventListener('change',update);
  box.querySelector('#zavi-loc-save').addEventListener('click',function(){
   var id=select.value;if(!id)return;
-  var v=read();v[id]={warehouse:clean(box.querySelector('#zavi-loc-warehouse').value)||clean(box.querySelector('#zavi-loc-warehouse-choice').value),zone:clean(box.querySelector('#zavi-loc-zone').value),shelf:clean(box.querySelector('#zavi-loc-shelf').value)};
+  var v=read();var warehouse=clean(box.querySelector('#zavi-loc-warehouse').value)||clean(box.querySelector('#zavi-loc-warehouse-choice').value);
+  if(!warehouse){box.querySelector('#zavi-loc-status').textContent='نام گدام را انتخاب کنید.';return}
+  if(!rememberName(warehouse)){box.querySelector('#zavi-loc-status').textContent='نام گدام ذخیره نشد؛ فضای ذخیره‌سازی را بررسی کنید.';return}
+  v[id]={warehouse:warehouse,zone:clean(box.querySelector('#zavi-loc-zone').value),shelf:clean(box.querySelector('#zavi-loc-shelf').value)};
   box.querySelector('#zavi-loc-status').textContent=save(v)?'موقعیت محصول ذخیره شد.':'ذخیره انجام نشد؛ فضای ذخیره‌سازی را بررسی کنید.';update();
  });
  var scanner=root.querySelector('.z638-warehouse-scanner');

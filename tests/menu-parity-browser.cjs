@@ -21,7 +21,10 @@ const fs=require('node:fs');
      page='dashboard';render();
      return {items:[...document.querySelectorAll('#sidebarLinks [data-go],#sidebarLinks2 [data-go]')].map(x=>x.dataset.go),ledger:JSON.stringify(db)};
     }
-    mode='demo';session=null;rows=[];selected=null;page='overview';showApp();
+    const demo=document.getElementById('demoBtn');
+    if(!demo||demo.hidden)throw Error('Safe local demo mode not available');
+    demo.click();
+    if(document.getElementById('appScreen').hidden)throw Error('Original ADMIN demo login failed');
     return {items:[...document.querySelectorAll('#appScreen .nav-item[data-page]')].map(x=>x.dataset.page)};
    },app);
    assert.ok(boot.items.length>=10,app+': original menu should contain >=10 sections');
@@ -41,7 +44,8 @@ const fs=require('node:fs');
        await new Promise(r=>setTimeout(r,3));
        const view=app==='one'?document.querySelector('#content'):document.querySelector('#view');
        const chars=(view?.textContent||'').trim().length;
-       if(page!==section||chars<18)failed.push({section,actual:page,chars,reason:'route missing/empty'});
+       const actual=app==='one'?page:document.querySelector('#appScreen .nav-item.selected')?.dataset.page;
+       if(actual!==section||chars<18)failed.push({section,actual,chars,reason:'route missing/empty'});
        if(app==='one'&&JSON.stringify(db)!==expectedLedger)failed.push({section,reason:'menu mutated ledger'});
        outcomes.push(section);
       }

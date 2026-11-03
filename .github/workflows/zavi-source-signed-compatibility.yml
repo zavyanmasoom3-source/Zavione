@@ -1,0 +1,151 @@
+name: Source-only signed candidate and legacy compatibility gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths:
+      - 'app-source/**'
+      - 'android-build/**'
+      - '.github/workflows/zavi-source-signed-compatibility.yml'
+permissions:
+  contents: read
+jobs:
+  verify-signed-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: one
+            legacy_apk: ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk
+            package: com.zavione.one
+          - app: admin
+            legacy_apk: ZAVI_ONE_ADMIN_V1_4_52_INDEPENDENT_COMMAND_QA.apk
+            package: com.zavione.one.admin
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source without unpacking any APK
+        env:
+          ZAVI_APP: ${{ matrix.app }}
+        run: |
+          python3 -m unittest discover -s tests -v
+          python3 - <<'PY'
+          import importlib.util,os
+          from pathlib import Path
+          spec=importlib.util.spec_from_file_location('recovery','scripts/recover-independent-source.py')
+          m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+          m.validate(Path('app-source')/os.environ['ZAVI_APP'])
+          PY
+      - name: Stage maintained source, never legacy APK web assets
+        env:
+          ZAVI_APP: ${{ matrix.app }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,shutil
+          dst=Path('android-build/app/src/main/assets')
+          if dst.exists():shutil.rmtree(dst)
+          shutil.copytree(Path('app-source')/os.environ['ZAVI_APP'],dst)
+          assert (dst/'index.html').is_file()
+          PY
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Prepare Android SDK
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Decode and validate the ORIGINAL app-specific signing keystore
+        env:
+          ZAVI_APP: ${{ matrix.app }}
+          STORE_B64: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEYSTORE_BASE64 || secrets.ZAVI_ADMIN_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_ALIAS || secrets.ZAVI_ADMIN_KEY_ALIAS }}
+          KEY_PASS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_PASSWORD || secrets.ZAVI_ADMIN_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 - <<'PY'
+          import os,base64,zipfile,io
+          from pathlib import Path
+          values=['STORE_B64','STORE_PASS','KEY_ALIAS','KEY_PASS']
+          missing=[key for key in values if not os.getenv(key)]
+          if missing:raise SystemExit('Signing inputs missing: '+', '.join(missing))
+          try:blob=base64.b64decode(''.join(os.environ['STORE_B64'].split()),validate=True)
+          except Exception:raise SystemExit('Base64 keystore is invalid')
+          if zipfile.is_zipfile(io.BytesIO(blob)):
+              expected={'one':'ZAVI_ONE_100_YEAR_RELEASE.jks','admin':'ZAVI_ONE_ADMIN_100_YEAR_RELEASE.jks'}[os.environ['ZAVI_APP']]
+              with zipfile.ZipFile(io.BytesIO(blob)) as z:
+                  info=[i for i in z.infolist() if i.filename==expected and not i.is_dir()]
+                  if len(info)!=1 or info[0].file_size>1024*1024:raise SystemExit('Expected one small app-specific keystore in ZIP')
+                  blob=z.read(info[0])
+          if len(blob)<1000 or blob[:2]==b'PK':raise SystemExit('Keystore material invalid; do not use ZIP as keystore')
+          p=Path(os.environ['RUNNER_TEMP'])/'zavi-original-release.jks'
+          p.write_bytes(blob)
+          PY
+          store="$RUNNER_TEMP/zavi-original-release.jks"
+          if ! keytool -list -keystore "$store" -storepass "$STORE_PASS" -alias "$KEY_ALIAS" >/dev/null 2>&1; then
+            echo "::error title=Signing mismatch::Original keystore password or alias failed validation"
+            exit 1
+          fi
+          if ! keytool -importkeystore -noprompt -srckeystore "$store" -srcstorepass "$STORE_PASS" -srcalias "$KEY_ALIAS" -srckeypass "$KEY_PASS" -destkeystore "$RUNNER_TEMP/zavi-keycheck.p12" -deststoretype PKCS12 -deststorepass "$STORE_PASS" -destkeypass "$STORE_PASS" >/dev/null 2>&1; then
+            echo "::error title=Signing mismatch::Original private key password could not unlock the alias"
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/zavi-keycheck.p12"
+          echo "ZAVI_RELEASE_STORE_FILE=$store" >> "$GITHUB_ENV"
+      - name: Assemble actual signed release-type candidate from maintained source
+        working-directory: android-build
+        env:
+          ZAVI_RELEASE_STORE_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
+          ZAVI_RELEASE_KEY_ALIAS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_ALIAS || secrets.ZAVI_ADMIN_KEY_ALIAS }}
+          ZAVI_RELEASE_KEY_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_PASSWORD || secrets.ZAVI_ADMIN_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          cp app/src/main/res/drawable/ic_launcher.xml app/src/main/res/drawable/zavi_launcher_image.xml
+          gradle --no-daemon :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviProduction=false
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
+      - name: Compare installed legacy APK certificate and package identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p reference
+          gh release download zavi-migration-v6606 --repo "${{ github.repository }}" --pattern "${{ matrix.legacy_apk }}" --dir reference
+          prior="reference/${{ matrix.legacy_apk }}"
+          current="android-build/app/build/outputs/apk/release/app-release.apk"
+          test -s "$prior" && test -s "$current"
+          signer="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          aapt="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          old_cert=$("$signer" verify --print-certs "$prior" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1)
+          new_cert=$("$signer" verify --print-certs "$current" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1)
+          old_meta=$("$aapt" dump badging "$prior" | grep '^package:' | head -n 1)
+          new_meta=$("$aapt" dump badging "$current" | grep '^package:' | head -n 1)
+          echo "Previous: $old_meta"
+          echo "Candidate: $new_meta"
+          [[ -n "$old_cert" && -n "$new_cert" ]] || { echo "::error::Cannot inspect certificate"; exit 1; }
+          if [[ "$old_cert" != "$new_cert" ]]; then
+            echo "::error title=Unsafe upgrade::Signing certificate differs from prior installed release, so in-place upgrade can lose data"
+            exit 1
+          fi
+          expected='${{ matrix.package }}'
+          if [[ "$old_meta" != *"name='$expected'"* || "$new_meta" != *"name='$expected'"* ]]; then
+            echo "::error title=Unsafe upgrade::Original and new package names do not both match the expected app ID"
+            exit 1
+          fi
+          old_code=$(echo "$old_meta" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p")
+          new_code=$(echo "$new_meta" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p")
+          [[ -n "$old_code" && -n "$new_code" && "$new_code" -gt "$old_code" ]] || { echo "::error title=Unsafe upgrade::Candidate versionCode must be greater than previous"; exit 1; }
+          echo "Signing certificate and package ID matched prior APK; versionCode increases."
+          echo "Feature quality, data migration and device compatibility NOT certified."
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_${{ matrix.app }}_SOURCE_ONLY_SIGNED_COMPATIBLE_QA
+          path: android-build/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14

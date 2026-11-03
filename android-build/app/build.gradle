@@ -10,8 +10,8 @@ android {
         applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
         minSdk 26
         targetSdk 36
-        versionCode admin ? 145550 : 660640
-        versionName admin ? '1.4.55-source-qa' : '66.64-source-qa'
+        versionCode admin ? 145560 : 660650
+        versionName admin ? '1.4.56-source-qa' : '66.65-source-qa'
         resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
     }
     signingConfigs {

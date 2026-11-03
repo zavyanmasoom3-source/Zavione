@@ -23,3 +23,18 @@
    word-break:normal; overflow-wrap:break-word;
  }
 }
+
+/* V66.58: compact scanner panels and unobstructed bottom actions on phones. */
+@media (max-width:600px) {
+  .z638-warehouse-scanner { padding:10px!important; margin-block:8px!important; }
+  .z638-warehouse-scanner :is(h2,h3,h4) { font-size:1rem!important; line-height:1.35!important; margin-block:4px 8px!important; }
+  .z638-warehouse-scanner :is(p,.muted,small) { font-size:.79rem!important; line-height:1.45!important; margin-block:4px!important; }
+  .z638-warehouse-scanner :is(button,input) { min-height:36px!important; font-size:.86rem!important; }
+  .z638-warehouse-scanner :is(.card,.panel) { padding:9px!important; margin-block:7px!important; }
+  #zavi-location-manager { padding:12px!important; }
+  #zavi-location-manager :is(input,select) { min-width:0; width:100%; box-sizing:border-box; }
+  #zavi-location-manager .zavi-location-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr)); gap:9px; }
+  #zavi-location-manager label { display:grid; gap:4px; min-width:0; font-size:.85rem; }
+  /* The assistant must never cover invoice confirm/cancel buttons. */
+  #z637AiButton,.z637-ai-button { bottom:82px!important; }
+}

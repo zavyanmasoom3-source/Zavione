@@ -23,6 +23,7 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 --directory app-source > /tmp/zavi-http.log 2>&1 &
           node tests/browser-source.cjs
           node tests/warehouse-browser.cjs
+          node tests/barcode-browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

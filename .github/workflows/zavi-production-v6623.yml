@@ -1,4 +1,4 @@
-name: ZAVI ONE and ADMIN compact mobile QA APK V66.58
+name: ZAVI ONE and ADMIN warehouse selector QA APK V66.59
 on:
   workflow_dispatch:
   push:
@@ -410,7 +410,7 @@ jobs:
           sha256sum app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6658_INSTALLABLE_DEBUG_APK
+          name: ZAVI_${{ matrix.app }}_V6659_INSTALLABLE_DEBUG_APK
           path: android-build/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -419,11 +419,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag="zavi-v6658-${{ matrix.app }}-debug-qa"
-          asset="ZAVI_${{ matrix.app }}_V6658_DEBUG_QA.apk"
+          tag="zavi-v6659-${{ matrix.app }}-debug-qa"
+          asset="ZAVI_${{ matrix.app }}_V6659_DEBUG_QA.apk"
           cp android-build/app/build/outputs/apk/debug/app-debug.apk "$asset"
           if ! gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            gh release create "$tag" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "ZAVI ${{ matrix.app }} V66.58 Android QA (debug)" --notes "Installable debug-signed test APK only. Not production-signed; verify all accounting and offline features before public release." --prerelease
+            gh release create "$tag" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "ZAVI ${{ matrix.app }} V66.59 Android QA (debug)" --notes "Installable debug-signed test APK only. Not production-signed; verify all accounting and offline features before public release." --prerelease
           fi
           gh release upload "$tag" "$asset" --repo "${{ github.repository }}" --clobber
           gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[].name'

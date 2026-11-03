@@ -1,82 +1,111 @@
-/* ZAVI ONE V63.5 - optional local-only camera barcode scanning.
- * No network call or analytics. Existing invoice SKU validation remains the authority.
- * Camera is requested ONLY on a click and all tracks are stopped on exit.
+/* ZAVI ONE offline barcode camera: native BarcodeDetector or bundled ZXing.
+ * No CDN, cloud queries or writes. Existing catalog/invoice validation is authoritative.
  */
 (()=>{'use strict';
- const messages={
-  fa:{start:'اسکن با دوربین',close:'بستن دوربین',ready:'بارکد را در تصویر دوربین قرار دهید.',unavailable:'اسکن دوربینی در این مرورگر پشتیبانی نمی‌شود. از بارکدخوان یا ورود دستی استفاده کنید.',secure:'دوربین فقط از صفحه امن HTTPS یا برنامه نصب‌شده قابل استفاده است.',denied:'دسترسی دوربین فراهم نشد. اجازه دوربین را بررسی کنید یا کد را دستی وارد کنید.',wrong:'کد شناسایی‌شده معتبر نیست. بارکد را دوباره اسکن کنید.'},
-  ps:{start:'د کمرې سکن',close:'کمره بنده کړئ',ready:'بارکوډ د کمرې مخې ته ونیسئ.',unavailable:'دا براوزر د کمرې سکن نه لري. بارکوډ یا لاسي کوډ وکاروئ.',secure:'کمره یوازې په خوندي HTTPS پاڼه کې کار کوي.',denied:'د کمرې اجازه نشته. کوډ په لاس ولیکئ.',wrong:'بارکوډ سم نه دی.'},
-  en:{start:'Scan with camera',close:'Close camera',ready:'Hold the barcode in front of your camera.',unavailable:'Camera barcode scanning is unavailable in this browser. Use a scanner or enter the code manually.',secure:'Camera requires HTTPS or a secure installed application.',denied:'Camera access failed. Check camera permission or enter the code manually.',wrong:'The scanned barcode is invalid.'}
- };
- const msg=k=>(messages[document.documentElement.lang==='en'?'en':document.documentElement.lang==='ps-AF'?'ps':'fa'])[k];
- let active=false,stream=null,detector=null,view=null,raf=0,checking=false,lastScan='',lastTime=0,targetId='zaviBarcodeScan';
- const formats=['ean_13','ean_8','code_128','qr_code'];
- function notify(value){if(typeof window.toast==='function')window.toast(value);else window.alert(value)}
- function stop(){active=false;if(raf)cancelAnimationFrame(raf);raf=0;const s=stream;stream=null;if(s)for(const t of s.getTracks())try{t.stop()}catch(_){};if(view){view.remove();view=null;}detector=null;checking=false;}
- async function start(nextTarget='zaviBarcodeScan'){
-  if(active)return;
-  lastScan='';
-  if(!['zaviBarcodeScan','zaviWarehouseScan','fld_sku'].includes(nextTarget))return;
-  const input=document.getElementById(nextTarget);
-  if(!input)return;
-  targetId=nextTarget;
-  if(!window.isSecureContext){notify(msg('secure'));return;}
-  if(typeof window.BarcodeDetector!=='function'||!navigator.mediaDevices?.getUserMedia){notify(msg('unavailable'));return;}
+const dict={
+ fa:{start:'اسکن بارکد',close:'بستن دوربین',ready:'بارکد را مقابل دوربین بگیرید.',unavailable:'اسکن دوربینی پشتیبانی نمی‌شود؛ بارکد را دستی وارد کنید.',secure:'دوربین به HTTPS یا اپ نصب‌شده نیاز دارد.',denied:'اجازه دوربین داده نشد؛ بارکد را دستی وارد کنید.',retry:'دوربین متوقف شد. دوباره کوشش کنید.'},
+ ps:{start:'د بارکوډ سکن',close:'کمره بندول',ready:'بارکوډ د کمرې مخې ته ونیسئ.',unavailable:'د کمرې سکن نشته؛ کوډ په لاس ولیکئ.',secure:'کمره HTTPS یا نصب شوی اپ غواړي.',denied:'د کمرې اجازه نشته؛ کوډ په لاس ولیکئ.',retry:'کمره بنده شوه. بیا هڅه وکړئ.'},
+ en:{start:'Scan barcode',close:'Close camera',ready:'Point the camera at the barcode.',unavailable:'Camera scanning unavailable; enter the barcode manually.',secure:'Camera requires HTTPS or an installed app.',denied:'Camera permission denied; enter the code manually.',retry:'Camera stopped. Please try again.'}
+};
+const ids=new Set(['zaviBarcodeScan','zaviWarehouseScan','fld_sku']);
+const messages=()=>{const l=(document.documentElement.lang||'fa-AF').toLowerCase();return dict[l.startsWith('en')?'en':l.startsWith('ps')?'ps':'fa']};
+function notify(value){if(typeof window.toast==='function')window.toast(value);else window.alert(value)}
+let state=null,serial=0,frame=0;
+function stop(){
+ ++serial;
+ if(frame)cancelAnimationFrame(frame);frame=0;
+ const s=state;state=null;
+ if(!s)return;
+ try{s.cancel?.()}catch(_){}
+ try{s.stream?.getTracks().forEach(t=>t.stop())}catch(_){}
+ try{if(s.video){s.video.pause();s.video.srcObject=null}}catch(_){}
+ try{s.panel?.remove()}catch(_){}
+}
+function deliver(value,token){
+ if(!state||token!==serial)return;
+ const clean=String(value??'').trim();
+ if(!clean||clean.length>70||/[\x00-\x1f\x7f]/.test(clean))return;
+ const {id,input}=state;
+ if(!input.isConnected){stop();return}
+ stop();input.value=clean;
+ input.dispatchEvent(new Event('input',{bubbles:true}));
+ input.dispatchEvent(new Event('change',{bubbles:true}));
+ if(id!=='fld_sku')input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+ input.focus({preventScroll:true});
+}
+function panel(s){
+ const box=document.createElement('section');box.id='zaviCameraPanel';box.className='zavi-camera-panel';box.setAttribute('role','region');box.setAttribute('aria-label',messages().start);
+ const button=document.createElement('button');button.type='button';button.className='btn subtle';button.textContent=messages().close;button.addEventListener('click',stop);
+ const video=document.createElement('video');video.id='zaviCameraVideo';video.autoplay=true;video.muted=true;video.playsInline=true;video.setAttribute('playsinline','');video.setAttribute('aria-label',messages().ready);
+ const note=document.createElement('p');note.className='field-hint';note.setAttribute('role','status');note.textContent=messages().ready;
+ box.append(button,video,note);
+ const host=s.input.closest('.zavi-barcode-box')||s.input.closest('.field')||s.input.parentElement;
+ host.append(box);s.panel=box;s.video=video;
+}
+async function fallback(s,token){
+ if(!window.ZaviZXingV6591?.start){stop();notify(messages().unavailable);return}
+ try{
+  s.cancel=await window.ZaviZXingV6591.start(s.stream,s.video,value=>deliver(value,token));
+  if(state!==s||serial!==token){try{s.cancel?.()}catch(_){}}
+ }catch(err){if(state===s&&serial===token){stop();notify(messages().retry)}}
+}
+async function loop(token){
+ const s=state;if(!s||serial!==token||!s.detector)return;
+ if(!s.panel.isConnected||!s.input.isConnected){stop();return}
+ if(!s.checking&&s.video.readyState>=2&&performance.now()-(s.lastFrame||0)>175){
+  s.lastFrame=performance.now();s.checking=true;
   try{
-   const supported=typeof BarcodeDetector.getSupportedFormats==='function'?await BarcodeDetector.getSupportedFormats():formats;
-   const matching=formats.filter(f=>supported.includes(f));
-   if(!matching.length){notify(msg('unavailable'));return;}
-   detector=new BarcodeDetector({formats:matching});
-   active=true;
-   view=document.createElement('div');view.className='zavi-camera-panel';view.id='zaviCameraPanel';
-   const close=document.createElement('button');close.type='button';close.className='btn subtle';close.textContent=msg('close');close.addEventListener('click',stop);
-   const video=document.createElement('video');video.id='zaviCameraVideo';video.autoplay=true;video.muted=true;video.playsInline=true;video.setAttribute('aria-label',msg('ready'));
-   const hint=document.createElement('p');hint.className='field-hint';hint.setAttribute('role','status');hint.textContent=msg('ready');
-   view.append(close,video,hint);
-   (input.closest('.zavi-barcode-box')||input.closest('.field')||input.parentElement).append(view);
-   const obtained=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'}}});
-   // User may have closed the invoice before permission was granted.
-   if(!active||!input.isConnected||!view?.isConnected){for(const t of obtained.getTracks())t.stop();stop();return;}
-   stream=obtained;video.srcObject=obtained;
-   try{await video.play()}catch(_){};
-   raf=requestAnimationFrame(loop);
-  }catch(err){stop();if(err?.name!=='AbortError')notify(err?.name==='NotAllowedError'?msg('denied'):msg('denied'));}
+   const codes=await s.detector.detect(s.video);
+   if(state!==s||serial!==token)return;
+   if(Array.isArray(codes))for(const found of codes){if(found?.rawValue){deliver(found.rawValue,token);return}}
+   s.failures=0;
+  }catch(_){
+   s.failures++;
+   if(s.failures>=10){s.detector=null;void fallback(s,token);return}
+  }finally{s.checking=false}
  }
- async function loop(){
-  if(!active)return;
-  const input=document.getElementById(targetId),video=view?.querySelector('video');
-  if(!input||!input.isConnected||!view?.isConnected||!video){stop();return;}
-  const ts=performance.now();
-  if(!checking&&ts-lastTime>=180&&video.readyState>=2){
-   lastTime=ts;checking=true;
+ if(state===s&&s.detector)frame=requestAnimationFrame(()=>loop(token));
+}
+async function start(id='zaviBarcodeScan'){
+ if(!ids.has(id))return;
+ const input=document.getElementById(id);if(!input){notify(messages().unavailable);return}
+ stop();
+ if(!window.isSecureContext){notify(messages().secure);return}
+ if(!navigator.mediaDevices?.getUserMedia){notify(messages().unavailable);return}
+ const token=serial,s={id,input,panel:null,video:null,stream:null,cancel:null,detector:null,checking:false,failures:0,lastFrame:0};
+ state=s;panel(s);
+ try{
+  // IMPORTANT for Safari: invoke getUserMedia immediately in the user click, before any await.
+  const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+  if(state!==s||token!==serial||!input.isConnected){stream.getTracks().forEach(t=>t.stop());return}
+  s.stream=stream;s.video.srcObject=stream;
+  try{await s.video.play()}catch(_){}
+  if(state!==s||token!==serial)return;
+  if(typeof window.BarcodeDetector==='function'){
    try{
-    const found=await detector.detect(video);
-    if(!active||!view?.isConnected)return;
-    for(const entry of found){
-     const value=String(entry?.rawValue||'').trim();
-     if(!value||value.length>70||/[\x00-\x1f\x7f]/.test(value))continue;
-     // The camera stops immediately after a valid scan. Do not suppress scanning the same
-     // physical barcode in a NEW session: repeated product sales must be possible.
-     lastScan=value;
-     stop();
-     input.value=value;
-     // Invoice and warehouse share existing catalog validation. Product form only fills SKU.
-     input.dispatchEvent(new Event('input',{bubbles:true}));
-     if(targetId!=='fld_sku')input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
-     input.focus();return;
-    }
-   }catch(_){/* transient camera/video frame errors are expected */}
-   finally{checking=false;}
+    const preferred=['ean_13','ean_8','code_128','qr_code','upc_a','code_39'];
+    const available=typeof window.BarcodeDetector.getSupportedFormats==='function'?await window.BarcodeDetector.getSupportedFormats():preferred;
+    const formats=preferred.filter(x=>available.includes(x));
+    if(formats.length)s.detector=new window.BarcodeDetector({formats});
+   }catch(_){s.detector=null}
   }
-  if(active)raf=requestAnimationFrame(loop);
+  if(state!==s||token!==serial)return;
+  if(s.detector)frame=requestAnimationFrame(()=>loop(token));
+  else await fallback(s,token);
+ }catch(error){
+  if(state!==s||token!==serial)return;
+  stop();
+  notify(['NotAllowedError','PermissionDeniedError','SecurityError'].includes(error?.name)?messages().denied:messages().retry);
  }
- document.addEventListener('click',event=>{
-  if(event.target.closest('[data-zavi-camera-open]')){event.preventDefault();start(event.target.closest('[data-zavi-camera-open]').getAttribute('data-zavi-camera-open')||'zaviBarcodeScan');}
-  else if(active&&(event.target.closest('#closeModal,#cancelModal')||event.target.id==='backdrop'))stop();
- });
- document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});
- window.addEventListener('pagehide',stop);
- const mo=new MutationObserver(()=>{if(active&&(!view?.isConnected||!document.getElementById(targetId)))stop()});
- mo.observe(document.documentElement,{subtree:true,childList:true});
- window.ZaviCameraScan={start,stop};
+}
+document.addEventListener('click',e=>{
+ const button=e.target.closest?.('[data-zavi-camera-open]');
+ if(button){e.preventDefault();void start(button.getAttribute('data-zavi-camera-open')||'zaviBarcodeScan');return}
+ if(state&&(e.target.closest?.('#closeModal,#cancelModal')||e.target.id==='backdrop'))stop()
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});
+window.addEventListener('pagehide',stop);
+const observer=new MutationObserver(()=>{if(state&&(!state.panel?.isConnected||!state.input?.isConnected))stop()});
+observer.observe(document.documentElement,{childList:true,subtree:true});
+window.ZaviCameraScan={start,stop};
 })();

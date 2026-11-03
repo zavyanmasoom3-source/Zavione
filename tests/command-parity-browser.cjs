@@ -36,7 +36,7 @@ const assert=require('node:assert/strict');
      document.documentElement.classList.add('zawi-locked');
      const blocked=window.ZaviDualCommand605.execute('فروش باز کن','text');
      document.documentElement.classList.remove('zawi-locked');
-     const target=document.querySelector('#sidebarLinks [data-go="sales"]');
+     const target=window.ZaviDualCommand605.findNavigation('sales');
      if(!target)throw Error('Sales navigation control not present');
      let clicked=0;target.addEventListener('click',()=>clicked++,{once:true});
      const opened=window.ZaviDualCommand605.execute('فروش باز کن','text');

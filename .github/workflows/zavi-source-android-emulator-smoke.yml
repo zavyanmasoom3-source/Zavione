@@ -1,0 +1,84 @@
+name: Source-only Android emulator install and launch smoke (QA)
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths: ['.github/workflows/zavi-source-android-emulator-smoke.yml']
+permissions:
+  contents: read
+jobs:
+  install-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: one
+            package: com.zavione.one
+          - app: admin
+            package: com.zavione.one.admin
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source integrity
+        run: |
+          python3 -m unittest discover -s tests -v
+          node tests/source-feature-parity.cjs
+      - name: Stage source-only web app
+        env:
+          ZAVI_APP: ${{ matrix.app }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,shutil
+          src=Path('app-source')/os.environ['ZAVI_APP']
+          dst=Path('android-build/app/src/main/assets')
+          if dst.exists():shutil.rmtree(dst)
+          shutil.copytree(src,dst)
+          assert (dst/'index.html').is_file()
+          PY
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Android source-only Debug build (no release signing)
+        working-directory: android-build
+        run: |
+          cp app/src/main/res/drawable/ic_launcher.xml app/src/main/res/drawable/zavi_launcher_image.xml
+          gradle --no-daemon :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviProduction=false
+      - name: Install and run on clean Android API 35 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            set -euo pipefail
+            mkdir -p qa-device
+            apk='android-build/app/build/outputs/apk/debug/app-debug.apk'
+            package='${{ matrix.package }}'
+            adb install "$apk"
+            adb shell pm path "$package" | grep -q 'package:'
+            adb logcat -c
+            adb shell am start -W -n "$package/com.zavione.mobile.MainActivity"
+            sleep 12
+            test -n "$(adb shell pidof "$package" | tr -d '\r')"
+            adb shell dumpsys package "$package" | grep -m1 'versionName=' > qa-device/app-version.txt
+            adb exec-out screencap -p > qa-device/startup.png
+            adb shell uiautomator dump /sdcard/qa-window.xml >/dev/null
+            adb pull /sdcard/qa-window.xml qa-device/window.xml >/dev/null
+            if adb logcat -d -s AndroidRuntime:E | grep -E 'FATAL EXCEPTION|Process: ${{ matrix.package }}'; then
+              echo '::error::Unexpected Android crash during first launch'
+              exit 1
+            fi
+            echo 'APK installed, correct package resolved, MainActivity running and screenshot captured.'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: QA-Android35-${{ matrix.app }}-install-and-start
+          path: qa-device/**
+          if-no-files-found: warn

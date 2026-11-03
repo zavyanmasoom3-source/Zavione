@@ -43,7 +43,7 @@ const assert=require('node:assert/strict');
     for(let i=0;i<30&&panel.querySelectorAll('.zv-wh-row').length!==1;i++)await new Promise(r=>setTimeout(r,20));
     if(records.length!==1||panel.querySelectorAll('.zv-wh-row').length!==1)throw Error('Create warehouse not persisted in cloud mock');
     for(let i=0;i<80&&panel.querySelectorAll('.zv-wh-stock-row').length!==1;i++)await new Promise(r=>setTimeout(r,20));
-    if(panel.querySelectorAll('.zv-wh-stock-row').length!==1)throw Error('Stock must be fetched and tenant filtered');
+    if(panel.querySelectorAll('.zv-wh-stock-row').length!==1)throw Error('Stock must be fetched and tenant filtered: '+JSON.stringify({rows:records,actions:calls,status:panel.querySelector('.zv-wh-status')?.textContent,stock:panel.querySelector('.zv-wh-stock')?.textContent,history:panel.querySelector('.zv-wh-history')?.textContent}));
     if(!panel.querySelector('.zv-wh-stock-row').textContent.includes('3.5000'))throw Error('Original stock precision missing');
     if(panel.textContent.includes('PRIVATE')||panel.textContent.includes('SECRET-HISTORY'))throw Error('Cross-tenant warehouse data leaked');
     if(panel.querySelectorAll('.zv-wh-history .zv-wh-stock-row').length!==1)throw Error('Server movement history missing');

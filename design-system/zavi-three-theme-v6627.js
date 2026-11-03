@@ -5,8 +5,11 @@
  var names={glass:'شیشه‌ای',light:'روشن',dark:'تیره'};
  function setTheme(mode){
   if(modes.indexOf(mode)<0)return;
+  try{
+   window.localStorage.setItem(KEY,mode);
+   if(window.localStorage.getItem(KEY)!==mode)console.warn('ZAVI theme storage mismatch',mode);
+  }catch(e){console.warn('ZAVI theme persistence unavailable',e)}
   document.documentElement.setAttribute('data-zavi-theme',mode);
-  try{window.localStorage.setItem(KEY,mode)}catch(e){console.warn('ZAVI theme persistence unavailable',e)}
   document.querySelectorAll('[data-zavi-theme-choice]').forEach(function(btn){
    var active=btn.getAttribute('data-zavi-theme-choice')===mode;
    btn.setAttribute('aria-pressed',String(active));
@@ -58,7 +61,11 @@
     var button=document.createElement('button');button.type='button';button.textContent=names[mode];
     button.setAttribute('data-zavi-theme-choice',mode);button.setAttribute('aria-label','حالت '+names[mode]);
     button.style.cssText='padding:9px 12px;border-radius:10px;border:1px solid var(--zavi-border,#d8e3f6);color:var(--zavi-text,#172544);background:var(--zavi-surface,#fff);font:inherit;font-size:13px;cursor:pointer;min-height:40px';
-    button.addEventListener('click',function(){setTheme(mode)});
+    button.addEventListener('click',function(event){
+     // Keep legacy settings click handlers from resetting this selection.
+     event.preventDefault();event.stopPropagation();
+     setTheme(mode);
+    });
     panel.appendChild(button);
    });
   }

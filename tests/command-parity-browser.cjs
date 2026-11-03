@@ -11,9 +11,9 @@ const assert=require('node:assert/strict');
    const errors=[];page.on('pageerror',e=>errors.push(String(e.message)));
    await page.goto('http://127.0.0.1:8765/'+app+'/index.html');
    await page.waitForFunction(()=>Boolean(window.ZaviDualCommand605&&window.ZaviDualCommand605.parseCommand));
-   const result=await page.evaluate(()=>{
+   const result=await page.evaluate((appName)=>{
     const api=window.ZaviDualCommand605;
-    const navigation=api.parseCommand(app==='admin'?'تنظیمات باز کن':'فروش باز کن');
+    const navigation=api.parseCommand(appName==='admin'?'تنظیمات باز کن':'فروش باز کن');
     const forbidden=api.parseCommand('حذف تمام مشتریان');
     return {
      app:api.app,version:api.version,
@@ -23,7 +23,7 @@ const assert=require('node:assert/strict');
      nativeVoice:!!window.ZaviAndroidLocalVoice?.postMessage,
      bridgeClaim:document.querySelector('#z605-mic')?.disabled
     }
-   });
+   },app);
    assert.equal(result.app,app,'Command center app identity must match');
    assert.equal(result.launcher,1,'Only one command launcher');
    assert.notEqual(result.star,'✦','No decorative star launcher');

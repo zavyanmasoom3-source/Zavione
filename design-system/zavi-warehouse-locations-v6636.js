@@ -48,7 +48,7 @@ function mount(){
   if(!rememberName(name)){box.querySelector('#zavi-loc-status').textContent='ذخیره نام گدام انجام نشد.';return}
   update();
   box.querySelector('#zavi-loc-warehouse-choice').value=name;
-  box.querySelector('#zavi-loc-status').textContent='نام گدام اضافه شد. برای ثبت موقعیت، محصول را انتخاب کنید.';
+  box.querySelector('#zavi-loc-status').textContent='گدام اضافه شد. برای ثبت موجودی، ابتدا محصول را انتخاب کنید.';
  });
 
  box.querySelector('#zavi-loc-save').addEventListener('click',function(){

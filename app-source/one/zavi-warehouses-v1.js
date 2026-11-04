@@ -22,7 +22,7 @@ async function rest(path,method,body){
 function panel(){
  return '<section class="card zv-wh-manager" id="'+ID+'"><header class="zv-wh-head"><h3>'+tr('گدام‌های مستقل','جلا ګدامونه','Separate warehouses')+'</h3><button type="button" class="btn subtle" data-wh-refresh>'+tr('تازه‌سازی','نوی کول','Refresh')+'</button></header>'+
  '<p class="zv-wh-note">'+tr('گدام‌ها روی سرور ثبت می‌شوند؛ موجودی فاکتورهای قبلی هنوز جداگانه است.','ګدامونه په سرور کې ثبتېږي؛ د پخوانیو رسیدونو موجودي لا بېله ده.','Warehouses are stored on the server; existing invoice stock is still separate.')+'</p>'+
- '<div class="zv-wh-status" role="status" aria-live="polite"></div><form data-wh-add class="zv-wh-form"><label>'+tr('نام گدام','د ګدام نوم','Warehouse name')+'<input name="warehouse_name" maxlength="90" required autocomplete="off"></label><label>'+tr('کود گدام','د ګدام کوډ','Warehouse code')+'<input name="warehouse_code" maxlength="32" required dir="ltr" autocomplete="off"></label><button class="btn primary" type="submit">'+tr('افزودن گدام','ګدام زیاتول','Add warehouse')+'</button></form><div class="zv-wh-list"></div><div class="zv-wh-stock" aria-label="'+tr('موجودی مستقل گدام','د ګدام جلا موجودي','Separate warehouse stock')+'"></div><div class="zv-wh-history"></div></section>'
+ '<div class="zv-wh-status" role="status" aria-live="polite"></div><form data-wh-add class="zv-wh-form"><label>'+tr('نام گدام','د ګدام نوم','Warehouse name')+'<input name="warehouse_name" maxlength="90" required autocomplete="off"></label><label>'+tr('کود گدام','د ګدام کوډ','Warehouse code')+'<input name="warehouse_code" maxlength="32" required dir="ltr" autocomplete="off"></label><button class="btn primary" type="submit">'+tr('افزودن گدام','ګدام زیاتول','Add warehouse')+'</button></form><div class="zv-wh-list"></div><div class="zv-wh-stock" aria-label="'+tr('موجودی مستقل گدام','د ګدام جلا موجودي','Separate warehouse stock')+'"></div><div class="zv-wh-transfer"></div><div class="zv-wh-history"></div></section>'
 }
 function message(box,msg){var el=box.querySelector('.zv-wh-status');if(el)el.textContent=msg}
 function element(tag,className,text){var e=document.createElement(tag);if(className)e.className=className;if(text!==undefined)e.textContent=text;return e}
@@ -85,12 +85,12 @@ function showEdit(box,id){
 async function refresh(box){
  box=box||document.getElementById(ID);if(!box)return;
  var ticket=++requestNo,c=owner(),form=box.querySelector('[data-wh-add]');
- if(!c){rows=[];stockRows=[];historyRows=[];stockNote='';historyNote='';activeWorkspace='';if(form)form.hidden=true;draw(box);drawStock(box);drawHistory(box);message(box,tr('برای افزودن گدام، وارد حساب ابری مالک شوید.','د ګدام لپاره د مالک کلاوډ حساب ته ننوځئ.','Sign in as cloud owner to manage warehouses.'));return}
+ if(!c){rows=[];stockRows=[];historyRows=[];stockNote='';historyNote='';activeWorkspace='';if(form)form.hidden=true;draw(box);drawStock(box);drawHistory(box);window.ZaviWarehouseTransfersV1?.mount(box,[]);message(box,tr('برای افزودن گدام، وارد حساب ابری مالک شوید.','د ګدام لپاره د مالک کلاوډ حساب ته ننوځئ.','Sign in as cloud owner to manage warehouses.'));return}
  activeWorkspace=c.id;stockRows=[];historyRows=[];stockNote='';historyNote='';if(form)form.hidden=false;message(box,tr('دریافت از سرور…','له سرور څخه ترلاسه کېږي…','Loading from server…'));
  try{
   var data=await rest('/rest/v1/zavi_warehouses?select=id,name,code,is_active,workspace_id&workspace_id=eq.'+encodeURIComponent(c.id)+'&order=created_at.asc','GET');
   if(ticket!==requestNo||!box.isConnected||activeWorkspace!==c.id)return;
-  rows=Array.isArray(data)?data:[];draw(box);
+  rows=Array.isArray(data)?data:[];draw(box);window.ZaviWarehouseTransfersV1?.mount(box,rows);
   try {
    var stock=await rest('/rest/v1/zavi_warehouse_stock_summary?select=warehouse_id,product_ref,quantity,workspace_id&workspace_id=eq.'+encodeURIComponent(c.id)+'&order=warehouse_id,product_ref&limit=201','GET');
    if(ticket!==requestNo||!box.isConnected||activeWorkspace!==c.id)return;
@@ -108,7 +108,7 @@ async function refresh(box){
     historyRows=Array.isArray(movements)?movements.filter(m=>m.workspace_id===c.id):[];
    }catch(historyError){historyRows=[];historyNote=tr('تاریخچه دریافت نشد: ','تاریخچه ترلاسه نه شوه: ','History unavailable: ')+historyError.message;}
   drawStock(box);drawHistory(box);message(box,stockNote?tr('گدام‌ها دریافت شدند؛ وضعیت موجودی را بررسی کنید.','ګدامونه ترلاسه شول؛ د موجودۍ حالت وګورئ.','Warehouses loaded; check stock status.'):tr('از دیتابیس دریافت شد.','له ډیټابېس څخه ترلاسه شول.','Loaded from database.'))
- }catch(e){if(ticket!==requestNo||!box.isConnected)return;rows=[];stockRows=[];historyRows=[];stockNote=tr('موجودی قابل تأیید نیست.','موجودي نه ده تایید شوې.','Stock cannot be verified.');historyNote='';draw(box);drawStock(box);drawHistory(box);message(box,e.message)}
+ }catch(e){if(ticket!==requestNo||!box.isConnected)return;rows=[];stockRows=[];historyRows=[];stockNote=tr('موجودی قابل تأیید نیست.','موجودي نه ده تایید شوې.','Stock cannot be verified.');historyNote='';draw(box);drawStock(box);drawHistory(box);window.ZaviWarehouseTransfersV1?.mount(box,[]);message(box,e.message)}
 }
 async function mutate(box,path,method,data){
  if(busy||!box)return false;busy=true;box.querySelectorAll('input,button').forEach(function(x){x.disabled=true});

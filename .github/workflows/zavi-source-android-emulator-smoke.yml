@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [fix/independent-source-release-20261103]
-    paths: ['.github/workflows/zavi-source-android-emulator-smoke.yml', 'scripts/android-emulator-smoke.sh']
+    paths: ['.github/workflows/zavi-source-android-emulator-smoke.yml', 'scripts/android-emulator-smoke.sh', 'android-build/app/src/main/java/com/zavione/mobile/MainActivity.java']
 permissions:
   contents: read
 jobs:

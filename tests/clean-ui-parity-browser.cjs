@@ -56,10 +56,16 @@ const fs=require('node:fs');
       const hero=content?.querySelector(app==='one'?'.z62-hero':'.admin-hero');
       const heroBackground=hero?getComputedStyle(hero).backgroundImage:'';
       const panelCss=content?getComputedStyle(content).color:'';
+      const quick=app==='one'?content?.querySelector('section.z63-quick-panel button.z63-quick-tile'):null;
+      const quickLabel=quick?.querySelector('span:not(.z63-quick-glyph)');
+      const adminCTA=app==='admin'?content?.querySelector('.admin-hero button.button.primary'):null;
+      const quickBg=quick?getComputedStyle(quick).backgroundColor:null;
+      const quickInk=quickLabel?getComputedStyle(quickLabel).color:null;
+      const adminCTAText=adminCTA?getComputedStyle(adminCTA).color:null;
       return {
        theme:root.getAttribute('data-zavi-appearance'),color,
        navPreserved:JSON.stringify(current)===JSON.stringify(nav),unreadable,
-       heroBackground,panelCss,bodyWidth:root.scrollWidth,viewport:innerWidth,
+       heroBackground,panelCss,quickBg,quickInk,adminCTAText,bodyWidth:root.scrollWidth,viewport:innerWidth,
        populated:(content?.textContent||'').trim().length,
        ledgerIntact:app!=='one'||JSON.stringify(db)===ledger
       }
@@ -68,6 +74,17 @@ const fs=require('node:fs');
      assert.ok(output.color.length>0,app+' '+theme+' showcase colors missing');
      assert.ok(output.panelCss.length>0,app+' '+theme+' content has no computed color');
      assert.ok(output.heroBackground.includes('gradient'),app+' '+theme+' approved gradient hero not applied');
+     // Contrast safeguard: fail instead of packaging unreadable white/black controls.
+     const rgb=value=>(String(value||'').match(/[\\d.]+/g)||[]).slice(0,3).map(Number);
+     if(theme==='light'&&app==='one'){
+      const bg=rgb(output.quickBg),ink=rgb(output.quickInk);
+      assert.ok(bg.length===3&&Math.min(...bg)>=205, 'Light quick actions must use bright cards: '+output.quickBg);
+      assert.ok(ink.length===3&&Math.max(...ink)<=155, 'Light quick action labels must be dark: '+output.quickInk);
+     }
+     if(theme==='light'&&app==='admin'){
+      const ink=rgb(output.adminCTAText);
+      assert.ok(ink.length===3&&ink[0]<165&&ink[1]<165, 'Light ADMIN main action label must contrast with white: '+output.adminCTAText);
+     }
      assert.equal(output.navPreserved,true,app+' menu removed after theme switch');
      assert.equal(output.unreadable,0,app+' hidden menu controls');
      assert.equal(output.ledgerIntact,true,app+' presentation mutated ledger');

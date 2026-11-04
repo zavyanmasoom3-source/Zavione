@@ -44,6 +44,13 @@ const assert=require('node:assert/strict');
    const before=JSON.stringify(db);
    const container=document.createElement('div');container.innerHTML=window.ZaviWarehouseV1.panel();document.body.appendChild(container);
    const box=container.firstElementChild;
+   // The production warehouse catalog renders these rows before activating transfers.
+   const catalog=box.querySelector('.zv-wh-list');
+   for(const warehouse of [w1,w2]){
+    const row=document.createElement('div');row.className='zv-wh-row';
+    const toggle=document.createElement('button');toggle.dataset.whToggle=warehouse.id;
+    row.appendChild(toggle);catalog.appendChild(row);
+   }
    const delay=async ok=>{for(let i=0;i<100&&!ok();i++)await new Promise(r=>setTimeout(r,15));if(!ok())throw Error('Timed out waiting for server-side transfer state '+JSON.stringify({posts,refreshCount,status:box.querySelector('.zv-wh-transfer')?.textContent,pending:api.pending({user:'00000000-0000-4000-8000-000000000000',workspace:ws}),form:!!box.querySelector('[data-zv-transfer-form]')}))};
    try{
     api.mount(box,[w1,w2]);

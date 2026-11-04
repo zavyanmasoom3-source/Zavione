@@ -169,3 +169,12 @@ html[data-zavi-appearance="glass"] .sidebar{
  html[data-zavi-theme] body{background:#fff!important;color:#111!important}
  html[data-zavi-theme] #content :is(.card,.panel,.stat,.report-card){background:#fff!important;color:#111!important;box-shadow:none!important}
 }
+
+/* Light-mode accessibility hardening: account labels, action tiles and modal text.
+   Scoped to light mode; dark/glass and financial logic are unchanged. */
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.z63-quick-tile,.z63-quick-tile span:not(.z63-quick-glyph),.z63-quick-tile strong,.z63-quick-tile small){color:#172b46!important;text-shadow:none!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content .z63-quick-tile{background:#f7fbff!important;border:1px solid #b8ccdf!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(#content,#overlay,#zawiPrivateGate) :is(label,.form-label,.hint,.muted,.subtitle,.small-info){color:#344861!important;opacity:1!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(#content,#overlay,#zawiPrivateGate) :is(input,select,textarea){background:#fff!important;color:#172b46!important;border-color:#8fa7be!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(#content,#overlay,#zawiPrivateGate) :is(input,textarea)::placeholder{color:#52647a!important;opacity:1!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.card,.panel,.stat,.metric,.settings-card,.summary-card,.report-card,.table-card,.form-card) :is(p,span,li,td,th,label):not(.badge):not(.chip):not(.pill){text-shadow:none!important}

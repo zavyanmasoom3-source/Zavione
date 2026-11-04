@@ -49,7 +49,7 @@ jobs:
         run: |
           cp app/src/main/res/drawable/ic_launcher.xml app/src/main/res/drawable/zavi_launcher_image.xml
           gradle --no-daemon :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviProduction=false
-      - name: Install and run on clean Android API 35 emulator
+      - name: Install and run on clean Android API 34 emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -61,7 +61,7 @@ jobs:
           emulator-boot-timeout: 900
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
-            set -euo pipefail
+            set -eu
             mkdir -p qa-device
             apk='android-build/app/build/outputs/apk/debug/app-debug.apk'
             package='${{ matrix.package }}'
@@ -86,6 +86,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: QA-Android35-${{ matrix.app }}-install-and-start
+          name: QA-Android34-${{ matrix.app }}-install-and-start
           path: qa-device/**
           if-no-files-found: warn

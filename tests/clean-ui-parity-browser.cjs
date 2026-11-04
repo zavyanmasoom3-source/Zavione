@@ -32,7 +32,9 @@ const fs=require('node:fs');
     return {nav:[...document.querySelectorAll('#appScreen .nav-item[data-page]')].map(n=>n.dataset.page)};
    },{app,expected});
    assert.ok(initialized.nav.length>=10,app+' lost original menu');
-   // The real UI uses a deliberate intro animation; assert that it closes.
+   // The original app intentionally starts splash AFTER login/demo transitions.
+   // Allow that delayed animation to start, then require its full removal.
+   await page.waitForTimeout(2200);
    await page.waitForFunction(app=>{
     if(app==='one')return !document.querySelector('.z6513-splash');
     const splash=document.querySelector('#zaviAdminSplash');

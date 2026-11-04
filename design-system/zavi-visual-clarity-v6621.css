@@ -66,3 +66,12 @@
 @media (prefers-reduced-motion:reduce) {
   #content :is(.card,.panel,.dashboard-card,.menu-card) { animation:none!important; transition:none!important; }
 }
+
+/* Mobile forms: reduce excessive spacing while preserving every control. */
+@media (max-width:600px) {
+ #content :is(input,select,textarea) { min-width:0; box-sizing:border-box; }
+ #content :is(.card,.panel) { margin-block:8px; }
+ #content :is(.card,.panel) > :is(h2,h3,h4) { margin-block:5px 8px; }
+ #content :is(.card,.panel) > :is(p,small) { margin-block:4px 8px; }
+ #content :is(.card,.panel) :is(input,select) { min-height:40px; }
+}

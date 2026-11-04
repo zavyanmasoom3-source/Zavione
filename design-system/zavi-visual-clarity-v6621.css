@@ -75,3 +75,14 @@
  #content :is(.card,.panel) > :is(p,small) { margin-block:4px 8px; }
  #content :is(.card,.panel) :is(input,select) { min-height:40px; }
 }
+
+/* V66.64: compact mobile accounting forms; retain all fields and actions. */
+@media(max-width:600px){
+ #content :is(.card,.panel,.dashboard-card,.menu-card){padding:12px!important;max-width:100%;box-sizing:border-box}
+ #content :is(.card,.panel) :is(h2,h3,h4){line-height:1.35!important;margin-block:5px 8px}
+ #content :is(.card,.panel) :is(input,select,textarea){min-width:0;max-width:100%;box-sizing:border-box}
+ #content #zavi-location-manager{padding:9px!important}
+ #content #zavi-location-manager .zavi-location-grid{gap:7px}
+ html[data-zavi-theme="light"] #content :is(input,select,textarea){color:#17243c;background:#fff;border-color:#aebbd0}
+ html[data-zavi-theme="light"] #content :is(input,textarea)::placeholder{color:#56667e;opacity:1}
+}

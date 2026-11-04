@@ -264,3 +264,37 @@ html[data-zavi-appearance="glass"] body #content.zrf-dashboard .z63-quick-panel 
 html[data-zavi-appearance="glass"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile :is(span,b,strong,small){
  color:#fff!important;-webkit-text-fill-color:#fff!important;
 }
+
+
+/* Appearance is the persisted user choice. Some legacy skins use data-zavi-theme
+ * for their fallback paint, so explicitly key these tiles to the chosen mode. */
+html[data-zavi-appearance="light"]{
+ --z68-surface:#ffffff;--z68-surface-2:#f9fcff;--z68-ink:#142744;
+}
+html[data-zavi-appearance="dark"]{
+ --z68-surface:#101f35;--z68-surface-2:#142943;--z68-ink:#f3f8ff;
+}
+html[data-zavi-appearance="light"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile{
+ background:#ffffff!important;background-color:#ffffff!important;background-image:none!important;
+ color:#172c49!important;-webkit-text-fill-color:#172c49!important;
+ border-color:#dce7f4!important;
+}
+html[data-zavi-appearance="light"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile span:not(.z63-quick-glyph){
+ color:#172c49!important;-webkit-text-fill-color:#172c49!important;
+}
+html[data-zavi-appearance="dark"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile{
+ background:#142943!important;background-color:#142943!important;background-image:none!important;
+ color:#f5f9ff!important;-webkit-text-fill-color:#f5f9ff!important;
+ border-color:#345573!important;
+}
+html[data-zavi-appearance="dark"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile span:not(.z63-quick-glyph){
+ color:#f5f9ff!important;-webkit-text-fill-color:#f5f9ff!important;
+}
+html[data-zavi-appearance="glass"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile{
+ background:rgba(35,75,132,.56)!important;background-color:rgba(35,75,132,.56)!important;
+ color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;
+ border-color:rgba(224,242,255,.33)!important;
+}
+html[data-zavi-appearance] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile .z63-quick-glyph{
+ color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;
+}

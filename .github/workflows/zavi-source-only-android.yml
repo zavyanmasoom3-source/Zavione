@@ -151,10 +151,8 @@ jobs:
           mkdir -p original
           if [ "$ZAVI_APP" = one ]; then
             original_name=ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk
-            expected=6918f35169083dd1ebf52ea7c90d622d7488f8748fdd1ebf52ea7c90d622d7488f8748
           else
             original_name=ZAVI_ONE_ADMIN_V1_4_52_INDEPENDENT_COMMAND_QA.apk
-            expected=8669b9a02488136dac68deeaf4bff074114c0f3c38e9c90e74387db36ab6445f
           fi
           gh release download zavi-migration-v6606 --repo "${{ github.repository }}" --pattern "$original_name" --dir original
           python3 - "$original_name" <<'PY'

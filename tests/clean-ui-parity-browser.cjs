@@ -16,9 +16,9 @@ const fs=require('node:fs');
    // Capture the actual login, not the animated ZAVI ONE / ADMIN intro overlay.
    await page.waitForTimeout(2000);
    await page.screenshot({path:'qa-clean-'+app+'-login.png'});
-   const expected=app==='one'?'zavi-clean-professional-v6667.css':'zavi-clean-professional-v1458.css';
+   const expected=app==='one'?['zavi-clean-professional-v6667.css','zavi-showcase-v6668.css']:['zavi-clean-professional-v1458.css','zavi-admin-showcase-v1459.css'];
    const initialized=await page.evaluate(({app,expected})=>{
-    const linked=[...document.querySelectorAll('link[rel="stylesheet"]')].some(n=>n.href.includes(expected));
+    const linked=expected.every(css=>[...document.querySelectorAll('link[rel="stylesheet"]')].some(n=>n.href.includes(css)));
     if(!linked)throw Error('Clean UI stylesheet not loaded');
     if(app==='one'){
      KEY='zavi_qa_clean_ui_do_not_sync';db=blankDB();zaviModules={};
@@ -46,23 +46,28 @@ const fs=require('node:fs');
      await page.evaluate(theme=>window.ZaviThemeV29.set(theme),theme);
      const output=await page.evaluate(({app,theme,nav,ledger})=>{
       const root=document.documentElement,content=document.querySelector(app==='one'?'#content':'#view');
-      const key=app==='one'?'--z67-panel':'--za58-card';
+      const key=app==='one'?'--z68-surface':'--z59-panel';
       const color=getComputedStyle(root).getPropertyValue(key).trim();
       const items=app==='one'
        ? [...document.querySelectorAll('#sidebarLinks [data-go],#sidebarLinks2 [data-go]')]
        : [...document.querySelectorAll('#appScreen .nav-item[data-page]')];
       const current=items.map(n=>app==='one'?n.dataset.go:n.dataset.page);
       const unreadable=items.filter(n=>getComputedStyle(n).visibility==='hidden'||getComputedStyle(n).opacity==='0').length;
+      const hero=content?.querySelector(app==='one'?'.z62-hero':'.admin-hero');
+      const heroBackground=hero?getComputedStyle(hero).backgroundImage:'';
+      const panelCss=content?getComputedStyle(content).color:'';
       return {
        theme:root.getAttribute('data-zavi-appearance'),color,
        navPreserved:JSON.stringify(current)===JSON.stringify(nav),unreadable,
-       bodyWidth:root.scrollWidth,viewport:innerWidth,
+       heroBackground,panelCss,bodyWidth:root.scrollWidth,viewport:innerWidth,
        populated:(content?.textContent||'').trim().length,
        ledgerIntact:app!=='one'||JSON.stringify(db)===ledger
       }
      },{app,theme,nav:initialized.nav,ledger:initialized.ledger});
      assert.equal(output.theme,theme,app+' '+theme+' theme not preserved');
-     assert.ok(output.color.length>0,app+' '+theme+' clean colors missing');
+     assert.ok(output.color.length>0,app+' '+theme+' showcase colors missing');
+     assert.ok(output.panelCss.length>0,app+' '+theme+' content has no computed color');
+     assert.ok(output.heroBackground.includes('gradient'),app+' '+theme+' approved gradient hero not applied');
      assert.equal(output.navPreserved,true,app+' menu removed after theme switch');
      assert.equal(output.unreadable,0,app+' hidden menu controls');
      assert.equal(output.ledgerIntact,true,app+' presentation mutated ledger');

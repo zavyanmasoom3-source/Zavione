@@ -1,4 +1,4 @@
-name: Source-only Android emulator install and launch smoke (QA)
+name: Source-only Android install, offline launch and data-preservation smoke (QA)
 on:
   workflow_dispatch:
   push:
@@ -56,18 +56,25 @@ jobs:
           target: default
           arch: x86_64
           profile: pixel_2
+          disable-animations: false
+          disable-spellchecker: false
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
             set -euo pipefail
             mkdir -p qa-device
             apk='android-build/app/build/outputs/apk/debug/app-debug.apk'
             package='${{ matrix.package }}'
+            adb wait-for-device
+            adb shell getprop sys.boot_completed | grep -q 1
             adb install "$apk"
             adb shell pm path "$package" | grep -q 'package:'
             adb logcat -c
             adb shell am start -W -n "$package/com.zavione.mobile.MainActivity"
             sleep 12
             test -n "$(adb shell pidof "$package" | tr -d '\r')"
-            adb shell dumpsys package "$package" | grep -m1 'versionName=' > qa-device/app-version.txt
+            adb shell dumpsys package "$package" > qa-device/dumpsys-package.txt
+            grep -m1 'versionName=' qa-device/dumpsys-package.txt > qa-device/app-version.txt
             adb exec-out screencap -p > qa-device/startup.png
             adb shell uiautomator dump /sdcard/qa-window.xml >/dev/null
             adb pull /sdcard/qa-window.xml qa-device/window.xml >/dev/null

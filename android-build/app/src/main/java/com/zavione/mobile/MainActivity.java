@@ -75,6 +75,9 @@ public final class MainActivity extends FragmentActivity {
     private FrameLayout container;
     // Prevent a bad internal navigation from trapping the user on a blank WebView.
     private int localNavigationRecoveryAttempts = 0;
+    // Android WebView renderer can be killed separately from the app, e.g. low RAM.
+    // Do not pretend a dead renderer displayed the app or silently discard drafts.
+    private int rendererRecoveryCount = 0;
     private WebView webView;
     private WebViewAssetLoader assetLoader;
     private ValueCallback<Uri[]> fileCallback;
@@ -200,6 +203,35 @@ public final class MainActivity extends FragmentActivity {
             }
         });
         webView.setWebViewClient(new WebViewClient() {
+            @Override public boolean onRenderProcessGone(WebView dead, android.webkit.RenderProcessGoneDetail detail) {
+                // On API 26+ an unhandled renderer death kills the host application.
+                // Only stored data remains; pending unsaved form text cannot be restored.
+                if (dead != webView) return false;
+                android.util.Log.e("ZAVI_WEBVIEW", "WebView renderer terminated; app data remains untouched");
+                if (fileCallback != null) { fileCallback.onReceiveValue(null); fileCallback = null; }
+                if (pendingCamera != null) { pendingCamera.deny(); pendingCamera = null; }
+                discardPendingPhoto();
+                container.removeView(dead);
+                dead.destroy();
+                webView = null;
+                runOnUiThread(() -> {
+                    final boolean canRecover = rendererRecoveryCount++ < 1;
+                    new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("ZAVI ONE — بازکردن دوباره")
+                        .setMessage("نمایش برنامه در Android متوقف شد. معلومات ذخیره‌شده پاک نشده‌اند؛ نوشته‌های ذخیره‌نشده ممکن است از دست رفته باشند. "
+                            + (canRecover ? "برای بازکردن دوباره صفحه آفلاین تأیید کنید." : "برنامه را ببندید و حافظه دستگاه را بررسی کنید."))
+                        .setCancelable(false)
+                        .setPositiveButton(canRecover ? "بازکردن دوباره" : "بستن", (dialog, which) -> {
+                            if (!canRecover) { finish(); return; }
+                            localNavigationRecoveryAttempts = 0;
+                            initializeWebView();
+                            webView.loadUrl(BASE + "index.html?zavi_renderer_recovery=1");
+                        })
+                        .setNegativeButton("خروج امن", (dialog, which) -> finish())
+                        .show();
+                });
+                return true;
+            }
             @Override public WebResourceResponse shouldInterceptRequest(WebView w, WebResourceRequest req) {
                 return assetLoader.shouldInterceptRequest(req.getUrl());
             }

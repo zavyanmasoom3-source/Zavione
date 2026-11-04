@@ -49,6 +49,28 @@ BEGIN
  IF from_balance<>3 OR to_balance<>7 THEN
    RAISE EXCEPTION 'Transfer did not preserve stock totals: % / %',from_balance,to_balance;
  END IF;
+ -- Exhaust the source, then retry the identical outgoing movement:
+ -- replay must succeed without running the BEFORE INSERT nonnegative guard a second time.
+ PERFORM public.zavi_warehouse_post_movement(
+ 'aaaaaaaa-0000-4000-8000-000000000020',
+ '11111111-1111-4111-8111-111111111111',
+ '11111111-aaaa-4111-8111-111111111111',
+ '11111111-bbbb-4111-8111-111111111111','P1',3.0000,'exhaust and retry'
+ );
+ PERFORM public.zavi_warehouse_post_movement(
+ 'aaaaaaaa-0000-4000-8000-000000000020',
+ '11111111-1111-4111-8111-111111111111',
+ '11111111-aaaa-4111-8111-111111111111',
+ '11111111-bbbb-4111-8111-111111111111','P1',3.0000,'exhaust and retry'
+ );
+ SELECT count(*) INTO count_rows FROM public.zavi_warehouse_movements
+ WHERE id='aaaaaaaa-0000-4000-8000-000000000020';
+ IF count_rows <> 1 THEN RAISE EXCEPTION 'Retry after full stock withdrawal was duplicated'; END IF;
+ SELECT coalesce(sum(CASE WHEN to_warehouse_id='11111111-aaaa-4111-8111-111111111111'
+ THEN quantity WHEN from_warehouse_id='11111111-aaaa-4111-8111-111111111111'
+ THEN -quantity ELSE 0 END),0) INTO from_balance
+ FROM public.zavi_warehouse_movements WHERE product_ref='P1';
+ IF from_balance <> 0 THEN RAISE EXCEPTION 'Retried transfer changed source stock unexpectedly: %',from_balance; END IF;
  BEGIN
   PERFORM public.zavi_warehouse_post_movement(
    'aaaaaaaa-0000-4000-8000-000000000003',

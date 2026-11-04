@@ -24,6 +24,16 @@ for(const app of ['one','admin']){
   }
  });
 }
+test('Showcase stylesheets load in the real document, not a printable invoice HTML literal',()=>{
+ for(const [app,file] of [['one','zavi-showcase-v6668.css'],['admin','zavi-admin-showcase-v1459.css']]){
+  const html=fs.readFileSync(path.join(__dirname,'..','app-source',app,'index.html'),'utf8');
+  const href='./'+file;
+  const index=html.indexOf(href),closeBody=html.lastIndexOf('</body>');
+  assert.ok(index>html.lastIndexOf('</script>')&&index<closeBody,
+    app+' approved stylesheet must load after every original app script and before document close');
+  assert.equal(html.indexOf(href,index+1),-1,app+' duplicated approved stylesheet');
+ }
+});
 test('New presentation preserves theme variants and original routes',()=>{
  const one=fs.readFileSync(path.join(__dirname,'../app-source/one/zavi-clean-professional-v6667.css'),'utf8');
  const admin=fs.readFileSync(path.join(__dirname,'../app-source/admin/zavi-clean-professional-v1458.css'),'utf8');

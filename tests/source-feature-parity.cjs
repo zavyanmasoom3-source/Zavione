@@ -8,7 +8,7 @@ const core={
  one:{
   shell:['index.html','sw.js','manifest.webmanifest'],
   accounting:['zavi-finance-stock-v18.js','cloud.js'],
-  warehouse:['zavi-warehouses-v1.js','zavi-barcode-v641.js'],
+  warehouse:['zavi-warehouses-v1.js','zavi-warehouse-transfers-v1.js','zavi-barcode-v641.js'],
   camera:['zavi-camera-scan-v635.js','zavi-zxing-offline-v1.js'],
   permissions:['zavi-staff-v648-core.js','offline-license-secure.js','zavi-store-v6579-auto-signed-offline.js'],
   locale:['zavi-i18n-v22.js','zavi-i18n-v6541-verified.js'],

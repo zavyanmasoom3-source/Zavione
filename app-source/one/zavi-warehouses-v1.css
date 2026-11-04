@@ -15,3 +15,15 @@ html[data-zavi-theme="dark"] .zv-wh-manager{color:#eff5fc}
 .zv-wh-edit-form button{min-height:38px}
 @media(max-width:600px){.zv-wh-edit-form{grid-template-columns:1fr 1fr}.zv-wh-edit-form button{width:100%}}
 @media(max-width:370px){.zv-wh-edit-form{grid-template-columns:1fr}}
+
+
+/* Server-confirmed, idempotent warehouse stock transfer */
+.zv-wh-transfer{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.zv-wh-transfer h4{font-size:14px;margin:0 0 10px}
+.zv-wh-transfer-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-items:end}
+.zv-wh-transfer-form label{display:flex;flex-direction:column;gap:5px;font-size:12px;min-width:0}
+.zv-wh-transfer-form input,.zv-wh-transfer-form select{min-height:38px;width:100%;max-width:100%;min-width:0;padding:6px 8px;border-radius:9px;background:var(--white,var(--card,#fff));color:var(--ink,var(--text,#182a40));border:1px solid var(--line,#bdc6d1)}
+.zv-wh-transfer-form button{min-height:38px}
+.zv-wh-transfer-status{min-height:18px;margin-top:9px;font-size:12px;overflow-wrap:anywhere}
+@media(max-width:550px){.zv-wh-transfer-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:350px){.zv-wh-transfer-form{grid-template-columns:minmax(0,1fr)}}

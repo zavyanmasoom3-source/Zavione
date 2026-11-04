@@ -238,3 +238,29 @@ html[data-zavi-appearance="glass"] .sidebar{
   background:#fff!important;color:#121212!important;box-shadow:none!important;
  }
 }
+
+
+/* Pixel QA contrast correction: preserve white quick-action cards in Light. */
+html[data-zavi-theme="light"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile{
+ background:#fff!important;background-image:none!important;
+ color:#18304e!important;-webkit-text-fill-color:#18304e!important;
+ border-color:#d6e5f6!important;box-shadow:none!important;
+}
+html[data-zavi-theme="light"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile :is(span,b,strong,small){
+ color:#18304e!important;-webkit-text-fill-color:#18304e!important;
+}
+html[data-zavi-theme="dark"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile{
+ background:#142943!important;background-image:none!important;
+ color:#f3f8ff!important;border-color:#315171!important;
+}
+html[data-zavi-theme="dark"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile :is(span,b,strong,small){
+ color:#f3f8ff!important;-webkit-text-fill-color:#f3f8ff!important;
+}
+html[data-zavi-appearance="glass"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile{
+ background:rgba(36,76,135,.46)!important;background-image:none!important;
+ color:#fff!important;border-color:rgba(223,240,255,.32)!important;
+ -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+}
+html[data-zavi-appearance="glass"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile :is(span,b,strong,small){
+ color:#fff!important;-webkit-text-fill-color:#fff!important;
+}

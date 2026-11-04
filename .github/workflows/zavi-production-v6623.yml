@@ -1,4 +1,4 @@
-name: ZAVI ONE and ADMIN warehouse selector QA APK V66.62
+name: ZAVI ONE and ADMIN warehouse selector QA APK V66.63
 on:
   workflow_dispatch:
   push:
@@ -217,11 +217,20 @@ jobs:
           s=html.read_text(encoding='utf-8')
           s=insert_before_end(s,'head',f'<link rel="stylesheet" href="./{premium}?v=66.24">')
           html.write_text(s,encoding='utf-8')
+          # Refresh the existing ADMIN renewal message script without introducing
+          # duplicate controls or changing WhatsApp's manual-send behavior.
+          if '${{ matrix.app }}' == 'admin':
+           renewal=assets/'zavi-admin-renewal-v1439.js'
+           if renewal.exists():
+            shutil.copy2(Path('design-system')/'zavi-admin-renewal-v1439.js',renewal)
+            print('Refreshed ADMIN WhatsApp reminder text')
+           else:
+            print('ADMIN renewal module absent in base; do not inject unverified UI')
           warehouse='zavi-warehouse-locations-v6636.js'
           shutil.copy2(Path('design-system')/warehouse,assets/warehouse)
           s=insert_before_end(s,'body',f'<script defer src="./{warehouse}?v=66.36"></script>')
           if '${{ matrix.app }}' == 'one':
-           concise='zavi-concise-dari-v6662.js'
+           concise='zavi-concise-dari-v6663.js'
            shutil.copy2(Path('design-system')/concise,assets/concise)
            s=html.read_text(encoding='utf-8')
            s=insert_before_end(s,'body',f'<script defer src="./{concise}?v=66.62"></script>')
@@ -431,7 +440,7 @@ jobs:
           sha256sum app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_V6662_INSTALLABLE_DEBUG_APK
+          name: ZAVI_${{ matrix.app }}_V6663_INSTALLABLE_DEBUG_APK
           path: android-build/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -440,11 +449,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag="zavi-v6662-${{ matrix.app }}-debug-qa"
-          asset="ZAVI_${{ matrix.app }}_V6662_DEBUG_QA.apk"
+          tag="zavi-v6663-${{ matrix.app }}-debug-qa"
+          asset="ZAVI_${{ matrix.app }}_V6663_DEBUG_QA.apk"
           cp android-build/app/build/outputs/apk/debug/app-debug.apk "$asset"
           if ! gh release view "$tag" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            gh release create "$tag" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "ZAVI ${{ matrix.app }} V66.62 Android QA (debug)" --notes "Installable debug-signed test APK only. Not production-signed; verify all accounting and offline features before public release." --prerelease
+            gh release create "$tag" --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "ZAVI ${{ matrix.app }} V66.63 Android QA (debug)" --notes "Installable debug-signed test APK only. Not production-signed; verify all accounting and offline features before public release." --prerelease
           fi
           gh release upload "$tag" "$asset" --repo "${{ github.repository }}" --clobber
           gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[].name'

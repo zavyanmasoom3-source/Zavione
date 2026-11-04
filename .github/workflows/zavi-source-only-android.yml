@@ -21,7 +21,7 @@ jobs:
       - name: Verify original source references, purchase and WhatsApp invariants
         run: |
           node tests/source-feature-parity.cjs
-          node --test tests/purchase-finance.test.cjs tests/whatsapp.test.cjs tests/backup-integrity.test.cjs
+          node --test tests/purchase-finance.test.cjs tests/whatsapp.test.cjs tests/backup-integrity.test.cjs tests/warehouse-transfer.test.cjs
           python3 -m unittest discover -s tests -v
       - name: Install pinned browser test runtime
         run: |
@@ -33,6 +33,7 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 --directory app-source > /tmp/zavi-http.log 2>&1 &
           node tests/browser-source.cjs
           node tests/warehouse-browser.cjs
+          node tests/warehouse-transfer-browser.cjs
           node tests/barcode-browser.cjs
           node tests/command-parity-browser.cjs
           node tests/display-parity-browser.cjs

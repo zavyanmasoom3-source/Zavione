@@ -1,9 +1,9 @@
-name: Source-only Android install, offline launch and data-preservation smoke (QA)
+name: Source-only Android install and launch smoke (QA)
 on:
   workflow_dispatch:
   push:
     branches: [fix/independent-source-release-20261103]
-    paths: ['.github/workflows/zavi-source-android-emulator-smoke.yml']
+    paths: ['.github/workflows/zavi-source-android-emulator-smoke.yml', 'scripts/android-emulator-smoke.sh']
 permissions:
   contents: read
 jobs:
@@ -61,28 +61,7 @@ jobs:
           emulator-boot-timeout: 900
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
-            set -eu
-            mkdir -p qa-device
-            apk='android-build/app/build/outputs/apk/debug/app-debug.apk'
-            package='${{ matrix.package }}'
-            adb wait-for-device
-            adb shell getprop sys.boot_completed | grep -q 1
-            adb install "$apk"
-            adb shell pm path "$package" | grep -q 'package:'
-            adb logcat -c
-            adb shell am start -W -n "$package/com.zavione.mobile.MainActivity"
-            sleep 12
-            test -n "$(adb shell pidof "$package" | tr -d '\r')"
-            adb shell dumpsys package "$package" > qa-device/dumpsys-package.txt
-            grep -m1 'versionName=' qa-device/dumpsys-package.txt > qa-device/app-version.txt
-            adb exec-out screencap -p > qa-device/startup.png
-            adb shell uiautomator dump /sdcard/qa-window.xml >/dev/null
-            adb pull /sdcard/qa-window.xml qa-device/window.xml >/dev/null
-            if adb logcat -d -s AndroidRuntime:E | grep -E 'FATAL EXCEPTION|Process: ${{ matrix.package }}'; then
-              echo '::error::Unexpected Android crash during first launch'
-              exit 1
-            fi
-            echo 'APK installed, correct package resolved, MainActivity running and screenshot captured.'
+            bash scripts/android-emulator-smoke.sh "${{ matrix.package }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

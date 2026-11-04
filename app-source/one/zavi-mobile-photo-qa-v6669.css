@@ -1,0 +1,15 @@
+/* V66.69 compact mobile QA — preserve sales, invoices, warehouses and settings actions. */
+@media(max-width:600px){
+ body :is(.card,.panel,.dashboard-card,.menu-card){box-sizing:border-box;max-width:100%;min-width:0}
+ body :is(.card,.panel,.dashboard-card,.menu-card) :is(h2,h3,h4){line-height:1.4;overflow-wrap:break-word}
+ body :is(.card,.panel,.dashboard-card,.menu-card) :is(input,select,textarea,button){max-width:100%;box-sizing:border-box}
+ body :is(input,select,textarea){min-width:0;font-size:16px}
+ body :is(.grid,.row,.flex)>*{min-width:0}
+ body #zavi-location-manager{padding:10px}
+ body #zavi-location-manager .zavi-location-grid{gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr))}
+ body .z638-warehouse-scanner{padding:9px}
+ body .z638-warehouse-scanner :is(p,small){line-height:1.45}
+ html[data-zavi-theme="light"] body :is(input,select,textarea){background:#fff;color:#17243c;border-color:#aebbd0}
+ html[data-zavi-theme="light"] body :is(input,textarea)::placeholder{color:#596981;opacity:1}
+}
+@media(prefers-reduced-motion:reduce){body :is(.card,.panel,.dashboard-card,.menu-card){animation:none!important;transition:none!important}}

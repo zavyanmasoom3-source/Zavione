@@ -52,3 +52,17 @@
  #content #zavi-location-manager .zavi-loc-actions{display:flex;gap:7px;flex-wrap:wrap}
  #content #zavi-location-manager .zavi-loc-actions button{flex:1 1 130px;font-size:13px;padding:7px}
 }
+
+/* V66.62 mobile sales readability: non-destructive layout safeguards. */
+@media (max-width:600px) {
+  #content { min-width:0; }
+  #content :is(.card,.panel,.dashboard-card,.menu-card) { box-sizing:border-box; max-width:100%; }
+  #content :is(.card,.panel) :is(button,input,select) { max-width:100%; box-sizing:border-box; }
+  #content :is(.card,.panel) :is(h2,h3,h4) { overflow-wrap:break-word; line-height:1.35; }
+  #content :is(.card,.panel) :is(p,small) { overflow-wrap:break-word; }
+  #content :is(.card,.panel) :is(.grid,.row,.flex) { min-width:0; }
+  #content :is(.card,.panel) button { touch-action:manipulation; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #content :is(.card,.panel,.dashboard-card,.menu-card) { animation:none!important; transition:none!important; }
+}

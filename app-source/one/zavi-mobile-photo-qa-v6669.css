@@ -73,3 +73,21 @@ html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.
 html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.zv-wh-manager,.zavi-clean-settings-hub,.settings-card,.report-card,.table-card,.form-card) :is(label,.hint,.muted,small){
  color:#354a63!important;opacity:1!important;
 }
+
+/* Mobile screenshot QA: compact warehouse records and settings, no hidden functionality. */
+@media(max-width:600px){
+ #content .zv-wh-manager .zv-wh-head{gap:6px!important}
+ #content .zv-wh-manager .zv-wh-head h3{font-size:14px!important}
+ #content .zv-wh-manager .zv-wh-form{grid-template-columns:minmax(0,1fr) minmax(0,100px)!important;gap:7px!important}
+ #content .zv-wh-manager .zv-wh-form button{grid-column:1/-1!important}
+ #content .zv-wh-manager .zv-wh-row{padding:8px!important;gap:6px!important}
+ #content .zv-wh-manager .zv-wh-stock-row{padding:7px 2px!important;gap:5px!important}
+ #content .zv-wh-manager .zv-wh-transfer-form{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+ #content .zavi-clean-settings-title{gap:6px!important;margin-bottom:8px!important}
+ #content .zavi-clean-settings-title strong{font-size:19px!important}
+ #content .zavi-clean-settings-group>summary{min-height:52px!important;padding-block:9px!important}
+ #content .zavi-clean-settings-stack>.settings-card{padding:10px!important}
+}
+@media(max-width:350px){
+ #content .zv-wh-manager .zv-wh-form,#content .zv-wh-manager .zv-wh-transfer-form{grid-template-columns:minmax(0,1fr)!important}
+}

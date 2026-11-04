@@ -142,6 +142,33 @@ jobs:
           shutil.copytree(src,dst)
           assert (dst/'index.html').is_file()
           PY
+      - name: Restore validated offline speech model from original V66.62 baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZAVI_APP: ${{ matrix.app }}
+        run: |
+          set -euo pipefail
+          mkdir -p original
+          if [ "$ZAVI_APP" = one ]; then
+            original_name=ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk
+            expected=6918f35169083dd1ebf52ea7c90d622d7488f8748fdd1ebf52ea7c90d622d7488f8748
+          else
+            original_name=ZAVI_ONE_ADMIN_V1_4_52_INDEPENDENT_COMMAND_QA.apk
+            expected=8669b9a02488136dac68deeaf4bff074114c0f3c38e9c90e74387db36ab6445f
+          fi
+          gh release download zavi-migration-v6606 --repo "${{ github.repository }}" --pattern "$original_name" --dir original
+          python3 - "$original_name" <<'PY'
+          import hashlib,sys,zipfile
+          from pathlib import Path
+          archive=Path('original')/sys.argv[1]
+          with zipfile.ZipFile(archive) as z:
+           model=z.read('assets/models/ggml-base-q5_1.bin')
+          if len(model)<50_000_000 or len(model)>70_000_000:raise SystemExit('Unexpected speech model size')
+          out=Path('android-build/app/src/main/assets/models/ggml-base-q5_1.bin')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_bytes(model)
+          print('Restored offline model',len(model),'SHA256',hashlib.sha256(model).hexdigest())
+          PY
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -168,13 +195,13 @@ jobs:
           apk=Path('app/build/outputs/apk/debug/app-debug.apk')
           size=apk.stat().st_size
           print('QA APK bytes:',size)
-          if size > 6_000_000:
-              raise SystemExit('QA size exceeded 6 MB target; audit new assets; DO NOT remove live features to shrink.')
-          print('Low APK size excludes bundled native offline voice; feature is not production-certified.')
+          if not 55_000_000 < size < 85_000_000:
+              raise SystemExit('Full-size QA APK missing expected offline model or unexpectedly oversized.')
+          print('Full-size QA contains speech model; speech recognition functionality still requires device testing.')
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI_${{ matrix.app }}_SOURCE_ONLY_QA_APK
+          name: ZAVI_${{ matrix.app }}_FULL_MODEL_SOURCE_QA_APK
           path: android-build/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 

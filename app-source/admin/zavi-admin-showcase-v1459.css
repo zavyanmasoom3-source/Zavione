@@ -206,3 +206,20 @@ html[data-zavi-appearance="glass"] #appScreen .sidebar{
   background:#fff!important;color:#111!important;box-shadow:none!important;
  }
 }
+
+
+/* Pixel QA: Light owner-dashboard action labels must remain visible on white. */
+html[data-zavi-theme="light"] body #appScreen #view .admin-hero button.button.primary,
+html[data-zavi-theme="light"] body #appScreen #view .admin-hero button.button.primary :is(span,b,strong){
+ background:#fff!important;background-image:none!important;
+ color:#104fae!important;-webkit-text-fill-color:#104fae!important;
+ text-shadow:none!important;filter:none!important;
+}
+html[data-zavi-theme="dark"] body #appScreen #view .admin-hero button.button.primary,
+html[data-zavi-theme="dark"] body #appScreen #view .admin-hero button.button.primary :is(span,b,strong){
+ color:#1054be!important;-webkit-text-fill-color:#1054be!important;
+}
+html[data-zavi-appearance="glass"] body #appScreen #view .admin-hero button.button.primary,
+html[data-zavi-appearance="glass"] body #appScreen #view .admin-hero button.button.primary :is(span,b,strong){
+ color:#1454b2!important;-webkit-text-fill-color:#1454b2!important;
+}

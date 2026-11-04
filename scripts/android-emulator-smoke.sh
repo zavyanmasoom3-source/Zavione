@@ -23,7 +23,22 @@ adb shell pm path "$package" > qa-device/installed-package.txt
 grep -q '^package:' qa-device/installed-package.txt
 adb logcat -c
 adb shell am start -W -n "$package/com.zavione.mobile.MainActivity" | tee qa-device/activity-launch.txt
-sleep 12
+# Emulator may finish the activity launch before WebView's bundled offline HTML is ready.
+# A debug-only Android onPageFinished event is the minimum proof of offline shell load.
+loaded=0
+for attempt in $(seq 1 45); do
+  if adb logcat -d -s ZAVI_QA_WEBVIEW:I '*:S' | grep -q 'Embedded app shell loaded'; then
+    loaded=1
+    break
+  fi
+  sleep 2
+done
+if [ "$loaded" -ne 1 ]; then
+  adb logcat -d -s chromium:E WebView:E AndroidRuntime:E > qa-device/webview-errors.txt || true
+  echo "::error::Embedded offline HTML did not finish loading on Android" >&2
+  exit 1
+fi
+sleep 4
 pid="$(adb shell pidof "$package" | tr -d '\r')"
 test -n "$pid" || { echo "::error::App process not alive after launch" >&2; exit 1; }
 printf '%s\n' "$pid" > qa-device/pid.txt
@@ -43,13 +58,20 @@ assert width>100 and height>100,"Invalid Android screenshot size"
 print("Android screen:",width,"x",height,"bytes",len(b))
 PY
 
-adb shell uiautomator dump /sdcard/qa-window.xml >/dev/null 2>&1 &&
-  adb pull /sdcard/qa-window.xml qa-device/window.xml >/dev/null ||
-  echo "::warning::UIAutomator unavailable; screenshot evidence retained"
-
+# Do not invoke uiautomator here: on unaccelerated CI emulators it can crash
+# its own separate Android process and falsely report a ZAVI ONE crash.
 adb logcat -d -s AndroidRuntime:E > qa-device/runtime-errors.txt || true
-if grep -q 'FATAL EXCEPTION' qa-device/runtime-errors.txt; then
-  echo "::error::Android Runtime crash detected" >&2
-  exit 1
-fi
-echo 'PASS: APK installed; app launched and remained alive; screenshot captured.'
+APP_PACKAGE="$package" APP_PID="$pid" python3 - <<'PY'
+from pathlib import Path
+import os,re
+text=Path("qa-device/runtime-errors.txt").read_text(errors="replace")
+package=os.environ["APP_PACKAGE"]
+pid=os.environ["APP_PID"]
+crashes=re.split(r"FATAL EXCEPTION:",text)[1:]
+own=[c for c in crashes if re.search(r"Process:\s*"+re.escape(package)+r"\b",c)
+     or re.search(r"\bPID:\s*"+re.escape(pid)+r"\b",c)]
+if own:
+    raise SystemExit("Android crash detected in app process "+package)
+print("AndroidRuntime: no recorded fatal crash in "+package)
+PY
+echo 'PASS: APK installed; embedded offline app loaded; process alive; screenshot captured.'

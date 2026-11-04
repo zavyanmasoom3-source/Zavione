@@ -44,6 +44,24 @@ BEGIN
     RAISE EXCEPTION 'At least one endpoint required';
   END IF;
   IF p_reference IS NOT NULL AND length(p_reference) > 150 THEN RAISE EXCEPTION 'Reference too long'; END IF;
+  -- Serialize retries sharing an operation UUID BEFORE the nonnegative trigger.
+  -- A BEFORE INSERT guard would otherwise reject a duplicate stock withdrawal
+  -- after the first successful operation had depleted the source warehouse.
+  PERFORM pg_catalog.pg_advisory_xact_lock(
+    pg_catalog.hashtextextended('zavi-warehouse-operation:' || p_operation_id::text, 0));
+  SELECT * INTO existing FROM public.zavi_warehouse_movements WHERE id=p_operation_id;
+  IF FOUND THEN
+    IF existing.workspace_id IS DISTINCT FROM p_workspace_id
+      OR existing.from_warehouse_id IS DISTINCT FROM p_from_warehouse_id
+      OR existing.to_warehouse_id IS DISTINCT FROM p_to_warehouse_id
+      OR existing.product_ref IS DISTINCT FROM p_product_ref
+      OR existing.quantity IS DISTINCT FROM p_quantity
+      OR existing.reference IS DISTINCT FROM p_reference
+      OR existing.created_by IS DISTINCT FROM auth.uid()
+    THEN RAISE EXCEPTION 'Operation ID already used with different data'; END IF;
+    -- Existing row is subject to RLS and was created by this same authenticated user.
+    RETURN existing.id;
+  END IF;
   -- Only the real workspace owner; product must exist in the authoritative
   -- cloud payload, so the stock table cannot invent a phantom product.
   IF NOT EXISTS (

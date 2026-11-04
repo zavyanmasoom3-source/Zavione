@@ -43,16 +43,15 @@ jobs:
           node tests/admin-owner-panel-browser.cjs
           node tests/menu-parity-browser.cjs
           node tests/clean-ui-parity-browser.cjs
-      - uses: actions/upload-artifact@v4
+      - name: Report browser checks without artifact upload
         if: always()
-        with:
-          name: source-only-pre-build-test-evidence
-          path: |
-            browser-source-results.json
-            menu-parity-results.json
-            ui-clean-audit.json
-            qa-parity-results.json
-          if-no-files-found: warn
+        run: |
+          echo 'Browser test results remain visible in the job logs.' >> "$GITHUB_STEP_SUMMARY"
+          for file in browser-source-results.json menu-parity-results.json ui-clean-audit.json qa-parity-results.json; do
+            if [ -f "$file" ]; then
+              echo "- $file generated" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
 
   postgres-gate:
     runs-on: ubuntu-latest
@@ -202,6 +201,7 @@ jobs:
           name: ZAVI_${{ matrix.app }}_FULL_MODEL_SOURCE_QA_APK
           path: android-build/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 1
 
   signing-readiness:
     runs-on: ubuntu-latest

@@ -71,6 +71,12 @@ BEGIN
  THEN -quantity ELSE 0 END),0) INTO from_balance
  FROM public.zavi_warehouse_movements WHERE product_ref='P1';
  IF from_balance <> 0 THEN RAISE EXCEPTION 'Retried transfer changed source stock unexpectedly: %',from_balance; END IF;
+ -- Restore three units in the throwaway fixture for the concurrent overspend test.
+ PERFORM public.zavi_warehouse_post_movement(
+ 'aaaaaaaa-0000-4000-8000-000000000021',
+ '11111111-1111-4111-8111-111111111111',
+ NULL,'11111111-aaaa-4111-8111-111111111111','P1',3.0000,'prepare concurrency'
+ );
  BEGIN
   PERFORM public.zavi_warehouse_post_movement(
    'aaaaaaaa-0000-4000-8000-000000000003',

@@ -166,3 +166,14 @@ html[data-zavi-appearance="glass"] #appScreen .sidebar{
  html[data-zavi-theme] body{background:#fff!important;color:#111!important}
  html[data-zavi-theme] #view :is(.card,.panel,.stat,.report-card){background:#fff!important;color:#111!important;box-shadow:none!important}
 }
+
+
+/* Owner-panel light contrast: login, modal, financial cards and primary actions.
+   Only light mode; no change to privileges, data or dark/glass presentation. */
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(#view,#authScreen,#modalBg) :is(.muted,.hint,.subtitle,.small-info,.admin-muted,.kpi-foot,.eyebrow,label,.form-label){color:#344861!important;opacity:1!important;text-shadow:none!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(#view,#authScreen,#modalBg) :is(input,select,textarea){background:#fff!important;color:#172b46!important;border-color:#8fa7be!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) :is(#view,#authScreen,#modalBg) :is(input,textarea)::placeholder{color:#52647a!important;opacity:1!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #view :is(.card,.panel,.stat,.metric,.fin-metric,.admin-card,.admin-kpi,.report-card,.service-card,.status-card,.table-card){background:#fff!important;color:#172b46!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #authScreen .auth-card{background:#fff!important;color:#172b46!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #view :is(.button.primary,.btn-primary,button.primary){background:#12579b!important;color:#fff!important;border-color:#12579b!important}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #view :is(.button.primary,.btn-primary,button.primary) :is(span,strong,b,small){color:#fff!important}

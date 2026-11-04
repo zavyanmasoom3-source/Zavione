@@ -211,7 +211,10 @@ public final class MainActivity extends FragmentActivity {
                 return true;
             }
             @Override public void onPageFinished(WebView w, String url) {
-                if (url.startsWith(BASE)) w.evaluateJavascript(BRIDGE_SCRIPT, null);
+                if (url.startsWith(BASE)) {
+                    w.evaluateJavascript(BRIDGE_SCRIPT, null);
+                    if (BuildConfig.DEBUG) android.util.Log.i("ZAVI_QA_WEBVIEW", "Embedded app shell loaded");
+                }
             }
             @Override public void onReceivedError(WebView w, WebResourceRequest req, android.webkit.WebResourceError err) {
                 if (!req.isForMainFrame()) return;

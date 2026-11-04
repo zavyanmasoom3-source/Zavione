@@ -13,6 +13,8 @@ const fs=require('node:fs');
    page.on('pageerror',err=>errors.push(err.message));
    await page.goto('http://127.0.0.1:8765/'+app+'/index.html');
    await page.waitForFunction(()=>typeof window.ZaviThemeV29?.set==='function');
+   // Capture the actual login, not the animated ZAVI ONE / ADMIN intro overlay.
+   await page.waitForTimeout(2000);
    await page.screenshot({path:'qa-clean-'+app+'-login.png'});
    const expected=app==='one'?'zavi-clean-professional-v6667.css':'zavi-clean-professional-v1458.css';
    const initialized=await page.evaluate(({app,expected})=>{
@@ -30,6 +32,12 @@ const fs=require('node:fs');
     return {nav:[...document.querySelectorAll('#appScreen .nav-item[data-page]')].map(n=>n.dataset.page)};
    },{app,expected});
    assert.ok(initialized.nav.length>=10,app+' lost original menu');
+   // The real UI uses a deliberate intro animation; assert that it closes.
+   await page.waitForFunction(app=>{
+    if(app==='one')return !document.querySelector('.z6513-splash');
+    const splash=document.querySelector('#zaviAdminSplash');
+    return !splash||splash.classList.contains('is-hidden');
+   },app,{timeout:7500});
    for(const [width,height,label] of [[390,844,'mobile'],[768,1024,'tablet'],[1180,800,'desktop']]){
     await page.setViewportSize({width,height});
     for(const theme of ['light','dark','glass']){

@@ -13,3 +13,18 @@
  html[data-zavi-theme="light"] body :is(input,textarea)::placeholder{color:#596981;opacity:1}
 }
 @media(prefers-reduced-motion:reduce){body :is(.card,.panel,.dashboard-card,.menu-card){animation:none!important;transition:none!important}}
+
+/* V66.62 screenshot issues: calmer accounting panels and accessible light theme. */
+@media(max-width:600px){
+ #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card){padding:12px!important;margin-block:8px!important;min-width:0}
+ #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card) :is(h2,h3,h4){margin-block:4px 8px!important;line-height:1.4!important}
+ #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card) :is(p,small,.hint){line-height:1.5!important}
+ #content :is(.table-wrap,.table-scroll,.zsvc-table-scroll,.zv-table-scroll){overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+ #content :is(.zv-wh-transfer,.zv-wh-transfer-form){min-width:0;max-width:100%;box-sizing:border-box}
+ #content :is(.zv-wh-transfer-form,.zv-wh-transfer-form *){overflow-wrap:break-word}
+}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card) :is(label,p,small,span,td,th){color:#20344d}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card) :is(.muted,.hint,.subtitle){color:#465c75!important}
+@media(prefers-reduced-motion:reduce){
+ #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card,.zv-wh-transfer){animation:none!important;transition:none!important}
+}

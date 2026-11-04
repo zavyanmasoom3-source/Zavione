@@ -46,3 +46,14 @@ html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.
    overscroll-behavior-x:contain;
  }
 }
+
+/* Compact warehouse and settings on mobile, preserve controls. */
+@media(max-width:650px){
+#content .zv-wh-manager{padding:10px!important;margin:8px 0!important}
+#content .zv-wh-form{gap:7px!important;margin:8px 0!important}
+#content .zv-wh-row{padding:8px!important;gap:7px!important}
+#content .zv-wh-transfer-form{gap:7px!important}
+#content .zavi-clean-settings-groups{gap:7px!important}
+#content .zavi-clean-settings-group>summary{min-height:52px!important;padding-block:9px!important}
+#content .zavi-clean-settings-stack{padding:8px!important;gap:7px!important}
+}

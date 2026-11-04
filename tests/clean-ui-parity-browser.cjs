@@ -75,7 +75,7 @@ const fs=require('node:fs');
      assert.ok(output.panelCss.length>0,app+' '+theme+' content has no computed color');
      assert.ok(output.heroBackground.includes('gradient'),app+' '+theme+' approved gradient hero not applied');
      // Contrast safeguard: fail instead of packaging unreadable white/black controls.
-     const rgb=value=>(String(value||'').match(/[\\d.]+/g)||[]).slice(0,3).map(Number);
+     const rgb=value=>(String(value||'').match(/[0-9.]+/g)||[]).slice(0,3).map(Number);
      if(theme==='light'&&app==='one'){
       const bg=rgb(output.quickBg),ink=rgb(output.quickInk);
       assert.ok(bg.length===3&&Math.min(...bg)>=205, 'Light quick actions must use bright cards: '+output.quickBg);

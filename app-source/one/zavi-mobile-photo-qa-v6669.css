@@ -57,3 +57,19 @@ html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.
 #content .zavi-clean-settings-group>summary{min-height:52px!important;padding-block:9px!important}
 #content .zavi-clean-settings-stack{padding:8px!important;gap:7px!important}
 }
+
+/* V66.62 layout audit: responsive financial forms, tables, and readable light theme. */
+@media(max-width:720px){
+ #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card,.zv-wh-manager){max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+ #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card,.zv-wh-manager) :is(input,select,textarea){max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+ #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card,.zv-wh-manager) :is(h1,h2,h3,h4,p,small,label){overflow-wrap:anywhere}
+ #content :is(.table-wrap,.table-scroll,.zsvc-table-scroll,.zv-table-scroll){overflow-x:auto!important;max-width:100%!important}
+ #content .zv-wh-transfer-form>*{min-width:0!important}
+ #content .zv-wh-stock-row{min-width:0!important}
+}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.zv-wh-manager,.zavi-clean-settings-hub,.settings-card,.report-card,.table-card,.form-card) :is(input,select,textarea){
+ background:#fff!important;color:#162b45!important;border-color:#98a9be!important;
+}
+html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.zv-wh-manager,.zavi-clean-settings-hub,.settings-card,.report-card,.table-card,.form-card) :is(label,.hint,.muted,small){
+ color:#354a63!important;opacity:1!important;
+}

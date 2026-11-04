@@ -28,3 +28,21 @@ html[data-zavi-theme="light"]:not([data-zavi-appearance="glass"]) #content :is(.
 @media(prefers-reduced-motion:reduce){
  #content :is(.settings-card,.report-card,.table-card,.form-card,.summary-card,.zv-wh-transfer){animation:none!important;transition:none!important}
 }
+
+/* V66.62 visible flicker guard: stabilize frequently re-rendered accounting cards.
+   Avoid display:none or removal of financial controls. */
+@media(max-width:780px){
+ html[data-zavi-theme] #content :is(.card,.panel,.settings-card,.report-card,.table-card,.form-card,.summary-card,.stat,.metric){
+   animation:none!important;
+   transition-property:color,background-color,border-color!important;
+   transition-duration:0.12s!important;
+   transform:none!important;
+   backface-visibility:visible;
+ }
+ html[data-zavi-theme] #content :is(.card,.panel,.settings-card,.report-card,.table-card,.form-card,.summary-card) :is(button,input,select,textarea){
+   animation:none!important;
+ }
+ html[data-zavi-theme] #content :is(.table-wrap,.table-scroll,.zsvc-table-scroll,.zv-table-scroll){
+   overscroll-behavior-x:contain;
+ }
+}

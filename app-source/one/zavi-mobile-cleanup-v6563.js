@@ -38,8 +38,18 @@ function moveNativeStats(root,home){
  wrap.append(native);
 }
 function addShortcuts(home){
- if($('.z63-quick-panel',home))return;
  const t=translations[lang()];
+ const existing=$('.z63-quick-panel',home);
+ if(existing){
+  existing.setAttribute('aria-label',t.shortcuts);
+  const heading=$(':scope > h3',existing);if(heading)heading.textContent=t.shortcuts;
+  const names={sale:t.newSale,purchase:t.newPurchase,receive:t.receive,pay:t.pay};
+  for(const [key,value] of Object.entries(names)){
+   const label=$('[data-z63-quick="'+key+'"] span:last-child',existing);
+   if(label&&label.textContent!==value)label.textContent=value;
+  }
+  return;
+ }
  const el=document.createElement('section');el.className='z63-quick-panel';el.setAttribute('aria-label',t.shortcuts);
  const label=document.createElement('h3');label.textContent=t.shortcuts;el.append(label);
  const grid=document.createElement('div');grid.className='z63-quick-grid';

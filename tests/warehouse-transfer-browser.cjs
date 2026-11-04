@@ -16,12 +16,12 @@ const assert=require('node:assert/strict');
    const w2={id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',workspace_id:ws,name:'گدام دوم',code:'TWO',is_active:true};
    const original={state:window.zaviCloudRestoreInfo,auth:window.zaviCloudGetAuthSession,cfg:window.zaviCloudGetPublicConfig,refresh:window.zaviCloudRefreshAuthSession,can:window.zaviCloudCanEdit,fetch:window.fetch,whrefresh:window.ZaviWarehouseV1.refresh};
    const origDB=db;
-   let ownerRole='owner',failPost=false,posts=0,refreshCount=0;
-   const saved=new Set(),ids=[];
+   let ownerRole='owner',failPost=false,posts=0,refreshCount=0,swapOnRefresh=false,user='00000000-0000-4000-8000-000000000000';
+   const saved=new Map(),ids=[];
    window.zaviCloudRestoreInfo=()=>({workspace:ws,role:ownerRole});
-   window.zaviCloudGetAuthSession=()=>({user:{id:'00000000-0000-4000-8000-000000000000'}});
+   window.zaviCloudGetAuthSession=()=>({user:{id:user}});
    window.zaviCloudGetPublicConfig=()=>({url:'https://warehouse-transfers-qa.invalid',key:'qa-public-key'});
-   window.zaviCloudRefreshAuthSession=async()=>({access_token:'qa-owner-jwt'});
+   window.zaviCloudRefreshAuthSession=async()=>{if(swapOnRefresh){user='other-user';swapOnRefresh=false}return {access_token:'qa-owner-jwt'}};
    window.zaviCloudCanEdit=()=>true;
    window.ZaviWarehouseV1.refresh=async()=>{refreshCount++};
    window.fetch=async(url,init={})=>{
@@ -29,12 +29,12 @@ const assert=require('node:assert/strict');
     if(init.headers?.Authorization!=='Bearer qa-owner-jwt'||init.headers?.apikey!=='qa-public-key')throw Error('Missing owner token');
     if(init.method==='GET'){
      const id=u.searchParams.get('id')?.replace(/^eq\./,'');
-     return {ok:true,status:200,json:async()=>id&&saved.has(id)?[{id,workspace_id:ws}]:[]};
+     return {ok:true,status:200,json:async()=>id&&saved.has(id)?[saved.get(id)]:[]};
     }
     if(init.method==='POST'&&u.pathname.endsWith('/rpc/zavi_warehouse_post_movement')){
      const body=JSON.parse(init.body);posts++;ids.push(body.p_operation_id);
      if(body.p_workspace_id!==ws||body.p_from_warehouse_id!==w1.id||body.p_to_warehouse_id!==w2.id||body.p_product_ref!=='P1'||body.p_quantity!=='1.2500')throw Error('Wrong RPC data or precision');
-     saved.add(body.p_operation_id);
+     saved.set(body.p_operation_id,{id:body.p_operation_id,workspace_id:ws,from_warehouse_id:body.p_from_warehouse_id,to_warehouse_id:body.p_to_warehouse_id,product_ref:body.p_product_ref,quantity:body.p_quantity,reference:body.p_reference});
      if(failPost)throw new TypeError('Simulated lost response AFTER server commit');
      return {ok:true,status:200,json:async()=>body.p_operation_id};
     }
@@ -69,10 +69,25 @@ const assert=require('node:assert/strict');
     const second=ids[1];
     if(second===first||!saved.has(second))throw Error('Second server commit was not tracked');
     failPost=false;
+    // Same operation ID with a different quantity must never be acknowledged.
+    const actualRecord={...saved.get(second)};
+    saved.get(second).quantity='9.0000';
+    box.querySelector('[data-zv-retry-transfer]').click();
+    await new Promise(r=>setTimeout(r,60));
+    if(!api.pending({user:'00000000-0000-4000-8000-000000000000',workspace:ws})||refreshCount!==1||posts!==2)throw Error('Mismatched transfer was incorrectly confirmed');
+    saved.set(second,actualRecord);
     box.querySelector('[data-zv-retry-transfer]').click();
     await delay(()=>refreshCount===2&&!api.pending({user:'00000000-0000-4000-8000-000000000000',workspace:ws}));
     if(posts!==2)throw Error('Lost response retry duplicated server transfer');
     if(JSON.stringify(db)!==before)throw Error('Historical accounting balance changed after retry');
+    // Changing users during token refresh, even within the same workspace,
+    // must preserve the old user's pending operation and never send their POST.
+    api.mount(box,[w1,w2]);swapOnRefresh=true;submitFirst();
+    await delay(()=>user==='other-user'&&!box.querySelector('[data-zv-transfer-form]'));
+    if(posts!==2||!api.pending({user:'00000000-0000-4000-8000-000000000000',workspace:ws}))throw Error('Account switch posted or lost the pending transfer');
+    user='00000000-0000-4000-8000-000000000000';api.mount(box,[w1,w2]);
+    box.querySelector('[data-zv-retry-transfer]').click();
+    await delay(()=>posts===3&&refreshCount===3&&!api.pending({user,workspace:ws}));
     ownerRole='viewer';api.mount(box,[w1,w2]);
     if(box.querySelector('[data-zv-transfer-form]')||box.querySelector('[data-zv-retry-transfer]'))throw Error('Viewer could access transfer form');
     return {posts,confirmed:saved.size,retriesWithoutPosting:true,ownerOnly:true,ledgerIntact:true};
@@ -84,7 +99,7 @@ const assert=require('node:assert/strict');
    }
   });
   assert.deepEqual(errors,[]);
-  assert.equal(result.posts,2);assert.equal(result.confirmed,2);
+  assert.equal(result.posts,3);assert.equal(result.confirmed,3);
   assert.equal(result.ownerOnly,true);assert.equal(result.ledgerIntact,true);
   console.log('Warehouse owner-only transfer; durable idempotent retry after lost response; untouched invoices PASSED',result);
   await ctx.close();

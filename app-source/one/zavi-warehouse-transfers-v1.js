@@ -26,6 +26,14 @@
   if(!data||!/^[0-9a-f-]{36}$/i.test(data.id||'')||!data.workspace_id||!data.from_warehouse_id||!data.to_warehouse_id||!data.product_ref||data.from_warehouse_id===data.to_warehouse_id)throw Error('INVALID_TRANSFER');
   return Object.freeze({...data,p_quantity:quantity(data.p_quantity)});
  }
+ function matches(item,row){
+  if(!row||row.id!==item.id||row.workspace_id!==item.workspace_id||
+     row.from_warehouse_id!==item.from_warehouse_id||row.to_warehouse_id!==item.to_warehouse_id||
+     row.product_ref!==item.product_ref||String(row.reference||'')!==String(item.reference||''))return false;
+  const units=value=>{const [whole,part='']=quantity(value).split('.');return BigInt(whole)*10000n+BigInt(part.padEnd(4,'0'))};
+  try{return units(row.quantity)===units(item.p_quantity)}catch{return false}
+ }
+ function sameIdentity(a,b){return !!a&&!!b&&a.user===b.user&&a.workspace===b.workspace&&a.url===b.url&&a.key===b.key}
  function identity(){
   const info=root?.zaviCloudRestoreInfo?.(),session=root?.zaviCloudGetAuthSession?.(),cfg=root?.zaviCloudGetPublicConfig?.();
   if(info?.role!=='owner'||!info.workspace||!session?.user?.id||!cfg?.url||!/^https:\/\/[a-z0-9.-]+$/i.test(cfg.url)||!cfg.key)return null;
@@ -89,21 +97,25 @@
  let sending=false;
  async function call(x,path,method,data){
   const latest=identity();
-  if(!latest||latest.user!==x.user||latest.workspace!==x.workspace)throw Error('SESSION_CHANGED');
+  if(!sameIdentity(latest,x))throw Error('SESSION_CHANGED');
   const auth=await root.zaviCloudRefreshAuthSession?.();
-  if(!auth?.access_token||identity()?.workspace!==x.workspace)throw Error('SESSION_CHANGED');
+  if(!auth?.access_token||!sameIdentity(identity(),x))throw Error('SESSION_CHANGED');
   const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),16000);
   try{
    const response=await root.fetch(x.url+path,{method,headers:{apikey:x.key,Authorization:'Bearer '+auth.access_token,'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined,signal:ctrl.signal});
    const json=await response.json().catch(()=>null);
-   if(!response.ok){const error=new Error(String(json?.message||json?.error||'HTTP '+response.status));error.code=response.status;throw error}
+   if(!sameIdentity(identity(),x))throw Error('SESSION_CHANGED');
+   if(!response.ok){const error=new Error(String(json?.message||json?.error||'HTTP '+response.status));error.code=response.status;error.missingRpc=path==='/rest/v1/rpc/zavi_warehouse_post_movement'&&(response.status===404||json?.code==='PGRST202');throw error}
    return json;
   }finally{clearTimeout(timer)}
  }
  async function reconcile(x,item){
-  const path='/rest/v1/zavi_warehouse_movements?select=id,workspace_id&workspace_id=eq.'+encodeURIComponent(x.workspace)+'&id=eq.'+encodeURIComponent(item.id)+'&limit=1';
+  const path='/rest/v1/zavi_warehouse_movements?select=id,workspace_id,from_warehouse_id,to_warehouse_id,product_ref,quantity,reference&workspace_id=eq.'+encodeURIComponent(x.workspace)+'&id=eq.'+encodeURIComponent(item.id)+'&limit=1';
   const found=await call(x,path,'GET');
-  return Array.isArray(found)&&found.some(row=>row?.id===item.id&&row.workspace_id===x.workspace)
+  if(!Array.isArray(found))throw Error('INVALID_SERVER_RESPONSE');
+  if(!found.length)return false;
+  if(found.length!==1||!matches(item,found[0]))throw Error('TRANSFER_CONTENT_MISMATCH');
+  return true
  }
  async function submit(box,item,x){
   if(sending)return;sending=true;const host=box.querySelector('.zv-wh-transfer'),t=L();
@@ -119,14 +131,15 @@
    if(result!==item.id)throw Error('SERVER_CONFIRMATION_MISMATCH');
    clear(x);status(host,t.done);await root.ZaviWarehouseV1?.refresh(box);
   }catch(e){
-   if(e.code===404||e.code===400&&/PGRST202/.test(e.message)){// Function is definitely missing, no transfer was made.
+   if(e.missingRpc){// Function is definitely missing, no transfer was made.
     clear(x);status(host,t.disabled);
    }else status(host,t.unsafe+' ('+String(e.message||'').slice(0,140)+')');
   }finally{
    sending=false;
    host?.querySelectorAll('input,select,button').forEach(n=>n.disabled=false);
    // Do not create a new transfer if an uncertain pending operation remains.
-   if(pending(x))paint(box,[]);
+   if(!sameIdentity(identity(),x))paint(box,[]);
+   else if(pending(x))paint(box,[]);
   }
  }
  if(root?.document){
@@ -149,5 +162,5 @@
    const item=pending(id);if(item)void submit(box,item,id);
   });
  }
- return Object.freeze({quantity,operation,mount,pending});
+ return Object.freeze({quantity,operation,matches,mount,pending});
 });

@@ -90,7 +90,7 @@ async function refresh(box){
  try{
   var data=await rest('/rest/v1/zavi_warehouses?select=id,name,code,is_active,workspace_id&workspace_id=eq.'+encodeURIComponent(c.id)+'&order=created_at.asc','GET');
   if(ticket!==requestNo||!box.isConnected||activeWorkspace!==c.id)return;
-  rows=Array.isArray(data)?data:[];draw(box);window.ZaviWarehouseTransfersV1?.mount(box,rows);
+  rows=Array.isArray(data)?data.filter(w=>w&&w.workspace_id===c.id):[];draw(box);window.ZaviWarehouseTransfersV1?.mount(box,rows);
   try {
    var stock=await rest('/rest/v1/zavi_warehouse_stock_summary?select=warehouse_id,product_ref,quantity,workspace_id&workspace_id=eq.'+encodeURIComponent(c.id)+'&order=warehouse_id,product_ref&limit=201','GET');
    if(ticket!==requestNo||!box.isConnected||activeWorkspace!==c.id)return;
@@ -106,7 +106,8 @@ async function refresh(box){
     const movements=await rest('/rest/v1/zavi_warehouse_movements?select=id,from_warehouse_id,to_warehouse_id,product_ref,quantity,reference,created_at,workspace_id&workspace_id=eq.'+encodeURIComponent(c.id)+'&order=created_at.desc&limit=30','GET');
     if(ticket!==requestNo||!box.isConnected||activeWorkspace!==c.id)return;
     historyRows=Array.isArray(movements)?movements.filter(m=>m.workspace_id===c.id):[];
-   }catch(historyError){historyRows=[];historyNote=tr('تاریخچه دریافت نشد: ','تاریخچه ترلاسه نه شوه: ','History unavailable: ')+historyError.message;}
+   }catch(historyError){if(ticket!==requestNo||!box.isConnected||activeWorkspace!==c.id)return;historyRows=[];historyNote=tr('تاریخچه دریافت نشد: ','تاریخچه ترلاسه نه شوه: ','History unavailable: ')+historyError.message;}
+  if(ticket!==requestNo||!box.isConnected||activeWorkspace!==c.id)return;
   drawStock(box);drawHistory(box);message(box,stockNote?tr('گدام‌ها دریافت شدند؛ وضعیت موجودی را بررسی کنید.','ګدامونه ترلاسه شول؛ د موجودۍ حالت وګورئ.','Warehouses loaded; check stock status.'):tr('از دیتابیس دریافت شد.','له ډیټابېس څخه ترلاسه شول.','Loaded from database.'))
  }catch(e){if(ticket!==requestNo||!box.isConnected)return;rows=[];stockRows=[];historyRows=[];stockNote=tr('موجودی قابل تأیید نیست.','موجودي نه ده تایید شوې.','Stock cannot be verified.');historyNote='';draw(box);drawStock(box);drawHistory(box);window.ZaviWarehouseTransfersV1?.mount(box,[]);message(box,e.message)}
 }

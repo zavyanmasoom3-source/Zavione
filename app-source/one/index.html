@@ -1725,8 +1725,14 @@ function save(next){
  }
  window.ZaviBarcodeV641?.invalidate?.(db.products);
  db=next;storageOk=true;refreshBusinessAssets();archiveInIndexedDB(next);
- if(window.zaviOfflineBackupSave)window.zaviOfflineBackupSave(next);
- if(window.zaviCloudAfterSave)window.zaviCloudAfterSave(next);
+ // The durable local commit already succeeded. A failed optional backup or
+ // sync hook must not masquerade as a failed sale and encourage a duplicate.
+ for(const hook of ['zaviOfflineBackupSave','zaviCloudAfterSave']){
+  try{
+   const result=window[hook]?.(next);
+   if(result&&typeof result.catch==='function')result.catch(()=>toast('معامله روی دستگاه ذخیره شد؛ پشتیبان یا همگام‌سازی کامل نشد.'));
+  }catch(_){toast('معامله روی دستگاه ذخیره شد؛ پشتیبان یا همگام‌سازی کامل نشد.');}
+ }
  return true;
 }
 function commit(fn){if(window.zaviCloudCanEdit&&!window.zaviCloudCanEdit()){toast(window.zaviAccessDiagnostic?.()||'اجازه ثبت معامله وجود ندارد.');return false}const next=JSON.parse(JSON.stringify(db));try{fn(next)}catch(e){toast(e.message||'خطا در ثبت اطلاعات');return false}

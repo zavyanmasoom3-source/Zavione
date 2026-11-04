@@ -262,3 +262,12 @@ html[data-zavi-appearance="glass"] body #appScreen #view .admin-hero button.butt
   font-size:11px!important;padding:5px 8px!important;border-radius:10px!important;
  }
 }
+
+/* Account control injects its compact-table stylesheet at runtime. Explicit
+   light specificity keeps dark row backgrounds from defeating readable text. */
+html[data-zavi-theme="light"] body #z24Root .v24-table:has(.v24-actions) tbody tr{
+ background:#ffffff!important;color:#152944!important;border-color:#dbe6f4!important;
+}
+html[data-zavi-theme="light"] body #z24Root .v24-table:has(.v24-actions) tbody tr :is(td,small,b,span){
+ color:#152944!important;opacity:1!important;
+}

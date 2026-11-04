@@ -16,3 +16,12 @@ test('Transfer IDs and distinct source/destination are required; no amount is ro
  assert.throws(()=>api.operation({...item,from_warehouse_id:'to'}),/INVALID_TRANSFER/);
  assert.throws(()=>api.operation({...item,id:''}),/INVALID_TRANSFER/);
 });
+
+test('reconciliation requires full immutable transfer contents, including exact quantity',()=>{
+ const item={id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',workspace_id:'ws1',from_warehouse_id:'from',to_warehouse_id:'to',product_ref:'P1',p_quantity:'1.25',reference:'invoice1'};
+ const row={...item,quantity:'1.2500'};
+ assert.equal(api.matches(item,row),true);
+ for(const [key,value] of Object.entries({workspace_id:'ws2',from_warehouse_id:'other',to_warehouse_id:'other',product_ref:'P2',quantity:'1.2501',reference:'different'}))assert.equal(api.matches(item,{...row,[key]:value}),false,key);
+ assert.equal(api.matches(item,{id:item.id,workspace_id:item.workspace_id}),false);
+ assert.equal(api.matches(item,{...row,quantity:'NaN'}),false);
+});

@@ -102,13 +102,8 @@ html[data-zavi-theme] #content.zrf-dashboard .z63-quick-panel :is(h2,h3,strong){
 html[data-zavi-theme] #content.zrf-dashboard .z63-quick-grid{
  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;
 }
-html[data-zavi-theme] #content.zrf-dashboard .z63-quick-tile{
- display:flex!important;align-items:center!important;justify-content:center!important;
- min-height:55px!important;padding:9px!important;
- border-radius:12px!important;border:1px solid var(--z68-line)!important;
- background:var(--z68-surface-2)!important;color:var(--z68-ink)!important;
- box-shadow:none!important;transition:background .16s ease,transform .16s ease!important;
-}
+/* Shortcut colors come from the original, already QA-proven theme-aware
+   zavi-mobile-cleanup-v6563.css. This layer changes layout only. */
 html[data-zavi-theme] #content.zrf-dashboard .z63-quick-tile:hover{
  transform:translateY(-1px)!important;
 }
@@ -237,64 +232,4 @@ html[data-zavi-appearance="glass"] .sidebar{
  html[data-zavi-theme] #content :is(.card,.panel,.stat,.report-card){
   background:#fff!important;color:#121212!important;box-shadow:none!important;
  }
-}
-
-
-/* Pixel QA contrast correction: preserve white quick-action cards in Light. */
-html[data-zavi-theme="light"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile{
- background:#fff!important;background-image:none!important;
- color:#18304e!important;-webkit-text-fill-color:#18304e!important;
- border-color:#d6e5f6!important;box-shadow:none!important;
-}
-html[data-zavi-theme="light"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile :is(span,b,strong,small){
- color:#18304e!important;-webkit-text-fill-color:#18304e!important;
-}
-html[data-zavi-theme="dark"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile{
- background:#142943!important;background-image:none!important;
- color:#f3f8ff!important;border-color:#315171!important;
-}
-html[data-zavi-theme="dark"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile :is(span,b,strong,small){
- color:#f3f8ff!important;-webkit-text-fill-color:#f3f8ff!important;
-}
-html[data-zavi-appearance="glass"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile{
- background:rgba(36,76,135,.46)!important;background-image:none!important;
- color:#fff!important;border-color:rgba(223,240,255,.32)!important;
- -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-}
-html[data-zavi-appearance="glass"] body #content.zrf-dashboard .z63-quick-panel .z63-quick-grid .z63-quick-tile :is(span,b,strong,small){
- color:#fff!important;-webkit-text-fill-color:#fff!important;
-}
-
-
-/* Appearance is the persisted user choice. Some legacy skins use data-zavi-theme
- * for their fallback paint, so explicitly key these tiles to the chosen mode. */
-html[data-zavi-appearance="light"]{
- --z68-surface:#ffffff;--z68-surface-2:#f9fcff;--z68-ink:#142744;
-}
-html[data-zavi-appearance="dark"]{
- --z68-surface:#101f35;--z68-surface-2:#142943;--z68-ink:#f3f8ff;
-}
-html[data-zavi-appearance="light"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile{
- background:#ffffff!important;background-color:#ffffff!important;background-image:none!important;
- color:#172c49!important;-webkit-text-fill-color:#172c49!important;
- border-color:#dce7f4!important;
-}
-html[data-zavi-appearance="light"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile span:not(.z63-quick-glyph){
- color:#172c49!important;-webkit-text-fill-color:#172c49!important;
-}
-html[data-zavi-appearance="dark"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile{
- background:#142943!important;background-color:#142943!important;background-image:none!important;
- color:#f5f9ff!important;-webkit-text-fill-color:#f5f9ff!important;
- border-color:#345573!important;
-}
-html[data-zavi-appearance="dark"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile span:not(.z63-quick-glyph){
- color:#f5f9ff!important;-webkit-text-fill-color:#f5f9ff!important;
-}
-html[data-zavi-appearance="glass"] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile{
- background:rgba(35,75,132,.56)!important;background-color:rgba(35,75,132,.56)!important;
- color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;
- border-color:rgba(224,242,255,.33)!important;
-}
-html[data-zavi-appearance] body #content.zrf-dashboard section.z63-quick-panel .z63-quick-grid button.z63-quick-tile .z63-quick-glyph{
- color:#ffffff!important;-webkit-text-fill-color:#ffffff!important;
 }

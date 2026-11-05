@@ -1,0 +1,72 @@
+name: Warehouse SQL security and concurrent stock regression
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths:
+      - .github/workflows/zavi-warehouse-postgres-qa.yml
+      - database/staged/20261103_zavi_warehouse_no_negative_guard.sql
+      - database/staged/20261103_zavi_warehouse_permissions_idempotent_rpc.sql
+      - tests/sql/**
+permissions:
+  contents: read
+jobs:
+  postgres-warehouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: qa
+          POSTGRES_DB: zavi_qa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d zavi_qa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGDATABASE: zavi_qa
+      PGPASSWORD: qa
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL CLI
+        run: |
+          command -v psql || (sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client)
+      - name: Build only fabricated two-tenant fixture, no production data
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/warehouse_fixture.sql
+      - name: Apply staged migrations to throwaway Postgres service
+        run: |
+          psql -v ON_ERROR_STOP=1 -f database/staged/20261103_zavi_warehouse_no_negative_guard.sql
+          psql -v ON_ERROR_STOP=1 -f database/staged/20261103_zavi_warehouse_permissions_idempotent_rpc.sql
+      - name: Test idempotency, tenant RLS, product identity and overspend guard
+        run: psql -v ON_ERROR_STOP=1 -f tests/sql/warehouse_assertions.sql
+      - name: Test two competing withdrawals from stock of three
+        shell: bash
+        run: |
+          set -euo pipefail
+          job() {
+            local uuid="$1" name="$2"
+            if psql -v ON_ERROR_STOP=1 -c "SELECT set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',false); SET ROLE authenticated; SELECT public.zavi_warehouse_post_movement('$uuid','11111111-1111-4111-8111-111111111111','11111111-aaaa-4111-8111-111111111111',NULL,'P1',2.0000,'concurrent');" >"/tmp/$name.log" 2>&1; then
+              echo 0 >"/tmp/$name.status"
+            else
+              echo 1 >"/tmp/$name.status"
+            fi
+          }
+          job aaaaaaaa-0000-4000-8000-000000000010 a &
+          job aaaaaaaa-0000-4000-8000-000000000011 b &
+          wait
+          a=$(cat /tmp/a.status); b=$(cat /tmp/b.status)
+          if [ "$((a+b))" -ne 1 ]; then
+            echo "::error::Exactly one of two competing withdrawals must fail"
+            cat /tmp/a.log /tmp/b.log
+            exit 1
+          fi
+          remain=$(psql -At -v ON_ERROR_STOP=1 -c "SELECT coalesce(sum(CASE WHEN to_warehouse_id='11111111-aaaa-4111-8111-111111111111' THEN quantity WHEN from_warehouse_id='11111111-aaaa-4111-8111-111111111111' THEN -quantity ELSE 0 END),0) FROM public.zavi_warehouse_movements WHERE workspace_id='11111111-1111-4111-8111-111111111111' AND product_ref='P1';")
+          test "$remain" = '1.0000' || test "$remain" = '1'
+          echo "PASS: one withdrawal committed, second rejected, remaining stock=$remain"

@@ -1,0 +1,33 @@
+name: Recover and audit independent sources
+on:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths:
+      - '.github/workflows/zavi-source-recovery-audit.yml'
+      - 'scripts/recover-independent-source.py'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/independent-source-release-20261103
+      - name: Test source recovery safeguards
+        run: python3 -m unittest discover -s tests -v
+      - name: Recover historical web sources without APK extraction
+        run: python3 scripts/recover-independent-source.py
+      - name: Record recovered sources on the isolated development branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app-source/
+          git commit -m "refactor: recover independently maintained ONE and ADMIN web sources with provenance"
+          git push origin HEAD:fix/independent-source-release-20261103
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-maintained-sources
+          path: app-source/
+          if-no-files-found: error

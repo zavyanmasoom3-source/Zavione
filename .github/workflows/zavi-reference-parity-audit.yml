@@ -1,0 +1,43 @@
+name: Audit V66.06 APK versus independent source (analysis only)
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths:
+      - '.github/workflows/zavi-reference-parity-audit.yml'
+      - 'scripts/audit_legacy_apk_parity.py'
+permissions:
+  contents: read
+jobs:
+  reference-source-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: one
+            legacy_apk: ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk
+          - app: admin
+            legacy_apk: ZAVI_ONE_ADMIN_V1_4_52_INDEPENDENT_COMMAND_QA.apk
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download legacy reference only for READ-ONLY comparison
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p reference
+          gh release download zavi-migration-v6606 --repo "${{ github.repository }}" --pattern "${{ matrix.legacy_apk }}" --dir reference
+          test -s "reference/${{ matrix.legacy_apk }}"
+      - name: Inventory native assets and compare original web assets
+        run: |
+          python3 scripts/audit_legacy_apk_parity.py \
+            --apk "reference/${{ matrix.legacy_apk }}" \
+            --source "app-source/${{ matrix.app }}" \
+            --app "${{ matrix.app }}" \
+            --out "audit/reference-${{ matrix.app }}-parity.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reference-${{ matrix.app }}-parity-evidence
+          path: audit/reference-${{ matrix.app }}-parity.json
+          if-no-files-found: error

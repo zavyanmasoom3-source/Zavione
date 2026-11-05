@@ -1,0 +1,13 @@
+{
+  "name": "zavi-offline-zxing-vendor",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Build-time only offline camera barcode scanner (no runtime CDN)",
+  "scripts": {
+    "build": "esbuild entry.js --bundle --format=iife --platform=browser --target=es2020 --minify --legal-comments=inline --outfile=../../app-source/one/zavi-zxing-offline-v1.js"
+  },
+  "devDependencies": {
+    "@zxing/browser": "0.2.1",
+    "esbuild": "0.25.12"
+  }
+}

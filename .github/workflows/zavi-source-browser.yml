@@ -1,0 +1,46 @@
+name: Independent source browser regression
+on:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths: ['app-source/**', 'tests/**', '.github/workflows/zavi-source-browser.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/purchase-finance.test.cjs
+      - name: Verify Dari WhatsApp messages and international phone normalization
+        run: node --test tests/whatsapp.test.cjs tests/backup-integrity.test.cjs tests/warehouse-transfer.test.cjs tests/retained-features.test.cjs
+      - name: Audit legacy feature source and local assets
+        run: node tests/source-feature-parity.cjs
+      - run: npm install --no-save playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Test isolated purchase persistence and both application entry screens
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory app-source > /tmp/zavi-http.log 2>&1 &
+          node tests/browser-source.cjs
+          node tests/warehouse-browser.cjs
+          node tests/warehouse-transfer-browser.cjs
+          node tests/barcode-browser.cjs
+          node tests/command-parity-browser.cjs
+          node tests/display-parity-browser.cjs
+          node tests/admin-owner-panel-browser.cjs
+          node tests/menu-parity-browser.cjs
+          node tests/clean-ui-parity-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: independent-source-browser-evidence
+          path: |
+            qa-*.png
+            browser-source-results.json
+            qa-parity-results.json
+            menu-parity-results.json
+            ui-clean-audit.json

@@ -1,0 +1,103 @@
+name: READ-ONLY audit original APK certificates and upgrade identity
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths: ['.github/workflows/zavi-signing-identity-audit.yml','android-build/app/build.gradle']
+permissions:
+  contents: read
+jobs:
+  identity-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: one
+            legacy_asset: ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk
+            latest_tag: zavi-v6662-one-debug-qa
+            latest_asset: ZAVI_one_V6662_DEBUG_QA.apk
+            target_id: com.zavione.one
+          - app: admin
+            legacy_asset: ZAVI_ONE_ADMIN_V1_4_52_INDEPENDENT_COMMAND_QA.apk
+            latest_tag: zavi-v6662-admin-debug-qa
+            latest_asset: ZAVI_admin_V6662_DEBUG_QA.apk
+            target_id: com.zavione.one.admin
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download existing published reference APKs for read-only analysis
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p comparison
+          gh release download zavi-migration-v6606 --repo "${{ github.repository }}" --pattern "${{ matrix.legacy_asset }}" --dir comparison
+          gh release download "${{ matrix.latest_tag }}" --repo "${{ github.repository }}" --pattern "${{ matrix.latest_asset }}" --dir comparison
+      - name: Install Android SDK verification tools
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'build-tools;36.0.0'
+      - name: Compare package identity, existing signers and intended original signing key
+        env:
+          APP: ${{ matrix.app }}
+          LEGACY: ${{ matrix.legacy_asset }}
+          LATEST: ${{ matrix.latest_asset }}
+          TARGET_PACKAGE: ${{ matrix.target_id }}
+          STORE_B64: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEYSTORE_BASE64 || secrets.ZAVI_ADMIN_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_ALIAS || secrets.ZAVI_ADMIN_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p audit
+          signer="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+          aapt="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          old="comparison/$LEGACY"; recent="comparison/$LATEST"
+          test -s "$old" && test -s "$recent"
+          extract_cert() { "$signer" verify --print-certs "$1" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1; }
+          extract_id() { "$aapt" dump badging "$1" | sed -n "s/^package: name='\([^']*\)'.*/\1/p" | head -n1; }
+          old_cert="$(extract_cert "$old")"; new_cert="$(extract_cert "$recent")"
+          old_id="$(extract_id "$old")"; new_id="$(extract_id "$recent")"
+          test -n "$old_cert" && test -n "$new_cert" && test -n "$old_id" && test -n "$new_id"
+          signing_cert="unavailable"
+          if [[ -n "${STORE_B64:-}" && -n "${STORE_PASS:-}" && -n "${KEY_ALIAS:-}" ]]; then
+            export STORE_FILE="$RUNNER_TEMP/zavi-identity-only.jks"
+            python3 - <<'PY'
+          import os,base64,zipfile,io
+          from pathlib import Path
+          s=''.join(os.environ['STORE_B64'].split())
+          blob=base64.b64decode(s,validate=True)
+          if zipfile.is_zipfile(io.BytesIO(blob)):
+              expected={'one':'ZAVI_ONE_100_YEAR_RELEASE.jks','admin':'ZAVI_ONE_ADMIN_100_YEAR_RELEASE.jks'}[os.environ['APP']]
+              with zipfile.ZipFile(io.BytesIO(blob)) as z:
+                  items=[i for i in z.infolist() if i.filename==expected and not i.is_dir()]
+                  if len(items)!=1 or items[0].file_size>1024*1024:raise ValueError('Expected one small matching keystore')
+                  blob=z.read(items[0])
+          if len(blob)<1000 or blob[:2]==b'PK':raise ValueError('Invalid keystore content')
+          Path(os.environ['STORE_FILE']).write_bytes(blob)
+          PY
+            if keytool -exportcert -rfc -keystore "$STORE_FILE" -storepass "$STORE_PASS" -alias "$KEY_ALIAS" 2>/dev/null | openssl x509 -outform DER 2>/dev/null > "$RUNNER_TEMP/zavi-public-cert.der"; then
+              signing_cert="$(sha256sum "$RUNNER_TEMP/zavi-public-cert.der" | cut -d' ' -f1)"
+            fi
+            rm -f "$STORE_FILE" "$RUNNER_TEMP/zavi-public-cert.der"
+          fi
+          jq -n --arg app "$APP" --arg target "$TARGET_PACKAGE" \
+            --arg v6606 "$old_id" --arg v6662 "$new_id" \
+            --arg signing "$signing_cert" --arg v6606digest "$old_cert" --arg v6662digest "$new_cert" \
+            '{app:$app, expected_new_package:$target, old_package:$v6606, newer_package:$v6662,
+              old_cert_sha256:$v6606digest, newer_cert_sha256:$v6662digest, configured_key_cert_sha256:$signing,
+              same_existing_package:($v6606==$v6662), same_existing_certificate:($v6606digest==$v6662digest),
+              can_upgrade_old_v6606_with_new_id_and_key:($v6606==$target and $v6606digest==$signing),
+              can_upgrade_v6662_with_new_id_and_key:($v6662==$target and $v6662digest==$signing),
+              warning:"Read-only check. Even a matching signer/package requires higher versionCode, backup and device-level data-preservation tests."}' \
+            > "audit/$APP-identity-audit.json"
+          cat "audit/$APP-identity-audit.json"
+          echo "::notice title=Release safety::No APK was signed or published and no customer data was modified."
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: identity-audit-${{ matrix.app }}
+          path: audit/*.json
+          if-no-files-found: warn

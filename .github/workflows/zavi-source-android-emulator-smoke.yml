@@ -1,0 +1,70 @@
+name: Source-only Android install and launch smoke (QA)
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/independent-source-release-20261103]
+    paths: ['.github/workflows/zavi-source-android-emulator-smoke.yml', 'scripts/android-emulator-smoke.sh', 'android-build/app/src/main/java/com/zavione/mobile/MainActivity.java']
+permissions:
+  contents: read
+jobs:
+  install-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: one
+            package: com.zavione.one
+          - app: admin
+            package: com.zavione.one.admin
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source integrity
+        run: |
+          python3 -m unittest discover -s tests -v
+          node tests/source-feature-parity.cjs
+      - name: Stage source-only web app
+        env:
+          ZAVI_APP: ${{ matrix.app }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,shutil
+          src=Path('app-source')/os.environ['ZAVI_APP']
+          dst=Path('android-build/app/src/main/assets')
+          if dst.exists():shutil.rmtree(dst)
+          shutil.copytree(src,dst)
+          assert (dst/'index.html').is_file()
+          PY
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Android source-only Debug build (no release signing)
+        working-directory: android-build
+        run: |
+          cp app/src/main/res/drawable/ic_launcher.xml app/src/main/res/drawable/zavi_launcher_image.xml
+          gradle --no-daemon :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviProduction=false
+      - name: Install and run on clean Android API 34 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: false
+          disable-spellchecker: false
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            bash scripts/android-emulator-smoke.sh "${{ matrix.package }}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: QA-Android34-${{ matrix.app }}-install-and-start
+          path: qa-device/**
+          if-no-files-found: warn

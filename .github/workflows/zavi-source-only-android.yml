@@ -141,7 +141,7 @@ jobs:
           shutil.copytree(src,dst)
           assert (dst/'index.html').is_file()
           PY
-      - name: Restore validated offline speech model from original V66.62 baseline
+      - name: Restore offline speech model from existing V66.62 QA release
         env:
           GH_TOKEN: ${{ github.token }}
           ZAVI_APP: ${{ matrix.app }}
@@ -149,11 +149,13 @@ jobs:
           set -euo pipefail
           mkdir -p original
           if [ "$ZAVI_APP" = one ]; then
-            original_name=ZAVI_ONE_V66_06_INDEPENDENT_COMMAND_QA.apk
+            original_name=ZAVI_one_V6662_DEBUG_QA.apk
+            source_tag=zavi-v6662-one-debug-qa
           else
-            original_name=ZAVI_ONE_ADMIN_V1_4_52_INDEPENDENT_COMMAND_QA.apk
+            original_name=ZAVI_admin_V6662_DEBUG_QA.apk
+            source_tag=zavi-v6662-admin-debug-qa
           fi
-          gh release download zavi-migration-v6606 --repo "${{ github.repository }}" --pattern "$original_name" --dir original
+          gh release download "$source_tag" --repo "${{ github.repository }}" --pattern "$original_name" --dir original
           python3 - "$original_name" <<'PY'
           import hashlib,sys,zipfile
           from pathlib import Path

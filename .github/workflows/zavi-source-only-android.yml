@@ -11,7 +11,7 @@ on:
       - 'database/staged/20261103_zavi_warehouse_permissions_idempotent_rpc.sql'
       - '.github/workflows/zavi-source-only-android.yml'
 permissions:
-  contents: read
+  contents: write
 jobs:
   browser-gate:
     runs-on: ubuntu-latest
@@ -198,12 +198,24 @@ jobs:
               raise SystemExit('Full-size QA APK missing expected offline model or unexpectedly oversized.')
           print('Full-size QA contains speech model; speech recognition functionality still requires device testing.')
           PY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ZAVI_${{ matrix.app }}_FULL_MODEL_SOURCE_QA_APK
-          path: android-build/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 1
+      - name: Publish verified debug QA APK as a GitHub pre-release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZAVI_APP: ${{ matrix.app }}
+          GH_REPO: ${{ github.repository }}
+          GH_SHA: ${{ github.sha }}
+          GH_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          tag="zavi-source-qa-${GH_SHA:0:12}"
+          apk="android-build/app/build/outputs/apk/debug/app-debug.apk"
+          output="ZAVI_${ZAVI_APP}_SOURCE_QA_${GH_SHA:0:8}.apk"
+          cp "$apk" "$output"
+          if ! gh release view "$tag" --repo "$GH_REPO" >/dev/null 2>&1; then
+            gh release create "$tag" --repo "$GH_REPO" --target "$GH_SHA" --prerelease --title "ZAVI source QA ${GH_SHA:0:8}" --notes "Debug QA builds only. Not production signed or certified for upgrading existing installations. Workflow run: https://github.com/$GH_REPO/actions/runs/$GH_RUN_ID" || gh release view "$tag" --repo "$GH_REPO" >/dev/null
+          fi
+          gh release upload "$tag" "$output" --repo "$GH_REPO" --clobber
+          echo "Published QA APK: $output" >> "$GITHUB_STEP_SUMMARY"
 
   signing-readiness:
     runs-on: ubuntu-latest

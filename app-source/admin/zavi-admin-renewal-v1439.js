@@ -171,7 +171,7 @@ function install(){
 }
 function start(){
  install();
- let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;install()})}).observe(document.body,{childList:true,subtree:false});
+ let queued=false;new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;install()})}).observe(document.body,{childList:true,subtree:true});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.panel&&!state.panel.hidden)close()});
  document.addEventListener('change',e=>{if(e.target?.id==='zaviAdminLanguage'){const b=q('#z139-nav b');if(b)b.textContent=tr().nav;render()}});
  document.addEventListener('zavi-payment-saved',()=>{if(state.panel&&!state.panel.hidden){notice(tr().timeNote);state.contacts=[];state.rows=[];load()}});

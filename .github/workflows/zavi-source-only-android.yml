@@ -1,15 +1,7 @@
 name: ZAVI source-only Android build
+# APK production is deliberately manual until source consolidation and QA pass.
 on:
   workflow_dispatch:
-  push:
-    branches: [main, fix/independent-source-release-20261103]
-    paths:
-      - 'app-source/**'
-      - 'android-build/**'
-      - 'tests/**'
-      - 'database/staged/20261103_zavi_warehouse_no_negative_guard.sql'
-      - 'database/staged/20261103_zavi_warehouse_permissions_idempotent_rpc.sql'
-      - '.github/workflows/zavi-source-only-android.yml'
 permissions:
   contents: write
 jobs:

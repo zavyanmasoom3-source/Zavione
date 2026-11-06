@@ -1,0 +1,20 @@
+name: Stage 3 locale parity audit
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'app-source/one/*.json'
+      - 'app-source/admin/*.json'
+      - 'scripts/stage3-locale-audit.cjs'
+      - '.github/workflows/stage3-locale-audit.yml'
+  workflow_dispatch:
+jobs:
+  locale-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Dari, Pashto and English dictionary parity
+        run: node scripts/stage3-locale-audit.cjs

@@ -2617,7 +2617,7 @@ function zaviInvoiceMessage(t){
   total:currency(txTotal(t)),paid:currency(t.paid||0),balance:currency(money(txTotal(t)-num(t.paid)))};
  return window.ZaviWhatsappV1?.invoice?.(info)||'فاکتور '+t.code+' — '+info.total;
 }
-function zaviShareInvoiceWhatsApp(){if(!activeInvoice)return;const t=db.tx.find(x=>x.id===activeInvoice.id);if(!t)return;const c=db.contacts.find(x=>x.id===t.contactId);zaviWhatsappChoice(t.customerPhone||c?.whatsappPhone||c?.phone||'',zaviInvoiceMessage(t),'فاکتور');}
+function zaviShareInvoiceWhatsApp(){if(!activeInvoice)return;const t=db.tx.find(x=>x.id===activeInvoice.id);if(!t)return;const c=db.contacts.find(x=>x.id===t.contactId),phone=t.customerPhone||c?.whatsappPhone||c?.phone||'',outgoing=window.ZaviWhatsappV1?.links?.(phone,zaviInvoiceMessage(t));if(!phone||!outgoing?.valid)return toast('برای ارسال مستقیم فاکتور، شماره معتبر واتساپ مشتری را در دفترچه تماس ثبت کنید.');zaviWhatsappChoice(phone,zaviInvoiceMessage(t),'فاکتور');}
 function openWhatsapp(id){
  const c=db.contacts.find(x=>x.id===id);if(!c)return;
  const balance=money(contactBalances()[c.id]?.receivable||0),last=paymentReceipts(c.id)[0];

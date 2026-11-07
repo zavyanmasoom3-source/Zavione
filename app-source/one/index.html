@@ -2821,10 +2821,16 @@ renderSettings=function(){return zaviOldRenderSettings()+``};
 
 function openEntity(kind,id,creditorMode=false){if(kind==='product'||kind==='edit_product'){
  const p=db.products.find(x=>x.id===id)||{},edit=!!p.id;
- const actualQty=edit?stockOf(id):0;
+ const productWarehouseApi=window.ZaviInvoiceWarehouseV6710;
+ const productWarehouseOptions=productWarehouseApi?.options?.()||[];
+ const productWarehouseReady=productWarehouseApi?.readyForSales?.()===true;
+ const defaultProductWarehouse=(p.warehouseId&&productWarehouseOptions.some(([wid])=>String(wid)===String(p.warehouseId)))?String(p.warehouseId):String(productWarehouseOptions[0]?.[0]||'');
+ const actualQty=edit?(productWarehouseReady&&defaultProductWarehouse?qtyRound(num(productWarehouseApi.stock(defaultProductWarehouse,id))):stockOf(id)):0;
  const buyingPrice=edit?(p.purchasePrice??unitCost(id)):(p.purchasePrice??p.openingCost??0);
  let pendingProductImage=zaviSafeProductImage(p.imageData),productImageBusy=false;
  const productIndustry=zaviBusinessTypeV638();
+ const productWarehouseField=productWarehouseOptions.length?selectField('warehouseId','گدام محصول',productWarehouseOptions,defaultProductWarehouse):'';
+ const productWarehouseHint=productWarehouseOptions.length?'<div class="field full"><div class="small-info">'+(productWarehouseReady?'تعداد این فرم فقط برای گدام انتخاب‌شده است.':'این انتخاب برای مقداردهی اولیه همان محصول حفظ می‌شود؛ تا تکمیل مقداردهی، موجودی قدیمی مبنا می‌ماند.')+'</div></div>':'';
  const catData=`<datalist id="zawiCategoryOptions">${[...PRODUCT_CATS,'سایر'].map(x=>`<option value="${escapeHtml(x)}"></option>`).join('')}</datalist>`;
  const body=`<div class="form-grid">
  ${field('name','نام محصول *',p.name||'','text','required maxlength="140" placeholder="نام محصول را بنویسید"')}
@@ -2837,8 +2843,9 @@ function openEntity(kind,id,creditorMode=false){if(kind==='product'||kind==='edi
  ${field('purchasePrice','قیمت آمد / خرید هر واحد',buyingPrice,'number','min="0" step="any" required')}
   ${selectField('productPriceCurrency','واحد پول قیمت‌های واردشده',[[db.currency,'پول اصلی ('+db.currency+')'],...(db.currency==='USD'?[]:[['USD','دالر امریکایی (USD)']])],db.currency)}
   <div class="field full"><div class="small-info">اگر قیمت را به دالر می‌نویسید، نخست نرخ دالر را در داشبورد ثبت کنید. بعد قیمت فروش و قیمت خرید را هر دو به دالر وارد کنید؛ هنگام ذخیره، معادل حسابداری به پول اصلی ثبت می‌شود.</div></div>
+ ${productWarehouseField}${productWarehouseHint}
  ${window.ZaviIndustryForms6529.render(productIndustry,p.industryDetails,{expanded:!!p.industryDetails})}
- ${field('openingQty',edit?'تعداد فعلی در گدام *':'تعداد محصول در آغاز *',edit?actualQty:0,'number','min="0" step="0.001" required')}
+ ${field('openingQty',productWarehouseReady?(edit?'تعداد فعلی در گدام انتخابی *':'تعداد آغاز در گدام انتخابی *'):(edit?'تعداد فعلی در گدام *':'تعداد محصول در آغاز *'),edit?actualQty:0,'number','min="0" step="0.001" required')}
  ${field('reorder','هشدار در موجودی کمتر یا مساوی',p.reorder??5,'number','min="0" step="0.001" required')}
  <div class="field full"><label>عکس محصول (اختیاری)</label><div class="zavi-photo-preview" id="zaviProductPhotoPreview">${zaviPhotoMarkup({name:p.name,imageData:pendingProductImage})}<div><label class="btn subtle" style="cursor:pointer">انتخاب عکس<input id="zaviProductPhotoInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label> <button class="btn tiny" type="button" id="zaviProductPhotoClear">حذف عکس</button><div class="tiny-note">عکس کوچک و فشرده ذخیره می‌شود. برای نگهداری تعداد زیاد عکس، پشتیبان JSON بگیرید.</div></div></div></div>
  </div><p class="tiny-note">${edit?'اگر تعداد محصول را تغییر بدهید، اصلاح موجودی جداگانه در سابقه ثبت می‌شود و فاکتورهای گذشته تغییر نمی‌کنند. تغییر قیمت آمد، قیمت تاریخی خریدهای قبلی را عوض نمی‌کند.':'اگر محصولیی را در «خرید جدید» آزاد بنویسید، همین‌جا به فهرست محصولها اضافه می‌شود؛ می‌توانید بعداً کود و قیمت فروش آن را تکمیل کنید.'}</p>`;
@@ -2849,6 +2856,7 @@ function openEntity(kind,id,creditorMode=false){if(kind==='product'||kind==='edi
  // Existing barcode always means existing product: show an explicit EDIT action,
  // not a misleading error or silent reuse of another product's financial history.
  const productForm=document.getElementById('dialogForm');
+ if(edit&&productWarehouseReady&&productForm.elements.warehouseId){productForm.elements.warehouseId.addEventListener('change',()=>{const wid=String(productForm.elements.warehouseId.value||'');productForm.elements.openingQty.value=String(qtyRound(num(productWarehouseApi.stock(wid,id))));});}
  const zaviFormCodes=()=>String(productForm.elements.barcodes.value||'').split(/[,;\n]+/).map(x=>x.trim()).filter(Boolean);
  let zaviPreviewOwner='';
  function refreshProductBarcodeNotice(){

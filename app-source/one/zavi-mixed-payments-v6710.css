@@ -1,0 +1,16 @@
+/* ZAVI ONE 67.10 — mixed sale payments. UI only; accounting logic remains in index.html. */
+.z710-payments{margin-top:16px;padding:13px;border:1px solid var(--z67-outline,#dce5ef);border-radius:15px;background:var(--z67-panel-alt,#f8fbff)}
+.z710-payments-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.z710-payments-head h4{margin:0;font-size:14px}.z710-payments-head small{color:var(--z67-muted,#64748b)}
+.z710-payment-list{display:grid;gap:9px}
+.z710-payment-row{display:grid;grid-template-columns:minmax(110px,.8fr) minmax(135px,1.1fr) minmax(105px,.7fr) minmax(105px,.8fr) minmax(105px,.8fr) 36px;gap:8px;align-items:end;padding:10px;border:1px solid var(--z67-outline,#dce5ef);border-radius:12px;background:var(--z67-panel,#fff)}
+.z710-payment-row label{display:grid;gap:5px;font-size:10px;font-weight:750;color:var(--z67-muted,#64748b)}
+.z710-payment-row :is(input,select){width:100%;min-width:0;min-height:40px}
+.z710-payment-remove{width:36px;height:40px;border-radius:10px;border:1px solid #f0c8cf;background:#fff3f5;color:#b94258}
+.z710-payment-summary{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:12px}
+.z710-payment-summary strong{font-size:14px}
+.z710-payment-error{min-height:18px;margin-top:6px;color:#b4233b;font-size:11px}
+html[data-zavi-appearance="glass"] .z710-payments,html[data-zavi-appearance="glass"] .z710-payment-row{backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+@media(max-width:760px){.z710-payment-row{grid-template-columns:1fr 1fr}.z710-payment-row .z710-wide{grid-column:1/-1}.z710-payment-remove{justify-self:end}}
+@media(max-width:420px){.z710-payment-row{grid-template-columns:1fr}.z710-payment-row .z710-wide{grid-column:auto}.z710-payment-remove{justify-self:stretch;width:100%}}
+@media print{.z710-payments{display:none!important}}

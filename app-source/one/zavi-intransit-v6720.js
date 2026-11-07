@@ -4,7 +4,7 @@
  * after the existing reviewed Purchase form is opened, reviewed and submitted.
  */
 (()=>{'use strict';
-const VERSION=2, PENDING='zavi_v6720_pending_receipt_', SYNCQ='zavi_v6721_server_queue_';
+const VERSION=2, PENDING='zavi_v6720_pending_receipt_', SYNCQ='zavi_v6721_server_queue_', RECEIPT_IDS='zavi_v6721_receipt_ids_';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>{if(typeof crypto?.randomUUID==='function')return crypto.randomUUID();const b=new Uint8Array(16);crypto.getRandomValues(b);b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20)};
 const isUuid=x=>/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(x||''));
@@ -23,6 +23,14 @@ function clearPending(){localStorage.removeItem(pendingKey())}
 function serverQueueKey(){return SYNCQ+ctx()}
 function serverQueue(){try{const q=JSON.parse(localStorage.getItem(serverQueueKey())||'[]');return Array.isArray(q)?q:[]}catch{return []}}
 function saveServerQueue(q){localStorage.setItem(serverQueueKey(),JSON.stringify(q))}
+function receiptIdKey(){return RECEIPT_IDS+ctx()}
+function receiptIds(){try{const m=JSON.parse(localStorage.getItem(receiptIdKey())||'{}');return m&&typeof m==='object'&&!Array.isArray(m)?m:{}}catch{return {}}}
+function stableReceiptId(key,preferred=''){
+ const map=receiptIds();
+ if(isUuid(preferred)){map[key]=preferred;localStorage.setItem(receiptIdKey(),JSON.stringify(map));return preferred}
+ if(isUuid(map[key]))return map[key];
+ const id=uid();map[key]=id;localStorage.setItem(receiptIdKey(),JSON.stringify(map));return id;
+}
 function cloudContext(){
  const info=window.zaviCloudRestoreInfo?.()||{},session=window.zaviCloudGetAuthSession?.()||{},cfg=window.zaviCloudGetPublicConfig?.()||{};
  if(info.role!=='owner'||!info.workspace||!session?.user?.id||!cfg?.url||!cfg?.key)return null;
@@ -96,7 +104,7 @@ function queueReceiptServer(tx){
   let existing=q.find(x=>x.kind==='receipt'&&x.receiptKey===receiptKey);
   if(existing)continue;
   const productRef=productRefForReceipt(order,r.itemId,tx);
-  const receiptId=isUuid(r.receiptId)?r.receiptId:uid();
+  const receiptId=stableReceiptId(receiptKey,r.receiptId);
   q.push({kind:'receipt',receiptKey,receiptId,orderId:order.id,lineId:r.itemId,quantity:Number(r.qty),productRef,note:tx.inTransitDiscrepancy||null});
   changed=true;
  }

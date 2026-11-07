@@ -40,7 +40,7 @@ test('All known ONE sections stay routable when stale module flags exist',()=>{
   const index=read('app-source/one/index.html');
   assert.match(index,/function zaviRouteIsKnown\(id\)/);
   assert.match(index,/window\.zaviCurrentPage=page/);
-  assert.match(index,/const available=organized\.filter\(\[id\]\)=>zaviRouteIsKnown\(id\)\);/);
+  assert.match(index,/const available=organized\.filter\(\(\[id\]\)=>zaviRouteIsKnown\(id\)\);/);
   assert.doesNotMatch(index,/if\(!zaviModuleEnabled\(p\)&&p!==['"]settings['"]&&p!==['"]subscription['"]\)/);
   assert.doesNotMatch(index,/if\(!zaviModuleEnabled\(page\)&&page!==['"]settings['"]&&page!==['"]subscription['"]\)page=['"]settings['"]/);
 });

@@ -2904,6 +2904,12 @@ function openEntity(kind,id,creditorMode=false){if(kind==='product'||kind==='edi
   // Empty barcode is valid; repeated codes inside the SAME product are de-duplicated.
   const barcodes=inspected.barcodes;
   const priceMult=f.productPriceCurrency.value==='USD'?(fxUsdRate()||0):1; if(priceMult<=0)return toast('اول نرخ دالر را در تنظیمات ذخیره کنید.');const salePrice=money(num(f.salePrice.value)*priceMult),purchasePrice=money(num(f.purchasePrice.value)*priceMult),qty=qtyRound(num(f.openingQty.value)),reorder=qtyRound(num(f.reorder.value));
+  const warehouseId=productWarehouseOptions.length?String(f.warehouseId?.value||''):'';
+  if(productWarehouseOptions.length&&!productWarehouseOptions.some(([wid])=>String(wid)===warehouseId))return toast('گدام معتبر را انتخاب کنید.');
+  const warehouseCurrentQty=edit&&productWarehouseReady&&warehouseId?qtyRound(num(productWarehouseApi.stock(warehouseId,id))):actualQty;
+  const stockDiff=edit?qtyRound(qty-warehouseCurrentQty):qty;
+  if(productWarehouseReady&&Math.abs(stockDiff)>.00001&&typeof crypto?.randomUUID!=='function')return toast('برای ثبت امن حرکت گدام، این دستگاه باید UUID امن پشتیبانی کند.');
+  const warehouseMovementId=productWarehouseReady&&Math.abs(stockDiff)>.00001?crypto.randomUUID():'';
   if(!name)return toast('نام محصول را بنویسید.');
   let industryDetails;try{industryDetails=window.ZaviIndustryForms6529.collect(productForm.querySelector('.z629-industry'),productIndustry)}catch(e){return toast(e.message)}
   if([salePrice,purchasePrice,qty,reorder].some(x=>!Number.isFinite(x)||x<0))return toast('تعداد و قیمت‌ها نمی‌توانند منفی باشند.');
@@ -2912,12 +2918,16 @@ function openEntity(kind,id,creditorMode=false){if(kind==='product'||kind==='edi
    if(qty>1)return toast('برای هر موبایل دارای IMEI، یک ردیف جدا با تعداد ۱ ثبت کنید.');
    if(db.products.some(x=>x.id!==id&&x.industryDetails?.type==='mobile'&&x.industryDetails.values?.imei===imei))return toast('این IMEI قبلاً برای محصول دیگری در همین فروشگاه ثبت شده است.');
   }
+  let savedProductId=edit?id:'';
   if(commit(n=>{
-   let obj=edit?n.products.find(x=>x.id===id):{id:newId('p')};
-   Object.assign(obj,{name,sku,barcodes,category,salePrice,purchasePrice,reorder,imageData:pendingProductImage,industryDetails});
-   if(!edit){obj.openingQty=qty;obj.openingCost=purchasePrice;n.products.push(obj)}
-   else {const diff=qtyRound(qty-actualQty);if(Math.abs(diff)>.00001){n.tx.push({id:newId('t'),code:nextCode(n),type:'stock_adjust',date:nowISO(),created:new Date().toISOString(),productId:id,delta:diff,cost:diff>0?(purchasePrice||unitCost(id)):unitCost(id),note:'اصلاح تعداد محصول از بخش محصول و گدام'})}}
-  })){closeModal();toast('مشخصات و موجودی محصول ذخیره شد.');}
+   let obj=edit?n.products.find(x=>x.id===id):{id:newId('p')};savedProductId=obj.id;
+   Object.assign(obj,{name,sku,barcodes,category,salePrice,purchasePrice,reorder,imageData:pendingProductImage,industryDetails,...(warehouseId?{warehouseId}:{})});
+   if(!edit){obj.openingQty=qty;obj.openingCost=purchasePrice;if(warehouseMovementId)obj.warehouseOpeningMovementId=warehouseMovementId;n.products.push(obj)}
+   else if(Math.abs(stockDiff)>.00001){n.tx.push({id:newId('t'),code:nextCode(n),type:'stock_adjust',date:nowISO(),created:new Date().toISOString(),productId:id,delta:stockDiff,cost:stockDiff>0?(purchasePrice||unitCost(id)):unitCost(id),note:'اصلاح تعداد محصول از بخش محصول و گدام',...(warehouseId?{warehouseId}:{}),...(warehouseMovementId?{warehouseMovementId}:{})})}
+  })){
+   if(productWarehouseReady&&warehouseId&&warehouseMovementId&&savedProductId){try{productWarehouseApi.stageDocument({warehouseId,direction:stockDiff>0?'in':'out',reference:'product-stock:'+savedProductId+':'+warehouseMovementId,lines:[{operation_id:warehouseMovementId,product_ref:savedProductId,quantity:Math.abs(stockDiff)}]})}catch(err){console.warn('Product warehouse staging failed',err);toast('محصول ذخیره شد؛ حرکت گدام صف‌بندی نشد و باید بررسی شود.');return}}
+   closeModal();toast('مشخصات و موجودی محصول ذخیره شد.');
+  }
  };
  return;
 }

@@ -2595,7 +2595,19 @@ function zaviInvoiceMessage(t){
 function zaviShareInvoiceWhatsApp(){if(!activeInvoice)return;const t=db.tx.find(x=>x.id===activeInvoice.id);if(!t)return;const c=db.contacts.find(x=>x.id===t.contactId);zaviWhatsappChoice(t.customerPhone||c?.phone||'',zaviInvoiceMessage(t),'فاکتور');}
 function openWhatsapp(id){
  const c=db.contacts.find(x=>x.id===id);if(!c)return;
- zaviWhatsappChoice(c.phone,customerStatementText(c),'صورت‌حساب');
+ const balance=money(contactBalances()[c.id]?.receivable||0),last=paymentReceipts(c.id)[0];
+ const data={storeName:db.storeName,customer:c.name,date:fmtDate(nowISO()),balance:currency(balance),
+  reminderDate:c.reminderDate?fmtDate(c.reminderDate):'',lastPayment:last?currency(last.amount):''};
+ const templates=window.ZaviWhatsappV1?.templates?.(data)||[{id:'account_summary',label:'خلاصه حساب',message:customerStatementText(c)}];
+ const options=templates.map(x=>`<option value="${escapeHtml(x.id)}">${escapeHtml(x.label)}</option>`).join('');
+ showModal('پیام واتساپ برای '+c.name,`<div class="form-grid"><div class="field full"><label>نوع پیام</label><select id="zaviWaTemplate">${options}</select></div><div class="field full"><label>متن آماده</label><textarea id="zaviWaTemplateText" rows="8" maxlength="3500"></textarea><small class="field-hint">نام مشتری و مانده حساب به‌صورت خودکار درج شده است؛ پیش از ارسال می‌توانید متن را تغییر دهید.</small></div></div>`,'',false);
+ const select=document.getElementById('zaviWaTemplate'),text=document.getElementById('zaviWaTemplateText');
+ const fill=()=>{const item=templates.find(x=>x.id===select.value)||templates[0];text.value=item?.message||''};fill();select.addEventListener('change',fill);
+ const actions=document.createElement('div');actions.className='statement-actions';actions.style.marginTop='12px';
+ const send=document.createElement('button');send.type='button';send.className='btn primary';send.textContent='ادامه به واتساپ';
+ send.onclick=()=>{const message=text.value.trim();if(!message)return toast('متن پیام خالی است.');closeModal();zaviWhatsappChoice(c.phone,message,'پیام مشتری')};
+ const cancel=document.createElement('button');cancel.type='button';cancel.className='btn subtle';cancel.textContent='بستن';cancel.onclick=closeModal;
+ actions.append(send,cancel);text.closest('.form-grid')?.after(actions);
 }
 function paymentReceipts(id){return orderByDate(db.tx.filter(t=>!t.voided&&t.type==='customer_payment'&&t.contactId===id))}
 function receiptsHtml(id){const arr=paymentReceipts(id),sum=money(arr.reduce((s,t)=>s+num(t.amount),0));return `<div class="card" style="margin-top:16px;box-shadow:none;border-radius:13px"><div class="panel-head"><h3>تاریخچه رسیدهای مشتری · ${faDigits(arr.length)} بار</h3><span class="pill green">جمع دریافت‌ها: ${currency(sum)}</span></div>${arr.length?`<div class="table-wrap" style="display:block"><table class="ledger-table" style="min-width:560px"><thead><tr><th>تاریخ افغانستان</th><th>شماره رسید</th><th>مبلغ دریافت</th><th>یادداشت / شماره حواله</th></tr></thead><tbody>${arr.map(t=>`<tr><td>${fmtDate(t.date)}</td><td>${escapeHtml(t.code)}</td><td class="amount positive">${currency(t.amount)}${t.originalCurrency&&t.originalCurrency!==db.currency?`<br><small>${origMoney(t.originalAmount,t.originalCurrency)}</small>`:''}</td><td>${escapeHtml([t.note,t.reference].filter(Boolean).join(' | ')||'بدون یادداشت')}</td></tr>`).join('')}</tbody></table></div>`:'<div class="small-info" style="padding:15px">تا هنوز پرداختی ثبت نشده است.</div>'}</div>`}

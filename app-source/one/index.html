@@ -1712,7 +1712,17 @@ body{font-size:15px;line-height:1.9}button,input,select,textarea{font-size:14px;
   if(matches.length!==1){toast(matches.length?'یک بارکد به چند محصول تعلق دارد؛ گدام را بررسی کنید.':'بارکد در گدام ثبت نشده است؛ ابتدا محصول را ثبت کنید.');return;}
   const p=matches[0];
   let row=[...box.querySelectorAll('.order-line')].find(r=>r.dataset.scanProductId===p.id);
-  if(row){const qty=row.querySelector('[data-field="qty"]');qty.focus();qty.select();toast('محصول پیدا شد؛ تعداد را خودتان مشخص کنید.');}
+  if(row){
+   const qty=row.querySelector('[data-field="qty"]');
+   const current=Number(qty?.value||0);
+   const next=(Number.isFinite(current)&&current>0?current:0)+1;
+   if(qty){
+    qty.value=String(next);
+    qty.dispatchEvent(new Event('input',{bubbles:true}));
+    qty.dispatchEvent(new Event('change',{bubbles:true}));
+   }
+   toast('بارکد تکرار شد؛ تعداد محصول یک واحد افزایش یافت.');
+  }
   else{
    row=[...box.querySelectorAll('.order-line')].find(r=>!r.querySelector('[data-field="productName"]').value.trim());
    if(!row){addLine();row=box.querySelector('.order-line:last-child');}

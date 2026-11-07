@@ -1,0 +1,2 @@
+const test=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');
+for(const mode of ['one','admin']){test(`${mode} loads unified viewport and source guard`,()=>{const p=`app-source/${mode}/index.html`;const h=fs.readFileSync(p,'utf8');assert.match(h,/zavi-pdf-unified-viewport-v675\\.css/);assert.match(h,/zavi-source-leak-guard-v675\\.js/);assert.doesNotMatch(h,/document\\.body\\.appendChild\\(box\\)[\\s\\S]{0,80}<\\/script>/);});}

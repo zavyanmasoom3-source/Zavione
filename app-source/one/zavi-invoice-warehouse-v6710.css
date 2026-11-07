@@ -1,5 +1,5 @@
 /* ZAVI ONE 67.10 — warehouse-aware invoice fields */
-.z671-warehouse-note{grid-column:1/-1;margin:0;padding:9px 11px;border-radius:10px;font-size:12px;line-height:1.6;background:color-mix(in srgb,currentColor 7%,transparent)}
+.z671-qty-field{min-width:0;display:flex;flex-direction:column;gap:4px}.z671-qty-field input{width:100%}\n.z671-warehouse-note{grid-column:1/-1;margin:0;padding:9px 11px;border-radius:10px;font-size:12px;line-height:1.6;background:color-mix(in srgb,currentColor 7%,transparent)}
 .z671-field-error{display:block;margin-top:5px;font-size:12px;font-weight:700;color:#b42318}
 .order-line.z671-invalid [data-field="qty"]{outline:2px solid #b42318;outline-offset:1px}
 [data-zavi-theme="dark"] .z671-field-error,[data-zavi-appearance="glass"] .z671-field-error{color:#ffb4ab}

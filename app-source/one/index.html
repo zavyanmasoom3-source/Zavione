@@ -2922,8 +2922,8 @@ function openEntity(kind,id,creditorMode=false){if(kind==='product'||kind==='edi
   if(commit(n=>{
    let obj=edit?n.products.find(x=>x.id===id):{id:newId('p')};savedProductId=obj.id;
    Object.assign(obj,{name,sku,barcodes,category,salePrice,purchasePrice,reorder,imageData:pendingProductImage,industryDetails,...(warehouseId?{warehouseId}:{})});
-   if(!edit){obj.openingQty=qty;obj.openingCost=purchasePrice;if(warehouseMovementId)obj.warehouseOpeningMovementId=warehouseMovementId;n.products.push(obj)}
-   else if(Math.abs(stockDiff)>.00001){n.tx.push({id:newId('t'),code:nextCode(n),type:'stock_adjust',date:nowISO(),created:new Date().toISOString(),productId:id,delta:stockDiff,cost:stockDiff>0?(purchasePrice||unitCost(id)):unitCost(id),note:'اصلاح تعداد محصول از بخش محصول و گدام',...(warehouseId?{warehouseId}:{}),...(warehouseMovementId?{warehouseMovementId}:{})})}
+   if(!edit){obj.openingQty=qty;obj.openingCost=purchasePrice;if(warehouseMovementId){obj.warehouseOpeningMovementId=warehouseMovementId;obj.warehouseOpeningReference='product-stock:'+obj.id+':'+warehouseMovementId}n.products.push(obj)}
+   else if(Math.abs(stockDiff)>.00001){n.tx.push({id:newId('t'),code:nextCode(n),type:'stock_adjust',date:nowISO(),created:new Date().toISOString(),productId:id,delta:stockDiff,cost:stockDiff>0?(purchasePrice||unitCost(id)):unitCost(id),note:'اصلاح تعداد محصول از بخش محصول و گدام',...(warehouseId?{warehouseId}:{}),...(warehouseMovementId?{warehouseMovementId,warehouseReference:'product-stock:'+id+':'+warehouseMovementId}:{})})}
   })){
    if(productWarehouseReady&&warehouseId&&warehouseMovementId&&savedProductId){try{productWarehouseApi.stageDocument({warehouseId,direction:stockDiff>0?'in':'out',reference:'product-stock:'+savedProductId+':'+warehouseMovementId,lines:[{operation_id:warehouseMovementId,product_ref:savedProductId,quantity:Math.abs(stockDiff)}]})}catch(err){console.warn('Product warehouse staging failed',err);toast('محصول ذخیره شد؛ حرکت گدام صف‌بندی نشد و باید بررسی شود.');return}}
    closeModal();toast('مشخصات و موجودی محصول ذخیره شد.');

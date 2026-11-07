@@ -39,28 +39,28 @@ jobs:
           echo "ZAVI_KEYSTORE_PATH=$key_path" >> "$GITHUB_ENV"
       - name: Verify source tests
         run: node --test tests/*.test.cjs
-      - name: Build ZAVI ONE 66.76
+      - name: Build ZAVI ONE 66.75
         run: |
           rm -rf android-build/app/src/main/assets
           mkdir -p android-build/app/src/main/assets release
           cp -a app-source/one/. android-build/app/src/main/assets/
           chmod +x android-build/gradlew
           ./android-build/gradlew -p android-build --no-daemon -PzaviApp=one -PzaviProduction=true :app:assembleRelease
-          cp android-build/app/build/outputs/apk/release/app-release.apk release/ZAVI_ONE_66.76_pdf_final.apk
-      - name: Build ZAVI ONE ADMIN 1.4.67
+          cp android-build/app/build/outputs/apk/release/app-release.apk release/ZAVI_ONE_66.75_pdf_final.apk
+      - name: Build ZAVI ONE ADMIN 1.4.66
         run: |
           rm -rf android-build/app/src/main/assets
           mkdir -p android-build/app/src/main/assets
           cp -a app-source/admin/. android-build/app/src/main/assets/
           ./android-build/gradlew -p android-build --no-daemon -PzaviApp=admin -PzaviProduction=true :app:assembleRelease
-          cp android-build/app/build/outputs/apk/release/app-release.apk release/ZAVI_ONE_ADMIN_1.4.67_pdf_final.apk
+          cp android-build/app/build/outputs/apk/release/app-release.apk release/ZAVI_ONE_ADMIN_1.4.66_pdf_final.apk
       - name: Verify APK identities
         run: |
           AAPT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt"
-          "$AAPT" dump badging release/ZAVI_ONE_66.76_pdf_final.apk | grep "versionCode='6676' versionName='66.76-pdf-final'"
-          "$AAPT" dump badging release/ZAVI_ONE_ADMIN_1.4.67_pdf_final.apk | grep "versionCode='4167' versionName='1.4.67-pdf-final'"
-          unzip -l release/ZAVI_ONE_66.76_pdf_final.apk | grep 'assets/zavi-pdf-final-v6760.css'
-          unzip -l release/ZAVI_ONE_ADMIN_1.4.67_pdf_final.apk | grep 'assets/zavi-admin-pdf-final-v1467.css'
+          "$AAPT" dump badging release/ZAVI_ONE_66.75_pdf_final.apk | grep "versionCode='6675' versionName='66.75-pdf-final'"
+          "$AAPT" dump badging release/ZAVI_ONE_ADMIN_1.4.66_pdf_final.apk | grep "versionCode='4166' versionName='1.4.66-pdf-final'"
+          unzip -l release/ZAVI_ONE_66.75_pdf_final.apk | grep 'assets/zavi-pdf-final-v6760.css'
+          unzip -l release/ZAVI_ONE_ADMIN_1.4.66_pdf_final.apk | grep 'assets/zavi-admin-pdf-final-v1467.css'
       - uses: actions/upload-artifact@v4
         with:
           name: ZAVI-PDF-final-APKs

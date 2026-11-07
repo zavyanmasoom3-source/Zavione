@@ -19,9 +19,9 @@ test('ZAVI ONE 66.75 PDF design contract is embedded and persisted',()=>{
   assert.match(migration,/'barcodeLabelStudio',true/);
 });
 
-test('Android identities are versioned for 66.77 and ADMIN 1.4.68',()=>{
+test('Android identities are versioned for 66.78 and ADMIN 1.4.69',()=>{
   const gradle=read('android-build/app/build.gradle');
-  assert.match(gradle,/versionCode admin \? 4168 : 6677/);
+  assert.match(gradle,/versionCode admin \? 4169 : 6678/);
   assert.match(gradle,/versionName admin \? '1\.4\.68-pdf-final' : '66\.77-pdf-final'/);
 });
 
@@ -43,4 +43,14 @@ test('All known ONE sections stay routable when stale module flags exist',()=>{
   assert.match(index,/const available=organized\.filter\(\(\[id\]\)=>zaviRouteIsKnown\(id\)\);/);
   assert.doesNotMatch(index,/if\(!zaviModuleEnabled\(p\)&&p!==['"]settings['"]&&p!==['"]subscription['"]\)/);
   assert.doesNotMatch(index,/if\(!zaviModuleEnabled\(page\)&&page!==['"]settings['"]&&page!==['"]subscription['"]\)page=['"]settings['"]/);
+});
+
+test('Cloud refresh cannot silently return a visible section to dashboard',()=>{
+  const index=read('app-source/one/index.html');
+  const cloud=read('app-source/one/cloud.js');
+  assert.match(index,/const requestedPage=typeof window\.zaviCurrentPage/);
+  assert.match(index,/content\.dataset\.zaviRoute=route/);
+  assert.match(index,/ZAVI route render failed/);
+  assert.match(cloud,/const activePage=typeof window\.zaviCurrentPage/);
+  assert.doesNotMatch(cloud,/closeModal\(\);page='dashboard';render\(\);/);
 });

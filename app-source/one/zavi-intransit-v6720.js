@@ -280,11 +280,6 @@ function openManager(){
  document.getElementById('z672New').onclick=()=>createOrder('');
  const overlay=document.getElementById('overlay');overlay?.addEventListener('click',e=>{const r=e.target.closest('[data-z672-receive]'),ed=e.target.closest('[data-z672-edit]'),c=e.target.closest('[data-z672-cancel]');if(r)receive(r.dataset.z672Receive);else if(ed)createOrder(ed.dataset.z672Edit);else if(c)cancelOrder(c.dataset.z672Cancel)});
 }
-document.addEventListener('click',e=>{
- const b=e.target.closest?.('[data-action="purchase_internal"],[data-action="in_transit_orders"]');if(!b)return;
- e.preventDefault();e.stopImmediatePropagation();
- if(b.dataset.action==='purchase_internal')openOrder('purchase','',false);else openManager();
-},true);
 window.addEventListener('zavi:invoice-saved',e=>{const tx=(db?.tx||[]).find(t=>t.id===e.detail?.invoiceId);if(!tx)return;if(applyReceiptFromInvoice(tx)){const p=loadPending();if(p?.token===tx.inTransitReceiptToken)clearPending()}if(tx.inTransitOrderId){queueReceiptServer(tx);void flushServer()}});
 window.addEventListener('online',()=>void flushServer());
 window.addEventListener('focus',()=>{if(navigator.onLine!==false)void flushServer()});

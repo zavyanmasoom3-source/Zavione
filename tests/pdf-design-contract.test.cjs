@@ -24,3 +24,14 @@ test('Android identities are versioned for 66.76 and ADMIN 1.4.67',()=>{
   assert.match(gradle,/versionCode admin \? 4167 : 6676/);
   assert.match(gradle,/versionName admin \? '1\.4\.67-pdf-final' : '66\.76-pdf-final'/);
 });
+
+test('Inline receipt template cannot terminate the parent HTML script',()=>{
+  const index=read('app-source/one/index.html');
+  const start=index.indexOf('function printRepairReceipt');
+  const end=index.indexOf('function usdLedgerRows');
+  assert.ok(start>=0&&end>start,'repair receipt template must be present');
+  const receipt=index.slice(start,end);
+  assert.match(receipt,/<\\\/script>/);
+  assert.doesNotMatch(receipt,/<script defer src="\\.\\/zavi-settings-organizer-v6730\\.js[^>]*><\\/script>/);
+  assert.doesNotMatch(receipt,/<script defer src="\\.\\/zavi-invoice-pdf-v6740\\.js[^>]*><\\/script>/);
+});

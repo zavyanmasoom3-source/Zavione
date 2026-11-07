@@ -374,7 +374,7 @@ async function choose(id,created=false){
  writeStorage(localStorage,WSKEY,id);
  // Remember preferred store under this AUTH UID only, never the globally shared store name.
  if(nextRole==='owner')writeStorage(localStorage,PREFERRED_WORKSPACE_PREFIX+identity,id);
- closeModal();page='dashboard';render();
+ closeModal();const activePage=typeof window.zaviCurrentPage==='string'?window.zaviCurrentPage:'dashboard';page=typeof window.zaviRouteIsKnown==='function'&&window.zaviRouteIsKnown(activePage)?activePage:'dashboard';render();
  window.dispatchEvent(new CustomEvent('zavi-cloud-workspace-selected',{detail:{workspace:id,role:nextRole}}));
  if(nextRole==='owner'&&!preserve&&!hasConflict){lastSync=new Date().toLocaleTimeString();window.dispatchEvent(new CustomEvent('zavi-cloud-sync-confirmed',{detail:{workspace:id,source:'initial-cloud-pull'}}));}
  changeInfo(resetIsNewer?'حساب آزمایشی از ابر پاک‌سازی و تازه‌سازی شد؛ سوابق قدیمی جداگانه محفوظ‌اند.':hasConflict?'نسخه سرور تغییر کرده و معلومات محلی ارسال‌نشده موجود است. همگام‌سازی متوقف شد؛ قبل از جایگزینی پشتیبان بگیرید.':preserve?'تغییرات ارسال‌نشده همین فروشگاه محفوظ است.':'معلومات مخصوص همین فروشگاه از ابر دریافت شد.',hasConflict);

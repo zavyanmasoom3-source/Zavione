@@ -1,7 +1,7 @@
 (()=>{'use strict';
 const $=s=>document.querySelector(s), el=id=>document.getElementById(id), escapeHTML=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ADMIN_SESSION_KEY='zavi_admin_session', ADMIN_PERSIST_KEY='zavi_admin_persistent_session_v23_1';
-let config={url:'',key:''},session=null,mode='login',page='overview',rows=[],selected=null,filter='all',search='',lastActionBusy=false;
+let config={url:'',key:''},session=null,mode='login',page='overview',rows=[],selected=null,filter='all',search='',lastActionBusy=false,adminAuthorized=false;
 const faDigits=x=>String(x).replace(/\d/g,c=>'۰۱۲۳۴۵۶۷۸۹'[Number(c)]);
 const money=(n,c='AFN')=>new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(+n||0)+' '+c;
 const AF_MONTHS=['حمل','ثور','جوزا','سرطان','اسد','سنبله','میزان','عقرب','قوس','جدی','دلو','حوت'];
@@ -90,24 +90,21 @@ async function refreshSession(){
  })();
  try{return await adminRefreshInFlight}finally{adminRefreshInFlight=null}
 }
-const ZAVI_ADMIN_ALLOWED_EMAILS=new Set(['zavyanmasoom6@gmail.com']);
 async function login(){
  const btn=el('loginBtn');btn.disabled=true;
  try{
   config={url:el('cfgUrl').value.trim().replace(/\/$/,''),key:el('cfgKey').value.trim()};checkConfig();saveConfig();
   const email=el('authEmail').value.trim().toLowerCase();
   const password=el('authPassword').value;
-  if(!ZAVI_ADMIN_ALLOWED_EMAILS.has(email))throw Error('این ایمیل در فهرست مدیران مجاز نیست.');
   if(!password)throw Error('رمز عبور خود را وارد کنید.');
   const r=await api('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email,password}});
   el('authPassword').value='';
   if(!r.access_token||!r.user)throw Error('ورود تأیید نشد.');
-  if(!ZAVI_ADMIN_ALLOWED_EMAILS.has(String(r.user.email||'').toLowerCase()))throw Error('حساب مجاز نیست.');
   session={...r,expires_at:r.expires_at||(r.expires_in?Math.floor(Date.now()/1000)+Number(r.expires_in):null)};
   // Backend admin RPC must authorize the authenticated UID, not just the email.
   await fetchRows();storeSession();mode='live';showApp();
   toast('با موفقیت وارد حساب خود شدید.');
- }catch(e){session=null;storeSession();el('authPassword').value='';toast(e.message,true)}finally{btn.disabled=false}
+ }catch(e){session=null;adminAuthorized=false;storeSession();el('authPassword').value='';toast(e.message,true)}finally{btn.disabled=false}
 }
 async function fetchRows(){
  const result=await api('/rest/v1/rpc/zavi_admin_list_workspaces',{method:'POST',body:{}});
@@ -118,7 +115,7 @@ async function fetchRows(){
  const hidden=new Set(archived.filter(r=>r.archived).map(r=>r.workspace_id));
  rows=result.filter(r=>!hidden.has(r.workspace_id));
  try{adminFinancePeriodStart=await api('/rest/v1/rpc/zavi_admin_get_report_period',{method:'POST',body:{}})}catch(e){console.warn('Report period unavailable',e)}
- el('connectionStatus').textContent='متصل به سرور مرکزی';document.dispatchEvent(new Event('zavi-admin-data-updated'));
+ adminAuthorized=true;el('connectionStatus').textContent='متصل به سرور مرکزی';document.dispatchEvent(new Event('zavi-admin-data-updated'));
 }
 function showApp(){closeModal();el('resumeBtn').hidden=true;el('authScreen').hidden=true;el('appScreen').hidden=false;el('sidebarEmail').textContent=mode==='demo'?'DEMO — نمونه نمایشی':session?.user?.email||el('authEmail').value;render()}
 function status(r){if(r.status==='suspended')return ['suspended','بسته / معلق'];if(r.plan==='none')return ['pending','در انتظار فعال‌سازی'];if(r.plan==='lifetime')return ['active','فعال'];const expiry=Date.parse(r.expires_at||'');if(!Number.isFinite(expiry)||expiry<=Date.now())return ['expired','پایان‌یافته'];const days=daysLeft(r.expires_at);if(days<=30)return ['warning','نزدیک ختم'];return ['active','فعال']}
@@ -180,7 +177,7 @@ function renderBrand(){
 // V53: dangerous operations are deliberately separate and never run on page load.
 let adminFinancePeriodStart=null;
 let adminResetBusy=false;
-const isMainAdmin=()=>mode==='live' && String(session?.user?.email||'').toLowerCase()==='zavyanmasoom6@gmail.com';
+const isMainAdmin=()=>mode==='live' && adminAuthorized===true && !!session?.user?.id;
 const RESET_FINANCE_PHRASE='RESET ADMIN REPORTS';
 const RESET_CUSTOMERS_PHRASE='DELETE ALL CUSTOMER ACCOUNTS';
 function renderAdminResetCenter(){
@@ -474,7 +471,7 @@ function downloadCsv(){let arr=[['نام فروشگاه','ایمیل مالک','
 async function logout(){
  closeModal();
  const token=session?.access_token;
- session=null;storeSession();el('resumeBtn').hidden=true;mode='login';
+ session=null;adminAuthorized=false;storeSession();el('resumeBtn').hidden=true;mode='login';
  el('appScreen').hidden=true;el('authScreen').hidden=false;el('authPassword').value='';
  // Revoke session on server where possible; local logout always takes effect.
  if(token){try{await fetch(config.url+'/auth/v1/logout',{method:'POST',headers:{'apikey':config.key,'Authorization':'Bearer '+token}})}catch{}}
@@ -494,7 +491,7 @@ document.addEventListener('submit',async e=>{
  catch(err){toast('ذخیره سیاست آفلاین انجام نشد: '+err.message,true)}finally{btn.disabled=false}
 });
 document.addEventListener('input',e=>{if(e.target.id==='customerSearch'){search=e.target.value;let elTable=el('view').querySelector('.panel:last-child');if(elTable){let list=rows.filter(r=>(r.workspace_name+' '+r.owner_email).toLowerCase().includes(search.toLowerCase())&&(filter==='all'||status(r)[0]===filter));elTable.innerHTML=customerRows(list)}}});document.addEventListener('change',e=>{if(e.target.id==='customerFilter'){filter=e.target.value;render()}if(e.target.id==='historyWorkspace'){selected=e.target.value;loadHistory().catch(x=>toast(x.message,true))}});
-async function resumeSavedSession(){if(!session?.access_token||!ZAVI_ADMIN_ALLOWED_EMAILS.has(String(session?.user?.email||'').toLowerCase()))return toast('دسترسی مخصوص مالک اصلی است.',true);
+async function resumeSavedSession(){if(!session?.access_token||!session?.refresh_token)return toast('نشست معتبر مدیریت در این دستگاه وجود ندارد.',true);
  const btn=el('resumeBtn');btn.disabled=true;
  try{await refreshSession();await fetchRows();mode='live';showApp();toast('اتصال قبلی دوباره برقرار شد.');}
  catch(e){toast('اتصال به سرور برقرار نشد: '+e.message,true)}finally{btn.disabled=false}
@@ -525,7 +522,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.ZaviAdminAPI={request:(path,opts)=>api(path,opts),getRows:()=>rows,getMode:()=>mode,notify:toast};
 closeModal();el('appScreen').hidden=true;el('authScreen').hidden=false;restoreConfig();(async()=>{
  if(['localhost','127.0.0.1'].includes(location.hostname)&&new URLSearchParams(location.search).get('demo')==='1'){mode='demo';rows=demoRows;page=new URLSearchParams(location.search).get('view')||'overview';showApp();return}
- session=savedSession();if(!session?.access_token||!session?.refresh_token||!ZAVI_ADMIN_ALLOWED_EMAILS.has(String(session?.user?.email||'').toLowerCase())){session=null;storeSession();return;}el('resumeBtn').hidden=false;
+ session=savedSession();if(!session?.access_token||!session?.refresh_token){session=null;adminAuthorized=false;storeSession();return;}el('resumeBtn').hidden=false;
  try{await refreshSession();await fetchRows();mode='live';showApp()}
  catch(e){ // A transient failure or an invalid subscription RPC must not delete login.
   el('authEmail').value=session?.user?.email||'';
@@ -567,7 +564,7 @@ document.addEventListener('submit',async event=>{
  button.disabled=true;
  try{
   const email=String(session.user?.email||'').trim().toLowerCase();
-  if(!ZAVI_ADMIN_ALLOWED_EMAILS.has(email))throw Error('حساب مدیریت مجاز نیست.');
+  if(!adminAuthorized||!email)throw Error('نشست مدیریت توسط سرور تأیید نشده است.');
   await api('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email,password:current}});
   await api('/auth/v1/user',{method:'PUT',body:{password:next}});
   form.reset();

@@ -194,6 +194,38 @@ function stage(tx){
  });
 }
 function readyForSales(){const x=context();return !!(x&&cache(x).initialized===true)}
+function recoverLocalMovements(){
+ if(!readyForSales())return 0;
+ const products=Array.isArray(globalThis.db?.products)?globalThis.db.products:[];
+ const tx=Array.isArray(globalThis.db?.tx)?globalThis.db.tx:[];
+ const groups=new Map();
+ const add=(warehouseId,direction,reference,line)=>{
+  const wid=String(warehouseId||''),dir=String(direction||''),ref=String(reference||'').slice(0,150);
+  if(!wid||!['in','out'].includes(dir)||!ref||!line?.operation_id||!line?.product_ref||!(Number(line.quantity)>0))return;
+  const key=[wid,dir,ref].join('|');
+  if(!groups.has(key))groups.set(key,{warehouseId:wid,direction:dir,reference:ref,lines:[]});
+  groups.get(key).lines.push(line);
+ };
+ for(const p of products){
+  const movement=String(p?.warehouseOpeningMovementId||''),wid=String(p?.warehouseId||''),qty=Number(p?.openingQty||0);
+  if(!movement||!wid||!(qty>0))continue;
+  add(wid,'in',p.warehouseOpeningReference||('product-stock:'+String(p.id||'')+':'+movement),{
+   operation_id:movement,product_ref:String(p.id||''),quantity:qty
+  });
+ }
+ for(const t of tx){
+  if(t?.voided||t?.type!=='stock_adjust'||!t?.warehouseMovementId||!t?.warehouseId||!t?.productId)continue;
+  const delta=Number(t.delta||0);if(Math.abs(delta)<=0.00001)continue;
+  add(t.warehouseId,delta>0?'in':'out',t.warehouseReference||('product-stock:'+String(t.productId)+':'+String(t.warehouseMovementId)),{
+   operation_id:String(t.warehouseMovementId),product_ref:String(t.productId),quantity:Math.abs(delta)
+  });
+ }
+ let staged=0;
+ for(const g of groups.values()){
+  try{if(stageDocument(g)){staged+=g.lines.length}}catch(e){console.warn('ZAVI warehouse recovery staging:',e)}
+ }
+ return staged;
+}
 async function initializeFromLegacy(warehouseId){
  const x=context();if(!x)throw Error('برای مقداردهی گدام وارد حساب مالک شوید.');
  if(navigator.onLine===false)throw Error('مقداردهی اولیه گدام یک‌بار به اینترنت نیاز دارد.');
@@ -223,9 +255,10 @@ async function initializeFromLegacy(warehouseId){
 }
 function pendingCount(){const x=context();return x?queue(x).length:0}
 async function sync(){if(navigator.onLine===false)return false;await flush();return refresh().then(()=>true).catch(()=>false)}
-window.ZaviInvoiceWarehouseV6710=Object.freeze({options,enabled,readyForSales,initializeFromLegacy,stock,stageDocument,stage,flush,refresh,sync,pendingCount});
-window.addEventListener('online',()=>void sync());
-window.addEventListener('zavi-cloud-workspace-selected',()=>void sync());
-window.addEventListener('focus',()=>{if(navigator.onLine!==false)void flush()});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(navigator.onLine!==false)void sync()},{once:true});else if(navigator.onLine!==false)void sync();
+window.ZaviInvoiceWarehouseV6710=Object.freeze({options,enabled,readyForSales,initializeFromLegacy,stock,stageDocument,stage,recoverLocalMovements,flush,refresh,sync,pendingCount});
+const recoverAndSync=()=>{try{recoverLocalMovements()}catch(e){console.warn('ZAVI warehouse local recovery:',e)}if(navigator.onLine!==false)void sync()};
+window.addEventListener('online',recoverAndSync);
+window.addEventListener('zavi-cloud-workspace-selected',recoverAndSync);
+window.addEventListener('focus',recoverAndSync);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',recoverAndSync,{once:true});else recoverAndSync();
 })();

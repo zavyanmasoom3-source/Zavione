@@ -1,1 +1,18 @@
-cat: app-source/one/zavi-barcode-label-v6700.css: No such file or directory
+/* ZAVI ONE 67.00 — barcode label studio */
+.z700-toolbar{display:flex;justify-content:flex-end;gap:8px;margin:0 0 10px}
+.z700-layer{position:fixed;inset:0;z-index:10070;background:rgba(2,10,24,.72);display:grid;place-items:center;padding:16px}
+.z700-panel{width:min(760px,100%);max-height:min(90vh,900px);overflow:auto;background:var(--z67-panel,#fff);color:var(--z67-text,#172b46);border:1px solid var(--z67-outline,#ccd9e6);border-radius:18px;padding:16px;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.z700-panel>header{display:flex;align-items:center;justify-content:space-between;gap:10px}.z700-panel h2,.z700-panel h3{margin:0 0 12px}
+.z700-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.z700-field{display:grid;gap:6px;font-size:13px;font-weight:700}.z700-field select,.z700-field input{min-height:42px;width:100%}
+.z700-preview{min-height:130px;display:grid;place-items:center;padding:12px;border:1px dashed var(--z67-outline,#ccd9e6);border-radius:14px;overflow:auto}.z700-actions{display:flex;justify-content:flex-end;margin-top:12px}
+.z700-label{width:var(--z700-w,50mm);height:var(--z700-h,30mm);box-sizing:border-box;background:#fff;color:#000;border:1px solid #d9d9d9;padding:2mm;display:grid;grid-template-rows:auto 1fr auto auto;gap:.8mm;align-items:center;overflow:hidden;font-family:Arial,sans-serif}
+.z700-name{font-size:9pt;line-height:1.05;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.z700-bars{width:100%;height:100%;min-height:10mm}.z700-code{font:8pt/1 monospace;text-align:center;direction:ltr}.z700-price{font:700 8pt/1 Arial,sans-serif;text-align:center;direction:ltr}
+#z700PrintSheet{display:none}
+.zavi-camera-actions{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-bottom:8px}
+@media(max-width:560px){.z700-form{grid-template-columns:1fr}.z700-layer{padding:8px}.z700-panel{border-radius:14px;padding:12px}}
+@media print{
+ @page{margin:0}
+ body.z700-printing>*:not(#z700PrintSheet){display:none!important}
+ body.z700-printing #z700PrintSheet{display:flex!important;flex-wrap:wrap;align-content:flex-start;gap:0;margin:0!important;padding:0!important;background:#fff!important}
+ body.z700-printing .z700-label{break-inside:avoid;page-break-inside:avoid;border:0!important}
+}

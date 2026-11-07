@@ -3,16 +3,17 @@
  */
 (()=>{'use strict';
 const GROUPS=[
- ['account','👤','حساب و پروفایل'],
- ['business','🏪','فروشگاه و کسب‌وکار'],
- ['appearance','🎨','ظاهر و زبان'],
- ['security','🔐','امنیت و دسترسی'],
- ['cloud','☁️','ابر و دستگاه‌ها'],
- ['accounting','🧾','حسابداری و فاکتورها'],
- ['subscription','💳','اشتراک'],
- ['advanced','⚙️','پیشرفته']
+ ['account','👤',{fa:'حساب و پروفایل',ps:'حساب او پروفایل',en:'Account & profile'}],
+ ['business','🏪',{fa:'فروشگاه و کسب‌وکار',ps:'دوکان او کاروبار',en:'Store & business'}],
+ ['appearance','🎨',{fa:'ظاهر و زبان',ps:'بڼه او ژبه',en:'Appearance & language'}],
+ ['security','🔐',{fa:'امنیت و دسترسی',ps:'امنیت او لاسرسی',en:'Security & access'}],
+ ['cloud','☁️',{fa:'ابر و دستگاه‌ها',ps:'کلاوډ او وسایل',en:'Cloud & devices'}],
+ ['accounting','🧾',{fa:'حسابداری و فاکتورها',ps:'حسابداري او بلونه',en:'Accounting & invoices'}],
+ ['subscription','💳',{fa:'اشتراک',ps:'ګډون',en:'Subscription'}],
+ ['advanced','⚙️',{fa:'پیشرفته',ps:'پرمختللي',en:'Advanced'}]
 ];
-const labels=Object.fromEntries(GROUPS.map(([id,icon,title])=>[id,{icon,title}]));
+function lang(){const l=String(document.documentElement.lang||'fa-AF').toLowerCase();return l.startsWith('en')?'en':l.startsWith('ps')?'ps':'fa'}
+function tr(v){return typeof v==='string'?v:(v?.[lang()]||v?.fa||'')}
 
 function isSettings(){
  try{if(typeof page!=='undefined'&&page==='settings')return true}catch(_){}
@@ -38,7 +39,7 @@ function collapseLongCopy(card){
  for(const p of [...card.querySelectorAll(':scope > p')]){
   if(p.closest('.z673-guide')||String(p.textContent||'').trim().length<150)continue;
   const details=document.createElement('details');details.className='z673-guide';
-  const summary=document.createElement('summary');summary.textContent='راهنما';
+  const summary=document.createElement('summary');summary.textContent=tr({fa:'راهنما',ps:'لارښود',en:'Guide'});
   p.parentNode.insertBefore(details,p);details.append(summary,p);
  }
 }
@@ -48,7 +49,7 @@ function ensureGroups(content){
  root=document.createElement('div');root.className='z673-settings-groups';
  for(const [id,icon,title] of GROUPS){
   const d=document.createElement('details');d.className='z673-settings-group';d.dataset.z673Group=id;if(id==='account')d.open=true;
-  const s=document.createElement('summary');s.innerHTML='<span class="z673-group-icon">'+icon+'</span><span>'+title+'</span><b data-z673-count>0</b>';
+  const s=document.createElement('summary');s.innerHTML='<span class="z673-group-icon">'+icon+'</span><span data-z673-title>'+tr(title)+'</span><b data-z673-count>0</b>';
   const body=document.createElement('div');body.className='z673-settings-body';
   d.append(s,body);root.append(d);
  }
@@ -62,7 +63,12 @@ function candidates(content,root){
   return node.matches?.('.card,.settings-card,.notice,section,form,[data-settings-card],.zavi-cloud-panel,.zavi-device-panel')||false;
  });
 }
+function refreshLabels(root){
+ for(const [id,,title] of GROUPS){const el=root.querySelector('[data-z673-group="'+id+'"] [data-z673-title]');if(el)el.textContent=tr(title)}
+ root.querySelectorAll('.z673-guide>summary').forEach(el=>el.textContent=tr({fa:'راهنما',ps:'لارښود',en:'Guide'}));
+}
 function updateCounts(root){
+ refreshLabels(root);
  for(const [id] of GROUPS){
   const d=root.querySelector('[data-z673-group="'+id+'"]'),body=d?.querySelector('.z673-settings-body'),count=d?.querySelector('[data-z673-count]');
   if(count)count.textContent=String(body?.children.length||0);

@@ -1,7 +1,7 @@
 {
-  "name": "ZAVI ONE ADMIN V53 / WEB V18",
+  "name": "ZAVI ONE ADMIN 1.4.61-dev.1",
   "released_at": "2026-10-23",
-  "web_version": "1.3",
+  "web_version": "1.4.61-dev.1",
   "design": "Dark Executive (original) + Light Studio V34",
   "languages": [
     "fa-AF",
@@ -50,18 +50,20 @@
     "Admin visual consistency and accessible interactions",
     "SQL instruction guide removed from public navigation and offline cache; retained in QA source"
   ],
-  "version": "64.4-qa",
-  "label": "ZAVI ONE ADMIN V64.3 — 7-Phase QA Milestone",
+  "version": "1.4.61-dev.1",
+  "label": "ZAVI ONE ADMIN 1.4.61-dev.1 — unified source build",
   "ai_backend_deployed": false,
   "v643_changes": [
     "Authenticated admin app receives local release metadata viewer",
     "Scoped form navigation/focus and visual contrast improvements",
     "No subscription, payment or API logic changed"
   ],
-  "status": "QA_ONLY",
+  "status": "IN_DEVELOPMENT",
   "production_ready": false,
   "release_date": "2026-10-22",
-  "release": "V64.4 — QUICK START / CSV VALIDATION / THERMAL 58-80 / ALERTS / LOCAL AUDIT / TRAINING — QA ONLY",
+  "release": "1.4.61-dev.1 — unified source build",
   "v644_note": "ADMIN release viewer remains read-only; no billing or role changes and no deployment.",
-  "locale_release": "Verified trilingual UI glossary + English consistency pass"
+  "locale_release": "Verified trilingual UI glossary + English consistency pass",
+  "build_source": "app-source/admin",
+  "build_policy": "APK must embed current repository source directly; legacy APK extraction is forbidden"
 }

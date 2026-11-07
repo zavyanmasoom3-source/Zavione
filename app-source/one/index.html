@@ -1787,14 +1787,14 @@ function zaviSaveModule(id,on){
  render();return true;
 }
 const Z20_OPTIONS=[['dashboardPhone','شماره تماس در داشبورد'],['chart','نمودار فروش'],['lowStock','هشدار کمبود گدام'],['quickSale','دکمه فروش فوری'],['recent','آخرین فعالیت‌ها'],['profit','نمایش سود در داشبورد'],['backupAlert','یادآوری پشتیبان'],['customerShare','ارسال حساب مشتری'],['invoiceImage','عکس فاکتور'],['qr','QR واتساپ در فاکتور'],['usdStock','نمایش دالری گدام'],['dailySalesInvoices','نمایش فاکتورهای فروش در مدیریت روزمره'],['dailyPurchaseInvoices','نمایش فاکتورهای خرید در مدیریت روزمره'],['debtorOgrai','نمایش دادن اوگرایی در حساب قرضداران'],['allowOversell','اجازه فروش بیشتر از موجودی (فقط مالک)'],['dailyIndustryTools','نمایش کارهای مخصوص صنف در مدیریت روزمره']];
-function z20Option(id){return ['dailySalesInvoices','dailyPurchaseInvoices'].includes(id)?db.uiOptions?.[id]===true:db.uiOptions?.[id]!==false}
+function z20Option(id){return ['dailySalesInvoices','dailyPurchaseInvoices','allowOversell'].includes(id)?db.uiOptions?.[id]===true:db.uiOptions?.[id]!==false}
 function z20ToggleOption(id,on){if(window.zaviCloudCanEdit&&!window.zaviCloudCanEdit())return toast(window.zaviAccessDiagnostic?.()||'تنظیمات فقط برای مالک فعال است.');commit(n=>{n.uiOptions={...(n.uiOptions||{}),[id]:!!on}})}
 // One-click reset of user-visible feature preferences only.
 // Never modify the subscription or cloud authorization; owner/write access remains required.
 function zaviEnableAllFeatures(){
  if(window.zaviCloudCanEdit&&!window.zaviCloudCanEdit())return toast('برای این کار، اشتراک معتبر و اجازه مالک لازم است.');
  const allModules=Object.fromEntries(ZAVI_MODULES.map(([id])=>[id,true]));
- const allOptions=Object.fromEntries(Z20_OPTIONS.map(([id])=>[id,true]));
+ const allOptions=Object.fromEntries(Z20_OPTIONS.map(([id])=>[id,id==='allowOversell'?false:true]));
  if(!confirm('تمام بخش‌های حسابداری و امکانات اختیاری روشن شوند؟ تنظیمات قبلی روشن/خاموش تغییر می‌کنند؛ معلومات حسابداری حذف نمی‌شوند.'))return;
  if(!commit(n=>{n.uiModules={...allModules};n.uiOptions={...(n.uiOptions||{}),...allOptions}}))return;
  zaviModules=allModules;
@@ -2976,7 +2976,8 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
  const initialUnit=Z6528Currencies.some(x=>x[0]===db.currency)?db.currency:'AFN';
  const z671WarehouseApi=window.ZaviInvoiceWarehouseV6710;
  const z671WarehouseOptions=z671WarehouseApi?.options?.()||[];
- const z671WarehouseMode=z671WarehouseOptions.length>0;
+ const z671WarehouseReady=z671WarehouseApi?.readyForSales?.()===true;
+ const z671WarehouseMode=z671WarehouseOptions.length>0&&(kind==='purchase'||kind==='sale_return'||z671WarehouseReady);
  const z671WarehouseField=z671WarehouseMode?selectField('warehouseId','گدام',z671WarehouseOptions,z671WarehouseOptions[0][0]):'';
  const fxForm=isPurchase?`<div class="form-section-title">واحد پول خرید</div><div class="form-grid">${selectField('originalCurrency','پول فاکتور',Z6528Currencies,initialUnit)}
  <div class="field"><label>کشور خرید</label><input name="purchaseOrigin" list="zaviPurchaseCountryNames" maxlength="80" value="${escapeHtml(foreignPurchase?'':'افغانستان')}" placeholder="نام کشور را آزاد بنویسید" required><datalist id="zaviPurchaseCountryNames">${purchaseCountries().slice(1).map(([code,label])=>`<option value="${escapeHtml(label)}">${escapeHtml(code)}</option>`).join('')}</datalist><small class="field-hint">نام کشور آزاد است و به فهرست محدود نمی‌شود.</small></div>

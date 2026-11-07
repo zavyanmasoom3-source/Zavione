@@ -105,6 +105,14 @@ function open(){
  code.addEventListener('change',()=>refresh(panel));size.addEventListener('change',()=>refresh(panel));
  layer.addEventListener('click',e=>{if(e.target===layer)close()});
 }
+function persistPdfLabelPrefs(product,code,sizeKey,count){
+ try{
+  window.ZaviPdfDesign?.update?.({barcode:{
+   lastProductId:product?.id||null,lastCode:String(code||''),
+   defaultSize:sizeKey,copies:count,symbology:'code128'
+  }});
+ }catch(_){}
+}
 function printLabels(panel){
  const product=selectedProduct(panel.querySelector('[data-z700-product]'));if(!product)return;
  const code=String(panel.querySelector('[data-z700-code]').value||'').trim();
@@ -115,7 +123,7 @@ function printLabels(panel){
  document.body.append(sheet);document.body.classList.add('z700-printing');
  const cleanup=()=>{document.body.classList.remove('z700-printing');sheet.remove();window.removeEventListener('afterprint',cleanup)};
  window.addEventListener('afterprint',cleanup,{once:true});
- try{window.print()}finally{setTimeout(()=>{if(document.body.classList.contains('z700-printing'))cleanup()},1500)}
+ try{window.print()}finally{setTimeout(()=>{persistPdfLabelPrefs(product,code,sizeKey,n);if(document.body.classList.contains('z700-printing'))cleanup()},1500)}
 }
 function close(){document.getElementById('z700LabelStudio')?.remove()}
 function onProductsPage(){

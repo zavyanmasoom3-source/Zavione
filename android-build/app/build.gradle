@@ -34,8 +34,8 @@ android {
         applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
         minSdk 26
         targetSdk 36
-        versionCode admin ? 4168 : 6677
-        versionName admin ? '1.4.68-pdf-final' : '66.77-pdf-final'
+        versionCode admin ? 4169 : 6678
+        versionName admin ? '1.4.69-pdf-final' : '66.78-pdf-final'
         resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
     }
 

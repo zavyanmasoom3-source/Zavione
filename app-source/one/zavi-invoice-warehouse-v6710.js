@@ -149,29 +149,49 @@ async function flush(){
   return q.length===0;
  }finally{syncing=false}
 }
-function stage(tx){
- const x=context();if(!x||!tx||!tx.warehouseId||!Array.isArray(tx.items))return false;
- const direction=tx.type==='purchase'||tx.type==='sale_return'?'in':tx.type==='sale'||tx.type==='purchase_return'?'out':'';
- if(!direction)return false;
- const wh=String(tx.warehouseId);
+function stageDocument({warehouseId,direction,reference,lines,allowNegative=false}={}){
+ const x=context();if(!x||!warehouseId||!Array.isArray(lines)||!lines.length)return false;
+ const wh=String(warehouseId),dir=String(direction||'');
+ if(!['in','out'].includes(dir))throw Error('نوع حرکت گدام معتبر نیست.');
  if(!activeWarehouses().some(w=>w.id===wh))throw Error('گدام انتخاب‌شده فعال نیست.');
+ const ref=String(reference||'').trim().slice(0,150);
+ if(!ref)throw Error('مرجع حرکت گدام لازم است.');
  let q=queue(x),changed=false;
- tx.items.forEach((line,index)=>{
-  const id=String(line.warehouseMovementId||'');
-  const qty=Number(line.qty),product=String(line.productId||'');
-  const o={id,workspace_id:x.workspace,warehouse_id:wh,product_ref:product,quantity:qty,direction,allow_negative:!!tx.warehouseAllowNegative,reference:String('invoice:'+String(tx.code||tx.id||'')).slice(0,150)};
-  if(!validOperation(o))throw Error('شناسه حرکت گدام در فاکتور معتبر نیست.');
-  const old=q.find(v=>v.id===id);
-  if(old){
-   if(JSON.stringify(old)!==JSON.stringify(o))throw Error('شناسه حرکت گدام با اطلاعات دیگری استفاده شده است.');
-   return;
+ for(const line of lines){
+  const o={
+   id:String(line.operation_id||line.id||''),
+   workspace_id:x.workspace,
+   warehouse_id:wh,
+   product_ref:String(line.product_ref||line.productId||''),
+   quantity:Number(line.quantity??line.qty),
+   direction:dir,
+   allow_negative:!!allowNegative,
+   reference:ref
+  };
+  if(!validOperation(o))throw Error('شناسه یا مقدار حرکت گدام معتبر نیست.');
+  const prior=q.find(v=>v.id===o.id);
+  if(prior){
+   if(JSON.stringify(prior)!==JSON.stringify(o))throw Error('شناسه حرکت گدام با اطلاعات دیگری استفاده شده است.');
+   continue;
   }
   q.push(o);changed=true;
- });
+ }
  if(changed)saveQueue(x,q);
  if(navigator.onLine!==false)void flush();
  window.dispatchEvent(new CustomEvent('zavi:warehouse-pending',{detail:{workspace:x.workspace,count:q.length}}));
  return true;
+}
+function stage(tx){
+ if(!tx||!Array.isArray(tx.items))return false;
+ const direction=tx.type==='purchase'||tx.type==='sale_return'?'in':tx.type==='sale'||tx.type==='purchase_return'?'out':'';
+ if(!direction)return false;
+ return stageDocument({
+  warehouseId:tx.warehouseId,
+  direction,
+  allowNegative:!!tx.warehouseAllowNegative,
+  reference:String('invoice:'+String(tx.code||tx.id||'')).slice(0,150),
+  lines:tx.items.map(line=>({operation_id:line.warehouseMovementId,product_ref:line.productId,quantity:line.qty}))
+ });
 }
 function readyForSales(){const x=context();return !!(x&&cache(x).initialized===true)}
 async function initializeFromLegacy(warehouseId){
@@ -183,22 +203,27 @@ async function initializeFromLegacy(warehouseId){
  if(c.stock.some(r=>Math.abs(Number(r.quantity)||0)>0.00001))throw Error('برای این فروشگاه قبلاً حرکت گدام ثبت شده است؛ پیش از مقداردهی دوباره، موجودی را تطبیق کنید.');
  if(initPending(x))throw Error('مقداردهی اولیه قبلی هنوز در حال همگام‌سازی است.');
  const products=Array.isArray(db?.products)?db.products:[];
- const lines=products.map(p=>({product_ref:String(p.id||''),quantity:Number(typeof stockOf==='function'?stockOf(p.id):0)})).filter(x=>x.product_ref&&x.quantity>0.00001);
+ const validWarehouses=new Set(activeWarehouses().map(w=>w.id)),fallback=String(warehouseId);
+ const lines=products.map(p=>({
+  product_ref:String(p.id||''),
+  quantity:Number(typeof stockOf==='function'?stockOf(p.id):0),
+  warehouse_id:validWarehouses.has(String(p.warehouseId||''))?String(p.warehouseId):fallback
+ })).filter(line=>line.product_ref&&line.quantity>0.00001);
  if(!lines.length){
   const marked=await request(x,'/rest/v1/rpc/zavi_warehouse_mark_initialized','POST',{p_workspace_id:x.workspace});
   if(marked!==true)throw Error('سرور مقداردهی گدام را تأیید نکرد.');
   await refresh();return readyForSales();
  }
  if(!crypto?.randomUUID)throw Error('تولید شناسه امن در این دستگاه ممکن نیست.');
- const reference=('warehouse-initialization:v1:'+x.workspace).slice(0,150);
- let q=queue(x),ops=lines.map(line=>({id:crypto.randomUUID(),workspace_id:x.workspace,warehouse_id:String(warehouseId),product_ref:line.product_ref,quantity:line.quantity,direction:'in',allow_negative:false,reference}));
- q=q.concat(ops);saveQueue(x,q);saveInitPending(x,{workspace:x.workspace,warehouseId:String(warehouseId),ids:ops.map(o=>o.id),createdAt:Date.now()});
+ const reference=('warehouse-initialization:v2:'+x.workspace).slice(0,150);
+ let q=queue(x),ops=lines.map(line=>({id:crypto.randomUUID(),workspace_id:x.workspace,warehouse_id:line.warehouse_id,product_ref:line.product_ref,quantity:line.quantity,direction:'in',allow_negative:false,reference}));
+ q=q.concat(ops);saveQueue(x,q);saveInitPending(x,{workspace:x.workspace,warehouseId:fallback,ids:ops.map(o=>o.id),createdAt:Date.now()});
  const done=await flush();if(!done)throw Error('بخشی از مقداردهی در صف همگام‌سازی باقی مانده است.');
  return readyForSales();
 }
 function pendingCount(){const x=context();return x?queue(x).length:0}
 async function sync(){if(navigator.onLine===false)return false;await flush();return refresh().then(()=>true).catch(()=>false)}
-window.ZaviInvoiceWarehouseV6710=Object.freeze({options,enabled,readyForSales,initializeFromLegacy,stock,stage,flush,refresh,sync,pendingCount});
+window.ZaviInvoiceWarehouseV6710=Object.freeze({options,enabled,readyForSales,initializeFromLegacy,stock,stageDocument,stage,flush,refresh,sync,pendingCount});
 window.addEventListener('online',()=>void sync());
 window.addEventListener('zavi-cloud-workspace-selected',()=>void sync());
 window.addEventListener('focus',()=>{if(navigator.onLine!==false)void flush()});

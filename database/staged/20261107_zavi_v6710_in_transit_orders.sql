@@ -237,7 +237,7 @@ create or replace function public.zavi_v671_receive_in_transit(
  p_note text default null
 ) returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path=''
 as $$
 declare
@@ -292,11 +292,7 @@ begin
  if l.product_ref is not null and l.product_ref<>product_id then
    raise exception 'Product mapping mismatch' using errcode='22023';
  end if;
- if not exists(
-   select 1 from public.zavi_workspaces w,
-   lateral jsonb_array_elements(case when jsonb_typeof(w.payload->'products')='array' then w.payload->'products' else '[]'::jsonb end) p(item)
-   where w.id=o.workspace_id and p.item->>'id'=product_id
- ) then raise exception 'Product not found in workspace catalog' using errcode='22023'; end if;
+ if length(product_id)>160 then raise exception 'Product reference too long' using errcode='22023'; end if;
  if not exists(
    select 1 from public.zavi_warehouses w
    where w.id=o.destination_warehouse_id and w.workspace_id=o.workspace_id and w.is_active=true

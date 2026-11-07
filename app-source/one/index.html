@@ -3222,11 +3222,12 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
   if(isPurchase&&!String(f.purchaseOrigin.value||'').trim())throw Error('نام کشور خرید را وارد کنید.');
   const warehouseId=z671WarehouseMode?String(f.warehouseId?.value||''):'';
   if(z671WarehouseMode&&!z671WarehouseOptions.some(([id])=>String(id)===warehouseId))throw Error('گدام معتبر و فعال را انتخاب کنید.');
+  const ownerOversell=kind==='sale'&&z20Option('allowOversell')&&window.zaviCloudRestoreInfo?.()?.role==='owner';
+  const warehouseAllowNegative=!!(z671WarehouseMode&&ownerOversell);
   // Prior to saving, confirm selling stock is sufficient by product, including repeated rows.
   if(kind==='sale'||kind==='purchase_return'){
    box.querySelectorAll('.line-stock-error').forEach(el=>el.textContent='');box.querySelectorAll('[data-z671-stock-error]').forEach(el=>{el.hidden=true;el.textContent=''});
    const usage={};for(const l of enteredRows){const p=findNamedProduct(l.name,l.sku);if(!p)throw Error(`محصولی «${l.name}» در گدام نیست. نخست آن را در بخش خرید ثبت کنید.`);usage[p.id]=(usage[p.id]||0)+l.qty}
-   const ownerOversell=kind==='sale'&&z20Option('allowOversell')&&window.zaviCloudRestoreInfo?.()?.role==='owner';
    let firstInvalid=null;
    for(const [pid,q] of Object.entries(usage)){
     const available=z671StockFor(pid)??0;
@@ -3270,7 +3271,7 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
     return {productId:p.id,productName:p.name,qty:l.qty,price:window.ZaviDecimal.convertMoney(l.price,String(rate)),cost:c,industryDetails:l.industryDetails,...(z671WarehouseMode?{warehouseMovementId:z671MovementId()}:{}),...(isPurchase?{priceOriginal:l.price}:{})};
    });
    let payload={id:newId('t'),code:nextCode(n),type:kind,date,created:new Date().toISOString(),contactId,customerName:name,customerPhone:phone,accountId:kind==='sale'?(salePayments[0]?.accountId||f.accountId.value):f.accountId.value,discount,paid,note:f.note.value.trim(),items:lines};
-   if(z671WarehouseMode)Object.assign(payload,{warehouseId,warehouseSchemaVersion:1});
+   if(z671WarehouseMode)Object.assign(payload,{warehouseId,warehouseAllowNegative,warehouseSchemaVersion:2});
    if(kind==='sale')Object.assign(payload,{payments:salePayments.map(p=>({...p,id:newId('pay')})),paymentSchemaVersion:1});
    if(isPurchase)Object.assign(payload,{purchaseOrigin:f.purchaseOrigin.value,originalCurrency:unit,exchangeRate:rate,originalAmount:totalOriginal,originalPaid:paidOriginal,originalDiscount:disOriginal,shipping:window.ZaviDecimal.convertMoney(shippingOriginal,String(rate)),shippingOriginal,freightOriginal:window.ZaviDecimal.roundMoney(purchaseCosts[0]),customsOriginal:window.ZaviDecimal.roundMoney(purchaseCosts[1]),otherCostsOriginal:window.ZaviDecimal.roundMoney(purchaseCosts[2]),accountingTotal:window.ZaviDecimal.convertMoney(totalOriginal,String(rate)),total:window.ZaviDecimal.convertMoney(totalOriginal,String(rate)),exchangeRateText:String(f.exchangeRate.value||'1'),purchaseSchemaVersion:2});
    n.tx.push(payload);savedInvoiceId=payload.id;

@@ -6,3 +6,5 @@ Fixes: unified phone/iPad portrait-landscape viewport; source leak guard; no old
 Retry after test-order fix: 2026-11-08T00:24:00+00:00
 
 Retry after real-body placement: 2026-11-08T00:29:00+00:00
+
+Retry final stylesheet order: 2026-11-08T00:32:00+00:00

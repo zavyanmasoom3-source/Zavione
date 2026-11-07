@@ -1,5 +1,5 @@
 {
-  "version": "65.83-trial-seven-real-entitlement-qa",
+  "version": "66.75-pdf-final",
   "count": 20,
   "mode": "one-app-20-industries-15-user-reported-fixes",
   "ipad": "Static PWA files in Netlify-ready ZIP; APK is Android-only.",
@@ -166,7 +166,8 @@
     }
   ],
   "personalization": "Display-only user name/photo stored per signed-in user and workspace on this device.",
-  "source": "ZAVI ONE V65.72 QA embedded frontend",
+  "source": "ZAVI ONE V66.75 PDF-final embedded frontend",
+  "pdf_design": "ZAVI ONE 1-5.pdf pixel-reference contract persisted in workspace payload.",
   "security": "Cloud-owner-only automatic first-device registration, server-check and ES256 offline token; existing device replacement and server authorization unchanged.",
   "trade_change": "Draft selection from one app, owner confirms on native store settings page.",
   "storage": "QA application ID is separate from production. No automatic migration or data deletion.",

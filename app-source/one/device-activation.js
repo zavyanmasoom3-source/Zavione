@@ -144,9 +144,11 @@ async function replacePrimary(){
     // New release: device list is fetched fresh on every transfer attempt.
     const approved=await window.ZaviDevices652.guardTransfer(ws,id,{silent:true});
     if(!approved){
-       transferMessage(msg('در حال بررسی اجازه انتقال در سرور…','Checking device transfer eligibility on the server…','د سرور له لارې د وسیلې لېږد څېړل کېږي…'),'info');
-     }
-     const reply=await rpc('zavi_v6580_owner_one_tap_transfer',{p_workspace_id:ws,p_new_device_id:id,p_new_device_name:(navigator.userAgentData?.platform||navigator.platform||'ZAVI ONE Device').slice(0,150)},auth,cfg);
+     const block=window.ZaviDevices652.lastTransferBlock?.();
+     const reason=block?.message||msg('انتقال متوقف شد تا همه فروش‌ها و تغییرات آفلاین دستگاه قبلی همگام شوند.','Transfer is blocked until all offline sales and changes on the previous device are synced.','لېږد تر هغه بند دی چې د پخوانۍ وسیلې ټول آفلاین پلور او بدلونونه همغږي شي.');
+     throw Error(reason);
+    }
+    const reply=await rpc('zavi_v6580_owner_one_tap_transfer',{p_workspace_id:ws,p_new_device_id:id,p_new_device_name:(navigator.userAgentData?.platform||navigator.platform||'ZAVI ONE Device').slice(0,150)},auth,cfg);
     if(!['DEVICE_ACTIVATED','DEVICE_REPLACED','DEVICE_ALREADY_ACTIVE'].includes(reply))throw Error(msg('انتقال توسط سرور تأیید نشد.','The server did not confirm the transfer.','سرور لېږد تایید نه کړ.'));
     moved=true;registeredFor='';registeredAt=0;
    }

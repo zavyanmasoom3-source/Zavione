@@ -34,5 +34,20 @@
   return ['سلام '+(d.customer||'')+' عزیز،','مانده حساب شما نزد '+(d.storeName||'فروشگاه')+' تا '+(d.date||'')+': '+(d.balance||'')+'.',
     ...(d.reminderDate?['تاریخ وعده: '+d.reminderDate]:[]),'اگر پرداخت کرده‌اید، لطفاً اطلاع بدهید. تشکر.'].join('\n');
  }
- return Object.freeze({digits,links,invoice,statement});
+ function templates(data){
+  const d=data||{},name=String(d.customer||'مشتری').trim()||'مشتری',store=String(d.storeName||'فروشگاه').trim()||'فروشگاه',
+    balance=String(d.balance||'—'),date=String(d.date||''),paid=String(d.lastPayment||''),reminder=String(d.reminderDate||'');
+  const rows=[
+   ['debt_reminder','یادآوری قرض',['سلام '+name+' عزیز،','یادآوری دوستانه از '+store+': مانده حساب شما '+balance+(date?' تا '+date:'')+'.',reminder?'تاریخ وعده پرداخت: '+reminder+'.':'','اگر پرداخت کرده‌اید لطفاً خبر بدهید. تشکر.'].filter(Boolean).join('\n')],
+   ['account_summary','خلاصه حساب',['سلام '+name+'،','خلاصه حساب شما نزد '+store+(date?' تا '+date:'')+':','مانده: '+balance+'.','برای جزئیات بیشتر با ما تماس بگیرید.'].join('\n')],
+   ['payment_thanks','تشکر از پرداخت',['سلام '+name+' عزیز،',paid?'پرداخت '+paid+' شما دریافت شد.':'پرداخت شما دریافت شد.','از اعتماد شما به '+store+' تشکر می‌کنیم.'].join('\n')],
+   ['settlement_request','درخواست تصفیه',['سلام '+name+' محترم،','لطفاً در صورت امکان مانده حساب '+balance+' را با '+store+' تصفیه کنید.','اگر قبلاً پرداخت کرده‌اید، لطفاً رسید یا خبر پرداخت را بفرستید. تشکر.'].join('\n')],
+   ['friendly','احوال‌پرسی دوستانه',['سلام '+name+' جان،','امیدوارم جور و صحت‌مند باشید. از طرف '+store+' برایتان روز خوبی آرزو داریم.'].join('\n')],
+   ['formal','پیام رسمی',['محترم '+name+'،','با احترام، این پیام از طرف '+store+' برای پیگیری حساب و ارتباط کاری شما ارسال شده است.','سپاس از همکاری شما.'].join('\n')],
+   ['short','پیام کوتاه',['سلام '+name+'،','مانده حساب: '+balance+'.','تشکر — '+store].join('\n')]
+  ];
+  return rows.map(([id,label,message])=>Object.freeze({id,label,message}));
+ }
+ function message(kind,data){return templates(data).find(x=>x.id===kind)?.message||statement(data)}
+ return Object.freeze({digits,links,invoice,statement,templates,message});
 });

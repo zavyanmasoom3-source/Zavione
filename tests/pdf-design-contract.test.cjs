@@ -31,7 +31,7 @@ test('Inline receipt template cannot terminate the parent HTML script',()=>{
   const end=index.indexOf('function usdLedgerRows');
   assert.ok(start>=0&&end>start,'repair receipt template must be present');
   const receipt=index.slice(start,end);
-  assert.match(receipt,/<\\\/script>/);
-  assert.doesNotMatch(receipt,/<script defer src="\\.\\/zavi-settings-organizer-v6730\\.js[^>]*><\\/script>/);
-  assert.doesNotMatch(receipt,/<script defer src="\\.\\/zavi-invoice-pdf-v6740\\.js[^>]*><\\/script>/);
+  assert.ok(receipt.includes('<\\/script>'),'receipt script closers must be HTML-parser safe');
+  assert.equal(receipt.includes('<script defer src="./zavi-settings-organizer-v6730.js?v=67.30"></script>'),false);
+  assert.equal(receipt.includes('<script defer src="./zavi-invoice-pdf-v6740.js?v=67.40"></script>'),false);
 });

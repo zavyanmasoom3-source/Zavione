@@ -3255,13 +3255,14 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
     }
     const c=kind==='purchase'?money(l.price*rate*(grossOriginal?totalOriginal/grossOriginal:1)):(priorCosts[p.id]??0);
     if(kind==='purchase')p.purchasePrice=money(c);
-    return {productId:p.id,productName:p.name,qty:l.qty,price:window.ZaviDecimal.convertMoney(l.price,String(rate)),cost:c,industryDetails:l.industryDetails,...(isPurchase?{priceOriginal:l.price}:{})};
+    return {productId:p.id,productName:p.name,qty:l.qty,price:window.ZaviDecimal.convertMoney(l.price,String(rate)),cost:c,industryDetails:l.industryDetails,...(z671WarehouseMode?{warehouseMovementId:z671MovementId()}:{}),...(isPurchase?{priceOriginal:l.price}:{})};
    });
    let payload={id:newId('t'),code:nextCode(n),type:kind,date,created:new Date().toISOString(),contactId,customerName:name,customerPhone:phone,accountId:kind==='sale'?(salePayments[0]?.accountId||f.accountId.value):f.accountId.value,discount,paid,note:f.note.value.trim(),items:lines};
+   if(z671WarehouseMode)Object.assign(payload,{warehouseId,warehouseSchemaVersion:1});
    if(kind==='sale')Object.assign(payload,{payments:salePayments.map(p=>({...p,id:newId('pay')})),paymentSchemaVersion:1});
    if(isPurchase)Object.assign(payload,{purchaseOrigin:f.purchaseOrigin.value,originalCurrency:unit,exchangeRate:rate,originalAmount:totalOriginal,originalPaid:paidOriginal,originalDiscount:disOriginal,shipping:window.ZaviDecimal.convertMoney(shippingOriginal,String(rate)),shippingOriginal,freightOriginal:window.ZaviDecimal.roundMoney(purchaseCosts[0]),customsOriginal:window.ZaviDecimal.roundMoney(purchaseCosts[1]),otherCostsOriginal:window.ZaviDecimal.roundMoney(purchaseCosts[2]),accountingTotal:window.ZaviDecimal.convertMoney(totalOriginal,String(rate)),total:window.ZaviDecimal.convertMoney(totalOriginal,String(rate)),exchangeRateText:String(f.exchangeRate.value||'1'),purchaseSchemaVersion:2});
    n.tx.push(payload);savedInvoiceId=payload.id;
-  })){invoiceSaved=true;closeModal();toast(isPurchase?'خرید ثبت شد و محصولهای جدید به گدام اضافه شدند.':'فاکتور فروش ثبت شد.');if(savedInvoiceId){const saved=db.tx.find(x=>x.id===savedInvoiceId);if(saved&&['sale','purchase'].includes(saved.type))setTimeout(()=>printInvoice(saved),80);}}
+  })){invoiceSaved=true;const saved=savedInvoiceId?db.tx.find(x=>x.id===savedInvoiceId):null;let warehouseQueued=false;if(saved&&z671WarehouseMode){try{warehouseQueued=z671WarehouseApi.stage(saved)===true}catch(stageError){console.warn('Warehouse movement staging failed',stageError)}}closeModal();toast(warehouseQueued?(isPurchase?'خرید ثبت شد و ورود گدام برای همگام‌سازی صف‌بندی شد.':'فاکتور ثبت شد و خروج گدام برای همگام‌سازی صف‌بندی شد.'):(isPurchase?'خرید ثبت شد.':'فاکتور فروش ثبت شد.'));if(saved&&['sale','purchase'].includes(saved.type))setTimeout(()=>printInvoice(saved),80);}
  }catch(err){toast(err.message||'فاکتور ثبت نشد.')}finally{invoiceSubmitting=false;}};
 }
 

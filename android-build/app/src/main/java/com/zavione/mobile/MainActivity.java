@@ -283,6 +283,13 @@ public final class MainActivity extends FragmentActivity {
                     String msg = message.getData();
                     if (msg != null) receiveDownload(msg);
                 });
+            WebViewCompat.addWebMessageListener(webView, "ZaviAndroidShare",
+                Collections.singleton("https://appassets.androidplatform.net"),
+                (view, message, origin, isMainFrame, reply) -> {
+                    if (!isMainFrame || !origin.toString().equals("https://appassets.androidplatform.net")) return;
+                    String msg = message.getData();
+                    if (msg != null && msg.length() <= MAX_DOWNLOAD_BYTES * 2) receiveShare(msg);
+                });
             WebViewCompat.addWebMessageListener(webView, "ZaviAndroidPrint",
                 Collections.singleton("https://appassets.androidplatform.net"),
                 (view, message, origin, isMainFrame, reply) -> {
@@ -357,6 +364,125 @@ public final class MainActivity extends FragmentActivity {
                 catch(Exception ex){pendingSave=null;toast("Unable to save file");}
             });
         } catch (Exception ignored) {toast("Unable to prepare download");}
+    }
+
+
+    private void sendShareEvent(boolean success,String message) {
+        if (webView == null) return;
+        try {
+            JSONObject payload = new JSONObject();
+            payload.put("success", success);
+            payload.put("message", message == null ? "" : message);
+            String js = "window.dispatchEvent(new CustomEvent('zavi:native-share',{detail:" +
+                JSONObject.quote(payload.toString()) + "}));";
+            webView.evaluateJavascript(js, null);
+        } catch (Exception ignored) {}
+    }
+
+    private void cleanupShareCache() {
+        try {
+            File dir = new File(getCacheDir(), "share");
+            File[] files = dir.listFiles();
+            if (files == null) return;
+            long cutoff = System.currentTimeMillis() - 24L * 60L * 60L * 1000L;
+            for (File file : files) {
+                if (file.isFile() && file.lastModified() < cutoff) {
+                    try { file.delete(); } catch (Exception ignored) {}
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void receiveShare(String input) {
+        try {
+            JSONObject item = new JSONObject(input);
+            String data = item.optString("data", "");
+            String mime = item.optString("mime", "");
+            if (!("image/png".equals(mime) || "image/jpeg".equals(mime) || "application/pdf".equals(mime))) {
+                sendShareEvent(false, "Unsupported file type");
+                return;
+            }
+            String expectedPrefix = "data:" + mime + ";base64,";
+            if (!data.startsWith(expectedPrefix) || data.length() > MAX_DOWNLOAD_BYTES * 2) {
+                sendShareEvent(false, "Invalid share data");
+                return;
+            }
+            byte[] binary = android.util.Base64.decode(
+                data.substring(expectedPrefix.length()),
+                android.util.Base64.DEFAULT
+            );
+            if (binary.length == 0 || binary.length > MAX_DOWNLOAD_BYTES) {
+                sendShareEvent(false, "File is too large");
+                return;
+            }
+
+            String name = item.optString("name", "ZAVI_ONE_invoice");
+            name = name.replaceAll("[^\\p{L}\\p{N}._ -]", "_");
+            if (name.isEmpty()) name = "ZAVI_ONE_invoice";
+            if (name.length() > 100) name = name.substring(0, 100);
+            String suffix = "application/pdf".equals(mime) ? ".pdf" :
+                ("image/jpeg".equals(mime) ? ".jpg" : ".png");
+            if (!name.toLowerCase(Locale.ROOT).endsWith(suffix)) name += suffix;
+
+            String phone = item.optString("phone", "").replaceAll("[^0-9]", "");
+            if (!phone.isEmpty() && !phone.matches("[1-9][0-9]{7,14}")) {
+                sendShareEvent(false, "Invalid WhatsApp number");
+                return;
+            }
+            String text = item.optString("text", "");
+            if (text.length() > 3500) text = text.substring(0, 3500);
+            String target = item.optString("target", "whatsapp");
+            String packageName = "business".equals(target) ? "com.whatsapp.w4b" : "com.whatsapp";
+
+            cleanupShareCache();
+            File dir = new File(getCacheDir(), "share");
+            if (!dir.isDirectory() && !dir.mkdirs()) {
+                sendShareEvent(false, "Unable to prepare share folder");
+                return;
+            }
+            File file = new File(dir, System.currentTimeMillis() + "_" + name);
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(file)) {
+                out.write(binary);
+                out.flush();
+            }
+            Uri uri = FileProvider.getUriForFile(
+                this,
+                getPackageName() + ".camera",
+                file
+            );
+
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType(mime);
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            if (!text.isEmpty()) send.putExtra(Intent.EXTRA_TEXT, text);
+            if (!phone.isEmpty()) send.putExtra("jid", phone + "@s.whatsapp.net");
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            send.setClipData(ClipData.newRawUri("ZAVI ONE invoice", uri));
+            send.setPackage(packageName);
+
+            final String fallbackText = text;
+            runOnUiThread(() -> {
+                try {
+                    startActivity(send);
+                    sendShareEvent(true, "WhatsApp opened");
+                } catch (Exception packageError) {
+                    try {
+                        Intent chooser = new Intent(Intent.ACTION_SEND);
+                        chooser.setType(mime);
+                        chooser.putExtra(Intent.EXTRA_STREAM, uri);
+                        if (!fallbackText.isEmpty()) chooser.putExtra(Intent.EXTRA_TEXT, fallbackText);
+                        chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        chooser.setClipData(ClipData.newRawUri("ZAVI ONE invoice", uri));
+                        startActivity(Intent.createChooser(chooser, "Share ZAVI ONE invoice"));
+                        sendShareEvent(true, "Share chooser opened");
+                    } catch (Exception fallbackError) {
+                        sendShareEvent(false, "No compatible sharing app");
+                    }
+                }
+            });
+        } catch (Exception error) {
+            sendShareEvent(false, "Unable to prepare invoice share");
+        }
     }
 
 

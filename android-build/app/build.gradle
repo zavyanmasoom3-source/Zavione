@@ -8,7 +8,7 @@ boolean admin = appVariant == "admin"
 boolean productionMode = providers.gradleProperty("zaviProduction").getOrElse("false").toBoolean()
 
 if (productionMode) {
-    for (String name : ["ZAVI_KEYSTORE_PATH", "ZAVI_KEYSTORE_PASSWORD", "ZAVI_KEY_ALIAS", "ZAVI_KEY_PASSWORD"]) {
+    for (String name in ["ZAVI_KEYSTORE_PATH", "ZAVI_KEYSTORE_PASSWORD", "ZAVI_KEY_ALIAS", "ZAVI_KEY_PASSWORD"]) {
         if (!System.getenv(name)) {
             throw new GradleException("Production signing missing: " + name)
         }
@@ -34,8 +34,8 @@ android {
         applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
         minSdk 26
         targetSdk 36
-        versionCode admin ? 4166 : 6675
-        versionName admin ? '1.4.66-pdf-final' : '66.75-pdf-final'
+        versionCode admin ? 4167 : 6676
+        versionName admin ? '1.4.67-pdf-final' : '66.76-pdf-final'
         resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
     }
 

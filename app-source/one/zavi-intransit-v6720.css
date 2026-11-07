@@ -9,3 +9,10 @@
 @media(max-width:700px){.z672-order-meta{grid-template-columns:repeat(2,minmax(0,1fr))}.z672-item-row{grid-template-columns:1fr 1fr}.z672-item-row [data-z672-remove]{grid-column:2}.z672-receive-row{grid-template-columns:1fr 110px}}
 
 .z672-purchase-more{display:inline-block;position:relative}.z672-purchase-more>summary{list-style:none;cursor:pointer}.z672-purchase-more>summary::-webkit-details-marker{display:none}.z672-purchase-more-menu{position:absolute;z-index:30;inset-inline-end:0;top:calc(100% + 6px);min-width:150px;padding:7px;border:1px solid var(--line);border-radius:11px;background:var(--white);box-shadow:0 12px 32px rgba(0,0,0,.14)}.z672-purchase-more-menu .btn{width:100%}
+
+/* Unified compact purchase home: four primary choices + More. */
+.z6712-purchase-home{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 12px}
+.z6712-purchase-action{min-height:82px;border:1px solid var(--z67-outline,#d3deea);border-radius:15px;background:var(--z67-panel,#fff);color:inherit;padding:13px;text-align:start;display:grid;align-content:center;gap:5px;cursor:pointer;box-shadow:0 5px 18px rgba(15,35,60,.05)}
+.z6712-purchase-action b{font-size:13px}.z6712-purchase-action small{font-size:10px;opacity:.7;line-height:1.5}.z6712-purchase-action:active{transform:translateY(1px)}
+.z6712-purchase-more{margin:0 0 14px}.z6712-purchase-more>summary{cursor:pointer;width:max-content;font-size:12px;font-weight:800}.z6712-purchase-more>.action-group{margin-top:8px}
+@media(max-width:760px){.z6712-purchase-home{grid-template-columns:repeat(2,minmax(0,1fr))}}

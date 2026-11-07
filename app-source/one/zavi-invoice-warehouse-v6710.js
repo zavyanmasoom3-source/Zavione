@@ -6,6 +6,7 @@
 (()=>{'use strict';
 const CACHE_PREFIX='zavi_v671_warehouse_cache_';
 const QUEUE_PREFIX='zavi_v671_warehouse_queue_';
+const INIT_PENDING_PREFIX='zavi_v671_warehouse_init_pending_';
 let syncing=false;
 
 function context(){
@@ -18,10 +19,14 @@ function read(key,fallback){try{const v=JSON.parse(localStorage.getItem(key)||'n
 function write(key,value){localStorage.setItem(key,JSON.stringify(value));}
 function cacheKey(x){return CACHE_PREFIX+scope(x)}
 function queueKey(x){return QUEUE_PREFIX+scope(x)}
+function initPendingKey(x){return INIT_PENDING_PREFIX+scope(x)}
+function initPending(x=context()){if(!x)return null;const p=read(initPendingKey(x),null);return p&&p.workspace===x.workspace&&Array.isArray(p.ids)?p:null}
+function saveInitPending(x,p){write(initPendingKey(x),p)}
+function clearInitPending(x){localStorage.removeItem(initPendingKey(x))}
 function cache(x=context()){
- if(!x)return {warehouses:[],stock:[],updatedAt:0};
+ if(!x)return {warehouses:[],stock:[],initialized:false,updatedAt:0};
  const c=read(cacheKey(x),null);
- if(!c||c.workspace!==x.workspace||!Array.isArray(c.warehouses)||!Array.isArray(c.stock))return {workspace:x.workspace,warehouses:[],stock:[],updatedAt:0};
+ if(!c||c.workspace!==x.workspace||!Array.isArray(c.warehouses)||!Array.isArray(c.stock))return {workspace:x.workspace,warehouses:[],stock:[],initialized:false,updatedAt:0};
  return c;
 }
 function queue(x=context()){
@@ -40,9 +45,9 @@ function enabled(){return options().length>0}
 function pendingDelta(q,warehouseId,productRef){
  let total=0;
  for(const o of q){
-  if(o.product_ref!==productRef)continue;
-  if(o.to_warehouse_id===warehouseId)total+=Number(o.quantity)||0;
-  if(o.from_warehouse_id===warehouseId)total-=Number(o.quantity)||0;
+  if(o.product_ref!==productRef||o.warehouse_id!==warehouseId)continue;
+  if(o.direction==='in')total+=Number(o.quantity)||0;
+  if(o.direction==='out')total-=Number(o.quantity)||0;
  }
  return total;
 }
@@ -80,13 +85,14 @@ async function request(x,path,method='GET',body){
 }
 async function refresh(){
  const x=context();if(!x||navigator.onLine===false)return cache(x);
- const [warehouses,stockRows]=await Promise.all([
+ const [warehouses,stockRows,configRows]=await Promise.all([
   request(x,'/rest/v1/zavi_warehouses?select=id,name,code,is_active,workspace_id&workspace_id=eq.'+encodeURIComponent(x.workspace)+'&order=created_at.asc'),
-  request(x,'/rest/v1/zavi_warehouse_stock_summary?select=warehouse_id,product_ref,quantity,workspace_id&workspace_id=eq.'+encodeURIComponent(x.workspace)+'&limit=5000')
+  request(x,'/rest/v1/zavi_warehouse_stock_summary?select=warehouse_id,product_ref,quantity,workspace_id&workspace_id=eq.'+encodeURIComponent(x.workspace)+'&limit=5000'),
+  request(x,'/rest/v1/zavi_warehouse_config?select=workspace_id,inventory_initialized&workspace_id=eq.'+encodeURIComponent(x.workspace)+'&limit=1')
  ]);
- if(!Array.isArray(warehouses)||!Array.isArray(stockRows))throw Error('WAREHOUSE_RESPONSE_INVALID');
+ if(!Array.isArray(warehouses)||!Array.isArray(stockRows)||!Array.isArray(configRows))throw Error('WAREHOUSE_RESPONSE_INVALID');
  const current=context();if(!current||current.workspace!==x.workspace||current.user!==x.user)throw Error('WAREHOUSE_SESSION_CHANGED');
- const next={workspace:x.workspace,warehouses:warehouses.filter(w=>w.workspace_id===x.workspace),stock:stockRows.filter(r=>r.workspace_id===x.workspace),updatedAt:Date.now()};
+ const next={workspace:x.workspace,warehouses:warehouses.filter(w=>w.workspace_id===x.workspace),stock:stockRows.filter(r=>r.workspace_id===x.workspace),initialized:configRows[0]?.inventory_initialized===true,updatedAt:Date.now()};
  write(cacheKey(x),next);
  window.dispatchEvent(new CustomEvent('zavi:warehouse-cache-updated',{detail:{workspace:x.workspace}}));
  return next;
@@ -135,6 +141,11 @@ async function flush(){
    }
   }
   if(changed||q.length===0)await refresh().catch(()=>{});
+  const init=initPending(x);
+  if(init&&init.ids.every(id=>!q.some(o=>o.id===id))){
+   const marked=await request(x,'/rest/v1/rpc/zavi_warehouse_mark_initialized','POST',{p_workspace_id:x.workspace});
+   if(marked===true){clearInitPending(x);await refresh();}
+  }
   return q.length===0;
  }finally{syncing=false}
 }
@@ -162,9 +173,32 @@ function stage(tx){
  window.dispatchEvent(new CustomEvent('zavi:warehouse-pending',{detail:{workspace:x.workspace,count:q.length}}));
  return true;
 }
+function readyForSales(){const x=context();return !!(x&&cache(x).initialized===true)}
+async function initializeFromLegacy(warehouseId){
+ const x=context();if(!x)throw Error('برای مقداردهی گدام وارد حساب مالک شوید.');
+ if(navigator.onLine===false)throw Error('مقداردهی اولیه گدام یک‌بار به اینترنت نیاز دارد.');
+ await refresh();
+ const c=cache(x);if(c.initialized===true)return true;
+ if(!activeWarehouses().some(w=>w.id===String(warehouseId)))throw Error('گدام فعال معتبر را انتخاب کنید.');
+ if(c.stock.some(r=>Math.abs(Number(r.quantity)||0)>0.00001))throw Error('برای این فروشگاه قبلاً حرکت گدام ثبت شده است؛ پیش از مقداردهی دوباره، موجودی را تطبیق کنید.');
+ if(initPending(x))throw Error('مقداردهی اولیه قبلی هنوز در حال همگام‌سازی است.');
+ const products=Array.isArray(db?.products)?db.products:[];
+ const lines=products.map(p=>({product_ref:String(p.id||''),quantity:Number(typeof stockOf==='function'?stockOf(p.id):0)})).filter(x=>x.product_ref&&x.quantity>0.00001);
+ if(!lines.length){
+  const marked=await request(x,'/rest/v1/rpc/zavi_warehouse_mark_initialized','POST',{p_workspace_id:x.workspace});
+  if(marked!==true)throw Error('سرور مقداردهی گدام را تأیید نکرد.');
+  await refresh();return readyForSales();
+ }
+ if(!crypto?.randomUUID)throw Error('تولید شناسه امن در این دستگاه ممکن نیست.');
+ const reference=('warehouse-initialization:v1:'+x.workspace).slice(0,150);
+ let q=queue(x),ops=lines.map(line=>({id:crypto.randomUUID(),workspace_id:x.workspace,warehouse_id:String(warehouseId),product_ref:line.product_ref,quantity:line.quantity,direction:'in',allow_negative:false,reference}));
+ q=q.concat(ops);saveQueue(x,q);saveInitPending(x,{workspace:x.workspace,warehouseId:String(warehouseId),ids:ops.map(o=>o.id),createdAt:Date.now()});
+ const done=await flush();if(!done)throw Error('بخشی از مقداردهی در صف همگام‌سازی باقی مانده است.');
+ return readyForSales();
+}
 function pendingCount(){const x=context();return x?queue(x).length:0}
 async function sync(){if(navigator.onLine===false)return false;await flush();return refresh().then(()=>true).catch(()=>false)}
-window.ZaviInvoiceWarehouseV6710=Object.freeze({options,enabled,stock,stage,flush,refresh,sync,pendingCount});
+window.ZaviInvoiceWarehouseV6710=Object.freeze({options,enabled,readyForSales,initializeFromLegacy,stock,stage,flush,refresh,sync,pendingCount});
 window.addEventListener('online',()=>void sync());
 window.addEventListener('zavi-cloud-workspace-selected',()=>void sync());
 window.addEventListener('focus',()=>{if(navigator.onLine!==false)void flush()});

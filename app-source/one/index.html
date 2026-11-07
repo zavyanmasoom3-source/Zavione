@@ -2992,7 +2992,7 @@ if(kind==='stock_adjust'){
   if(d<0&&available<q)return toast('موجودی گدام انتخابی برای کاهش کافی نیست؛ موجود: '+fmtQty(available));
   const cost=d>0?money(num(f.cost.value)):unitCost(pid);
   if(!Number.isFinite(cost)||cost<0)return toast('بهای واحد معتبر نیست.');
-  const movementId=whReady&&warehouseId?z671MovementId():'';
+  let movementId='';try{movementId=whReady&&warehouseId?zaviSecureUuid():''}catch(_){return toast('برای ثبت امن حرکت گدام، این دستگاه UUID امن پشتیبانی نمی‌کند.');}
   let saved=false;
   saved=commit(n=>n.tx.push({id:newId('t'),code:nextCode(n),type:'stock_adjust',created:new Date().toISOString(),date:readDate(f.date.value),productId:pid,delta:d*q,cost,note:f.note.value.trim(),...(warehouseId?{warehouseId}:{}),...(movementId?{warehouseMovementId:movementId,warehouseReference:'stock-adjust:'+pid+':'+movementId}:{})}));
   if(saved&&movementId){
@@ -3004,6 +3004,13 @@ if(kind==='stock_adjust'){
  return
 }
 if(['customer_payment','customer_loan','supplier_payment','creditor_loan','supplier_debt','expense','transfer','hawala_transfer','capital_in','owner_draw'].includes(kind)){openCashForm(kind,id);return}}
+function zaviSecureUuid(){
+ if(typeof crypto?.randomUUID==='function')return crypto.randomUUID();
+ if(!crypto?.getRandomValues)throw Error('SECURE_UUID_UNAVAILABLE');
+ const b=new Uint8Array(16);crypto.getRandomValues(b);b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;
+ const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');
+ return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+}
 function nextCode(n){return 'ZW-'+String(n.tx.length+1).padStart(5,'0')}
 function normalizeName(x){return toLatin(String(x||'')).trim().replace(/\s+/g,' ').toLocaleLowerCase()}
 function zaviProductCodes(p){return [p?.sku,...(Array.isArray(p?.barcodes)?p.barcodes:[])].map(normalizeName).filter(Boolean)}

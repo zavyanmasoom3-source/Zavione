@@ -1,0 +1,54 @@
+name: Build PDF-final APKs
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'release/build-pdf-final.trigger'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Build ZAVI ONE and ADMIN
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - name: Verify source tests
+        run: node --test tests/*.test.cjs
+      - name: Build ZAVI ONE 66.76
+        run: |
+          rm -rf android-build/app/src/main/assets
+          mkdir -p android-build/app/src/main/assets release
+          cp -a app-source/one/. android-build/app/src/main/assets/
+          chmod +x android-build/gradlew
+          ./android-build/gradlew -p android-build --no-daemon -PzaviApp=one :app:assembleRelease
+          cp android-build/app/build/outputs/apk/release/app-release.apk release/ZAVI_ONE_66.76_pdf_final.apk
+      - name: Build ZAVI ONE ADMIN 1.4.67
+        run: |
+          rm -rf android-build/app/src/main/assets
+          mkdir -p android-build/app/src/main/assets
+          cp -a app-source/admin/. android-build/app/src/main/assets/
+          ./android-build/gradlew -p android-build --no-daemon -PzaviApp=admin :app:assembleRelease
+          cp android-build/app/build/outputs/apk/release/app-release.apk release/ZAVI_ONE_ADMIN_1.4.67_pdf_final.apk
+      - name: Verify APK identities
+        run: |
+          AAPT="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/aapt"
+          "$AAPT" dump badging release/ZAVI_ONE_66.76_pdf_final.apk | grep "versionCode='6676' versionName='66.76-pdf-final'"
+          "$AAPT" dump badging release/ZAVI_ONE_ADMIN_1.4.67_pdf_final.apk | grep "versionCode='4167' versionName='1.4.67-pdf-final'"
+          unzip -l release/ZAVI_ONE_66.76_pdf_final.apk | grep 'assets/zavi-pdf-final-v6760.css'
+          unzip -l release/ZAVI_ONE_ADMIN_1.4.67_pdf_final.apk | grep 'assets/zavi-admin-pdf-final-v1467.css'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI-PDF-final-APKs
+          path: release/*.apk
+          if-no-files-found: error
+          retention-days: 14

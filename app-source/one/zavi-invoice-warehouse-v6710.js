@@ -98,23 +98,39 @@ async function reconcile(x,o){
  if(rows.length!==1||!opMatches(o,rows[0]))throw Error('WAREHOUSE_OPERATION_COLLISION');
  return true;
 }
-async function post(x,o){
- const body={p_operation_id:o.id,p_workspace_id:x.workspace,p_from_warehouse_id:o.direction==='out'?o.warehouse_id:null,p_to_warehouse_id:o.direction==='in'?o.warehouse_id:null,p_product_ref:o.product_ref,p_quantity:o.quantity,p_reference:o.reference||null};
- const result=await request(x,'/rest/v1/rpc/zavi_warehouse_post_movement','POST',body);
- if(String(result).replace(/^"|"$/g,'')!==String(o.id))throw Error('WAREHOUSE_CONFIRMATION_MISMATCH');
+async function postBatch(x,ops){
+ if(!Array.isArray(ops)||!ops.length||ops.length>200)throw Error('WAREHOUSE_BATCH_INVALID');
+ const first=ops[0];
+ if(ops.some(o=>o.workspace_id!==first.workspace_id||o.warehouse_id!==first.warehouse_id||o.direction!==first.direction||o.reference!==first.reference))throw Error('WAREHOUSE_BATCH_MISMATCH');
+ const body={
+  p_workspace_id:x.workspace,
+  p_warehouse_id:first.warehouse_id,
+  p_document_ref:first.reference,
+  p_direction:first.direction,
+  p_lines:ops.map(o=>({operation_id:o.id,product_ref:o.product_ref,quantity:o.quantity}))
+ };
+ const result=await request(x,'/rest/v1/rpc/zavi_warehouse_post_document_movements','POST',body);
+ if(!Array.isArray(result)||result.length!==ops.length)throw Error('WAREHOUSE_BATCH_CONFIRMATION_MISMATCH');
+ const ids=new Set(result.map(r=>String(r?.operation_id||'')));
+ if(ops.some(o=>!ids.has(String(o.id))))throw Error('WAREHOUSE_BATCH_CONFIRMATION_MISMATCH');
 }
 async function flush(){
  const x=context();if(!x||navigator.onLine===false||syncing)return false;
  syncing=true;
  try{
   let q=queue(x),changed=false;
-  for(const o of [...q]){
+  while(q.length){
+   const first=q[0];
+   const batch=q.filter(o=>o.workspace_id===first.workspace_id&&o.warehouse_id===first.warehouse_id&&o.direction===first.direction&&o.reference===first.reference).slice(0,200);
    try{
-    if(!(await reconcile(x,o)))await post(x,o);
-    q=q.filter(item=>item.id!==o.id);saveQueue(x,q);changed=true;
+    await postBatch(x,batch);
+    const done=new Set(batch.map(o=>o.id));
+    q=q.filter(item=>!done.has(item.id));saveQueue(x,q);changed=true;
    }catch(e){
     if(e?.name==='AbortError'||/network|fetch|offline/i.test(String(e?.message||'')))break;
-    console.warn('ZAVI warehouse invoice queue:',e);break;
+    console.warn('ZAVI warehouse invoice queue:',e);
+    window.dispatchEvent(new CustomEvent('zavi:warehouse-sync-error',{detail:{workspace:x.workspace,message:String(e?.message||e).slice(0,180),count:q.length}}));
+    break;
    }
   }
   if(changed||q.length===0)await refresh().catch(()=>{});
@@ -131,7 +147,7 @@ function stage(tx){
  tx.items.forEach((line,index)=>{
   const id=String(line.warehouseMovementId||'');
   const qty=Number(line.qty),product=String(line.productId||'');
-  const o={id,workspace_id:x.workspace,warehouse_id:wh,product_ref:product,quantity:qty,direction,reference:String('invoice:'+String(tx.code||tx.id||'')+':'+(index+1)).slice(0,150)};
+  const o={id,workspace_id:x.workspace,warehouse_id:wh,product_ref:product,quantity:qty,direction,reference:String('invoice:'+String(tx.code||tx.id||'')).slice(0,150)};
   if(!validOperation(o))throw Error('شناسه حرکت گدام در فاکتور معتبر نیست.');
   const old=q.find(v=>v.id===id);
   if(old){

@@ -3044,7 +3044,7 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
   if(!name){delete row.dataset.scanProductId;delete row.dataset.autoPriceProduct;v.textContent='اسم محصول را بنویسید';v.classList.remove('fresh');return}
   if(p){
    if(row.dataset.z629MatchedId!==p.id){window.ZaviIndustryForms6529.fill(row.querySelector('.z629-industry'),orderIndustry,p.industryDetails);row.dataset.z629MatchedId=p.id;}
-   v.textContent=`در گدام: ${fmtQty(stockOf(p.id))} عدد · ${p.sku||'بدون کود'}`;v.classList.remove('fresh');
+   v.textContent=`${z671WarehouseMode?'موجودی گدام انتخابی':'در گدام'}: ${fmtQty(z671StockFor(p.id)??0)} عدد · ${p.sku||'بدون کود'}`;v.classList.remove('fresh');
    const unit=row.querySelector('[data-field="price"]');
    if(row.dataset.autoPriceProduct!==p.id&&(unit.value==='0'||unit.dataset.zaviAutoPrice==='true')){
     if(isSale){unit.value=String(p.salePrice||0);unit.dataset.zaviAutoPrice='true';row.dataset.autoPriceProduct=p.id}
@@ -3062,7 +3062,7 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
  function addLine(){let idx=count++;
   box.insertAdjacentHTML('beforeend',`<div class="order-line" data-line="${idx}"><div class="order-row">
     <input data-field="productName" list="zawiProductNames" maxlength="140" autocomplete="off" placeholder="نام محصول را بنویسید" aria-label="نام محصول" required>
-    <input data-field="qty" type="number" min="0.001" step="0.001" value="1" aria-label="تعداد" required>
+    <div class="z671-qty-field"><input data-field="qty" type="number" min="0.001" step="0.001" value="1" aria-label="تعداد" required><small class="z671-field-error" data-z671-stock-error hidden></small></div>
     <input data-field="price" type="number" min="0" step="any" value="0" aria-label="قیمت هر واحد" required>
     <button class="remove-line" type="button" aria-label="حذف ردیف">${icon('close')}</button></div>
     <div class="line-status">اسم محصول را بنویسید</div><div class="line-stock-error" role="alert" aria-live="polite"></div>
@@ -3116,7 +3116,7 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
   }
   const product=matches[0];invoiceBarcodePreview.classList.add('found');
   const title=document.createElement('strong');title.textContent=product.name;
-  const detail=document.createElement('span');detail.textContent='موجودی: '+fmtQty(stockOf(product.id))+' | دسته: '+String(product.category||'—')+' | '+(isSale?'قیمت فروش: '+currency(product.salePrice||0):(f.originalCurrency.value===db.currency?'قیمت خرید: '+currency(product.purchasePrice??unitCost(product.id)??0):'قیمت خرید ارزی را قبل از ثبت بررسی کنید.'));
+  const detail=document.createElement('span');detail.textContent='موجودی'+(z671WarehouseMode?' گدام انتخابی':'')+': '+fmtQty(z671StockFor(product.id)??0)+' | دسته: '+String(product.category||'—')+' | '+(isSale?'قیمت فروش: '+currency(product.salePrice||0):(f.originalCurrency.value===db.currency?'قیمت خرید: '+currency(product.purchasePrice??unitCost(product.id)??0):'قیمت خرید ارزی را قبل از ثبت بررسی کنید.'));
   const hint=document.createElement('small');hint.textContent='قیمت ثبت‌شده به صورت خودکار پر می‌شود. سپس تعداد، نام مشتری و رسید را دستی بررسی کنید؛ دکمه افزودن یا Enter هر دو کار می‌کنند.';
   invoiceBarcodePreview.append(title,detail,hint);
  }
@@ -3162,6 +3162,7 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
  });
  f.freeContactName.addEventListener('change',()=>{const c=matchingContact(f.freeContactName.value,f.freeContactPhone.value,type);if(c&&!f.freeContactPhone.value)f.freeContactPhone.value=c.phone||''});
  if(isPurchase)f.originalCurrency.addEventListener('change',()=>{f.exchangeRate.value=f.originalCurrency.value===db.currency?'1':'';updateTotals()});
+ if(z671WarehouseMode&&f.warehouseId)f.warehouseId.addEventListener('change',()=>{box.querySelectorAll('.order-line').forEach(updateMatchStatus);previewInvoiceBarcode()});
  form.addEventListener('input',e=>{
   if(e.target.dataset.field==='price'&&e.isTrusted)e.target.dataset.zaviAutoPrice='false';
   if(e.target.dataset.field==='productName')updateMatchStatus(e.target.closest('.order-line'));

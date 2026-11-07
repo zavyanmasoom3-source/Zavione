@@ -2617,7 +2617,59 @@ function zaviInvoiceMessage(t){
   total:currency(txTotal(t)),paid:currency(t.paid||0),balance:currency(money(txTotal(t)-num(t.paid)))};
  return window.ZaviWhatsappV1?.invoice?.(info)||'فاکتور '+t.code+' — '+info.total;
 }
-function zaviShareInvoiceWhatsApp(){if(!activeInvoice)return;const t=db.tx.find(x=>x.id===activeInvoice.id);if(!t)return;const c=db.contacts.find(x=>x.id===t.contactId),phone=t.customerPhone||c?.whatsappPhone||c?.phone||'',outgoing=window.ZaviWhatsappV1?.links?.(phone,zaviInvoiceMessage(t));if(!phone||!outgoing?.valid)return toast('برای ارسال مستقیم فاکتور، شماره معتبر واتساپ مشتری را در دفترچه تماس ثبت کنید.');zaviWhatsappChoice(phone,zaviInvoiceMessage(t),'فاکتور');}
+function zaviInvoiceWhatsappNumber(t){
+ const c=db.contacts.find(x=>x.id===t?.contactId);
+ return c?.whatsappPhone||t?.customerPhone||c?.phone||'';
+}
+function zaviFileDataUrl(file){
+ return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(Error('خواندن فایل ممکن نشد.'));r.readAsDataURL(file)});
+}
+async function zaviInvoiceShareFile(kind,target='whatsapp'){
+ if(!activeInvoice)return toast('نخست فاکتور را باز کنید.');
+ const tx=db.tx.find(x=>x.id===activeInvoice.id);if(!tx)return toast('فاکتور پیدا نشد.');
+ const phone=zaviInvoiceWhatsappNumber(tx),links=window.ZaviWhatsappV1?.links?.(phone,zaviInvoiceMessage(tx));
+ if(!links?.valid)return toast('شماره معتبر واتساپ مشتری را در دفترچه تماس ثبت کنید.');
+ let file;
+ try{
+  if(kind==='pdf')file=await zaviInvoicePdfFile();
+  else{
+   const blob=await (await fetch(activeInvoice.uri)).blob();
+   file=new File([blob],'ZAVI-ONE-Invoice-'+String(tx.code||tx.id).replace(/[^A-Za-z0-9_-]+/g,'-')+'.png',{type:'image/png',lastModified:Date.now()});
+  }
+  if(file.size>25*1024*1024)throw Error('فایل برای ارسال بسیار بزرگ است.');
+  const bridge=window.ZaviAndroidShare;
+  if(bridge?.postMessage){
+   const data=await zaviFileDataUrl(file);
+   bridge.postMessage(JSON.stringify({name:file.name,mime:file.type,data,phone:links.recipient,text:zaviInvoiceMessage(tx),target:target==='business'?'business':'whatsapp'}));
+   toast('فایل آماده شد؛ واتساپ در حال بازشدن است.');
+   return;
+  }
+  if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+   await navigator.share({title:'فاکتور مشتری',text:zaviInvoiceMessage(tx),files:[file]});
+   return;
+  }
+  downloadBlob(file,file.name,file.type);
+  zaviWhatsappChoice(phone,zaviInvoiceMessage(tx),'فاکتور');
+  toast('فایل ذخیره شد؛ در این دستگاه پیوست مستقیم نیتیو در دسترس نیست.');
+ }catch(e){if(e?.name!=='AbortError')toast(e?.message||'ارسال فایل فاکتور انجام نشد.')}
+}
+function zaviInvoiceWhatsappFileDialog(){
+ if(!activeInvoice)return toast('نخست فاکتور را باز کنید.');
+ const tx=db.tx.find(x=>x.id===activeInvoice.id);if(!tx)return;
+ const phone=zaviInvoiceWhatsappNumber(tx),out=window.ZaviWhatsappV1?.links?.(phone,zaviInvoiceMessage(tx));
+ if(!out?.valid)return toast('برای ارسال مستقیم فایل، شماره معتبر واتساپ مشتری را ثبت کنید.');
+ showModal('ارسال فایل فاکتور',`<div class="notice">شماره مقصد: <b dir="ltr">${escapeHtml(out.recipient)}</b><br>نوع فایل و واتساپ را انتخاب کنید. ارسال نهایی در خود واتساپ تأیید می‌شود.</div><div class="statement-actions" style="margin-top:12px"><button type="button" class="btn primary" data-zavi-wa-file="image" data-zavi-wa-target="whatsapp">عکس · WhatsApp</button><button type="button" class="btn subtle" data-zavi-wa-file="pdf" data-zavi-wa-target="whatsapp">PDF · WhatsApp</button><button type="button" class="btn primary" data-zavi-wa-file="image" data-zavi-wa-target="business">عکس · Business</button><button type="button" class="btn subtle" data-zavi-wa-file="pdf" data-zavi-wa-target="business">PDF · Business</button></div>`,'',false);
+ document.querySelectorAll('[data-zavi-wa-file]').forEach(button=>button.addEventListener('click',()=>zaviInvoiceShareFile(button.dataset.zaviWaFile,button.dataset.zaviWaTarget)));
+}
+if(!window.__zaviNativeShareEventBound){
+ window.__zaviNativeShareEventBound=true;
+ window.addEventListener('zavi:native-share',event=>{
+  let detail=event.detail;try{if(typeof detail==='string')detail=JSON.parse(detail)}catch(_){}
+  if(detail?.success)toast('فایل به برنامهٔ اشتراک‌گذاری سپرده شد.');
+  else if(detail?.message)toast('ارسال فایل: '+detail.message);
+ });
+}
+function zaviShareInvoiceWhatsApp(){if(!activeInvoice)return;const t=db.tx.find(x=>x.id===activeInvoice.id);if(!t)return;const c=db.contacts.find(x=>x.id===t.contactId),phone=c?.whatsappPhone||t.customerPhone||c?.phone||'',outgoing=window.ZaviWhatsappV1?.links?.(phone,zaviInvoiceMessage(t));if(!phone||!outgoing?.valid)return toast('برای ارسال مستقیم فاکتور، شماره معتبر واتساپ مشتری را در دفترچه تماس ثبت کنید.');zaviWhatsappChoice(phone,zaviInvoiceMessage(t),'فاکتور');}
 function openWhatsapp(id){
  const c=db.contacts.find(x=>x.id===id);if(!c)return;
  const balance=money(contactBalances()[c.id]?.receivable||0),last=paymentReceipts(c.id)[0];
@@ -3493,7 +3545,7 @@ function printInvoice(t){
  const uri=canvas.toDataURL('image/png');
  activeInvoice={id:t.id,uri,canvas};
  showModal('فاکتور: '+t.code,`<div class="statement-preview"><img src="${uri}" alt="نمایش فاکتور فروش"></div>
- <div class="statement-actions"><button type="button" class="btn primary" data-invoice-archive="1">${icon('check')} ذخیره در سیستم</button>${z20Option('invoiceImage')?`<button type="button" class="btn primary" data-invoice-share="1">${icon('arrow')} اشتراک‌گذاری عکس</button>`:''}<button type="button" class="btn subtle" data-invoice-whatsapp="1">واتساپ معمولی / تجارتی</button><button type="button" class="btn subtle" data-invoice-save="1">${icon('download')} دانلود فاکتور (عکس)</button><button type="button" class="btn subtle" data-invoice-copy="1">کپی رسید</button><button type="button" class="btn subtle" data-invoice-pdf-save="1">${icon('download')} ذخیره PDF</button><button type="button" class="btn primary" data-invoice-pdf-share="1">${icon('arrow')} اشتراک PDF</button><button type="button" class="btn" data-invoice-print="1">${icon('print')} چاپ</button><button type="button" class="btn primary" data-z644-thermal="${escapeHtml(t.id)}">🧾 چاپ حرارتی ${Number(db.printPrefs?.paperWidth)===58?58:80}mm</button></div>
+ <div class="statement-actions"><button type="button" class="btn primary" data-invoice-archive="1">${icon('check')} ذخیره در سیستم</button>${z20Option('invoiceImage')?`<button type="button" class="btn primary" data-invoice-share="1">${icon('arrow')} اشتراک‌گذاری عکس</button>`:''}<button type="button" class="btn subtle" data-invoice-whatsapp="1">واتساپ متن</button><button type="button" class="btn primary" data-invoice-whatsapp-file="1">واتساپ فایل</button><button type="button" class="btn subtle" data-invoice-save="1">${icon('download')} دانلود فاکتور (عکس)</button><button type="button" class="btn subtle" data-invoice-copy="1">کپی رسید</button><button type="button" class="btn subtle" data-invoice-pdf-save="1">${icon('download')} ذخیره PDF</button><button type="button" class="btn primary" data-invoice-pdf-share="1">${icon('arrow')} اشتراک PDF</button><button type="button" class="btn" data-invoice-print="1">${icon('print')} چاپ</button><button type="button" class="btn primary" data-z644-thermal="${escapeHtml(t.id)}">🧾 چاپ حرارتی ${Number(db.printPrefs?.paperWidth)===58?58:80}mm</button></div>
 `,'',false);
  const invoiceDialog=document.querySelector('#overlay .modal');
  invoiceDialog?.classList.add('z45-invoice-modal');
@@ -3777,7 +3829,7 @@ document.addEventListener('click',e=>{
  const wasteEdit=e.target.closest('[data-waste-edit]');if(wasteEdit){wasteForm(wasteEdit.dataset.wasteEdit);return;}
  const wasteDelete=e.target.closest('[data-waste-delete]');if(wasteDelete){wasteDeleteRecord(wasteDelete.dataset.wasteDelete);return;}
  const wasteExport=e.target.closest('[data-waste-export]');if(wasteExport){wasteExportCSV();return;}
- const jDelete=e.target.closest('[data-z659-delete-note]');if(jDelete){z659DeleteJournalNote(jDelete.dataset.z659DeleteNote);return}const jPage=e.target.closest('[data-z659-jpage]');if(jPage){z659JournalPage=Math.max(0,z659JournalPage+(jPage.dataset.z659Jpage==='next'?1:-1));render();return}if(e.target.closest('[data-invoice-whatsapp]')){zaviShareInvoiceWhatsApp();return}if(e.target.closest('[data-invoice-archive]')){archiveInvoice();return}if(e.target.closest('[data-usd-add]')){openUSDLedgerForm();return}if(e.target.closest('[data-repair-detail]')){repairDetails(e.target.closest('[data-repair-detail]').dataset.repairDetail);return}if(e.target.closest('[data-repair-print]')){printRepairReceipt(e.target.closest('[data-repair-print]').dataset.repairPrint);return}if(e.target.closest('[data-repair-pay]')){repairReceive(e.target.closest('[data-repair-pay]').dataset.repairPay);return}if(e.target.closest('[data-repair-edit]')){repairForm(e.target.closest('[data-repair-edit]').dataset.repairEdit);return}if(e.target.closest('[data-invoice-save]')){saveInvoiceImage();return}if(e.target.closest('[data-invoice-copy]')){copyInvoiceReceipt();return}if(e.target.closest('[data-invoice-pdf-save]')){saveInvoicePdf();return}if(e.target.closest('[data-invoice-pdf-share]')){shareInvoicePdf();return}if(e.target.closest('[data-invoice-share]')){shareInvoiceImage();return}if(e.target.closest('[data-invoice-print]')){printInvoiceImage();return}let credEl=e.target.closest('[data-creditor-ledger]');if(credEl){openCreditorLedger(credEl.dataset.creditorLedger);return}let goEl=e.target.closest('[data-go]');if(goEl){go(goEl.dataset.go);return}let led=e.target.closest('[data-ledger]');if(led){openCustomerLedger(led.dataset.ledger);return}let share=e.target.closest('[data-statement]');if(share){previewCustomerStatement(share.dataset.statement);return}let collect=e.target.closest('[data-collect]');if(collect){openCashForm('customer_payment',collect.dataset.collect);return}let debtorLoan=e.target.closest('[data-z660-loan]');if(debtorLoan){const id=debtorLoan.dataset.z660Loan;if(!z20Option('debtorOgrai')||window.zaviCloudRestoreInfo?.()?.role!=='owner'||!debtors().some(c=>c.id===id))return toast('این اختیار فقط برای مالک و مشتری قرضدار فعال است.');closeModal();openCashForm('customer_loan',id);return}let wa=e.target.closest('[data-wa]');if(wa){openWhatsapp(wa.dataset.wa);return}let pl=e.target.closest('[data-print-ledger]');if(pl){printCustomerLedger(pl.dataset.printLedger);return}if(e.target.closest('[data-save-image]')){saveStatementImage();return}if(e.target.closest('[data-share-image]')){shareStatementImage();return}let det=e.target.closest('[data-detail]');if(det){detail(det.dataset.detail);return}let action=e.target.closest('[data-action]');if(action){let k=action.dataset.action,id=action.dataset.id;if(k==='journal_note')addJournalNote();else if(k==='repair_new')repairForm();else if(k==='backup')backup();else if(k==='backup_secure')backupSecure();else if(k==='product_template')downloadProductsTemplate();else if(k==='reset')doReset();else if(k==='export_csv'||k==='export_transactions')exportCSV('transactions');else if(k==='export_products')exportCSV('products');else if(k==='export_contacts')exportCSV('contacts');else if(k==='clear_period'){periodFrom='';periodTo='';render()}else openEntity(k,id);return}if(e.target.closest('#closeModal, #cancelModal')||e.target.id==='backdrop')closeModal();if(e.target.id==='drawerShade')closeDrawer();});
+ const jDelete=e.target.closest('[data-z659-delete-note]');if(jDelete){z659DeleteJournalNote(jDelete.dataset.z659DeleteNote);return}const jPage=e.target.closest('[data-z659-jpage]');if(jPage){z659JournalPage=Math.max(0,z659JournalPage+(jPage.dataset.z659Jpage==='next'?1:-1));render();return}if(e.target.closest('[data-invoice-whatsapp-file]')){zaviInvoiceWhatsappFileDialog();return}if(e.target.closest('[data-invoice-whatsapp]')){zaviShareInvoiceWhatsApp();return}if(e.target.closest('[data-invoice-archive]')){archiveInvoice();return}if(e.target.closest('[data-usd-add]')){openUSDLedgerForm();return}if(e.target.closest('[data-repair-detail]')){repairDetails(e.target.closest('[data-repair-detail]').dataset.repairDetail);return}if(e.target.closest('[data-repair-print]')){printRepairReceipt(e.target.closest('[data-repair-print]').dataset.repairPrint);return}if(e.target.closest('[data-repair-pay]')){repairReceive(e.target.closest('[data-repair-pay]').dataset.repairPay);return}if(e.target.closest('[data-repair-edit]')){repairForm(e.target.closest('[data-repair-edit]').dataset.repairEdit);return}if(e.target.closest('[data-invoice-save]')){saveInvoiceImage();return}if(e.target.closest('[data-invoice-copy]')){copyInvoiceReceipt();return}if(e.target.closest('[data-invoice-pdf-save]')){saveInvoicePdf();return}if(e.target.closest('[data-invoice-pdf-share]')){shareInvoicePdf();return}if(e.target.closest('[data-invoice-share]')){shareInvoiceImage();return}if(e.target.closest('[data-invoice-print]')){printInvoiceImage();return}let credEl=e.target.closest('[data-creditor-ledger]');if(credEl){openCreditorLedger(credEl.dataset.creditorLedger);return}let goEl=e.target.closest('[data-go]');if(goEl){go(goEl.dataset.go);return}let led=e.target.closest('[data-ledger]');if(led){openCustomerLedger(led.dataset.ledger);return}let share=e.target.closest('[data-statement]');if(share){previewCustomerStatement(share.dataset.statement);return}let collect=e.target.closest('[data-collect]');if(collect){openCashForm('customer_payment',collect.dataset.collect);return}let debtorLoan=e.target.closest('[data-z660-loan]');if(debtorLoan){const id=debtorLoan.dataset.z660Loan;if(!z20Option('debtorOgrai')||window.zaviCloudRestoreInfo?.()?.role!=='owner'||!debtors().some(c=>c.id===id))return toast('این اختیار فقط برای مالک و مشتری قرضدار فعال است.');closeModal();openCashForm('customer_loan',id);return}let wa=e.target.closest('[data-wa]');if(wa){openWhatsapp(wa.dataset.wa);return}let pl=e.target.closest('[data-print-ledger]');if(pl){printCustomerLedger(pl.dataset.printLedger);return}if(e.target.closest('[data-save-image]')){saveStatementImage();return}if(e.target.closest('[data-share-image]')){shareStatementImage();return}let det=e.target.closest('[data-detail]');if(det){detail(det.dataset.detail);return}let action=e.target.closest('[data-action]');if(action){let k=action.dataset.action,id=action.dataset.id;if(k==='journal_note')addJournalNote();else if(k==='repair_new')repairForm();else if(k==='backup')backup();else if(k==='backup_secure')backupSecure();else if(k==='product_template')downloadProductsTemplate();else if(k==='reset')doReset();else if(k==='export_csv'||k==='export_transactions')exportCSV('transactions');else if(k==='export_products')exportCSV('products');else if(k==='export_contacts')exportCSV('contacts');else if(k==='clear_period'){periodFrom='';periodTo='';render()}else openEntity(k,id);return}if(e.target.closest('#closeModal, #cancelModal')||e.target.id==='backdrop')closeModal();if(e.target.id==='drawerShade')closeDrawer();});
 document.addEventListener('zavi:language-changed',()=>{if(document.getElementById('content') && !document.documentElement.classList.contains('zawi-locked'))render();});
 // When the app remains open past New Year, refresh ONLY the date chart's options.
 // No customer or accounting records are touched.

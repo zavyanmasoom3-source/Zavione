@@ -19,8 +19,8 @@ test('ZAVI ONE 66.75 PDF design contract is embedded and persisted',()=>{
   assert.match(migration,/'barcodeLabelStudio',true/);
 });
 
-test('Android identities are versioned for 66.75 and ADMIN 1.4.66',()=>{
+test('Android identities are versioned for 66.76 and ADMIN 1.4.67',()=>{
   const gradle=read('android-build/app/build.gradle');
-  assert.match(gradle,/versionCode admin \? 4166 : 6675/);
-  assert.match(gradle,/versionName admin \? '1\.4\.66-pdf-final' : '66\.75-pdf-final'/);
+  assert.match(gradle,/versionCode admin \? 4167 : 6676/);
+  assert.match(gradle,/versionName admin \? '1\.4\.67-pdf-final' : '66\.76-pdf-final'/);
 });

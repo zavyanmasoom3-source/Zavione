@@ -51,7 +51,17 @@ function drawStock(box){
   var value=element('b','',String(r.quantity));
   if(Number(r.quantity)<0)value.classList.add('zv-wh-negative');
   entry.appendChild(value);area.appendChild(entry)
- })
+ });
+ const invoiceWarehouse=window.ZaviInvoiceWarehouseV6710;
+ const active=rows.filter(function(w){return w.is_active});
+ if(invoiceWarehouse&&active.length&&!invoiceWarehouse.readyForSales?.()){
+  var init=element('div','zv-wh-initialize'),title=element('strong','',tr('فعال‌سازی موجودی گدام برای فاکتورها','د بلونو لپاره د ګدام موجودي فعالول','Enable warehouse stock for invoices')),
+      note=element('p','zv-wh-note',tr('موجودی فعلی حسابداری را یک‌بار به گدام انتخابی منتقل کنید. تا تأیید سرور، فروش‌های قبلی با موجودی قدیمی ادامه می‌یابد.','اوسنۍ موجودي یو ځل ټاکلي ګدام ته ولېږدئ.','Assign current accounting stock to one warehouse once. Existing sales keep legacy stock until the server confirms.')),
+      select=element('select','');select.setAttribute('data-wh-init-select','');
+  active.forEach(function(w){var o=element('option','',w.name+' · '+w.code);o.value=w.id;select.appendChild(o)});
+  var button=element('button','btn primary',tr('تخصیص موجودی فعلی','اوسنۍ موجودي ټاکل','Assign current stock'));button.type='button';button.setAttribute('data-wh-initialize','');
+  init.append(title,note,select,button);area.appendChild(init);
+ }
 }
 function drawHistory(box){
  var area=box.querySelector('.zv-wh-history');if(!area)return;area.replaceChildren();
@@ -135,9 +145,16 @@ document.addEventListener('submit',function(e){
  mutate(box,'/rest/v1/zavi_warehouses','POST',{workspace_id:c.id,name:name,code:code}).then(function(ok){if(ok&&box.isConnected)form.reset()})
 });
 document.addEventListener('click',function(e){
- var button=e.target.closest&&e.target.closest('[data-wh-refresh],[data-wh-toggle],[data-wh-edit],[data-wh-cancel]');if(!button)return;
+ var button=e.target.closest&&e.target.closest('[data-wh-refresh],[data-wh-toggle],[data-wh-edit],[data-wh-cancel],[data-wh-initialize]');if(!button)return;
  var box=button.closest('#'+ID);if(!box)return;
  if(button.hasAttribute('data-wh-refresh')){refresh(box);return}
+ if(button.hasAttribute('data-wh-initialize')){
+  var api=window.ZaviInvoiceWarehouseV6710,warehouseId=box.querySelector('[data-wh-init-select]')?.value;
+  if(!api?.initializeFromLegacy||!warehouseId){message(box,tr('بخش مقداردهی موجودی آماده نیست.','د موجودۍ برخه چمتو نه ده.','Inventory initialization is unavailable.'));return}
+  button.disabled=true;message(box,tr('در حال ثبت امن موجودی فعلی در گدام…','اوسنۍ موجودي خوندي کېږي…','Assigning current stock to warehouse…'));
+  api.initializeFromLegacy(warehouseId).then(function(ok){message(box,ok?tr('موجودی گدام فعال شد.','د ګدام موجودي فعاله شوه.','Warehouse stock is active.'):tr('مقداردهی کامل نشد.','بشپړ نه شو.','Initialization incomplete.'));return refresh(box)}).catch(function(err){message(box,String(err?.message||err))}).finally(function(){if(button.isConnected)button.disabled=false});
+  return
+ }
  if(button.hasAttribute('data-wh-cancel')){button.closest('[data-wh-edit-form]')?.remove();return}
  if(button.hasAttribute('data-wh-edit')){if(owner()?.id===activeWorkspace)showEdit(box,button.dataset.whEdit);return}
  var id=button.dataset.whToggle,record=rows.find(function(x){return x.id===id});

@@ -2566,7 +2566,7 @@ function openWhatsapp(id){
  const fill=()=>{const item=templates.find(x=>x.id===select.value)||templates[0];text.value=item?.message||''};fill();select.addEventListener('change',fill);
  const actions=document.createElement('div');actions.className='statement-actions';actions.style.marginTop='12px';
  const send=document.createElement('button');send.type='button';send.className='btn primary';send.textContent='ادامه به واتساپ';
- send.onclick=()=>{const message=text.value.trim();if(!message)return toast('متن پیام خالی است.');closeModal();zaviWhatsappChoice(c.phone,message,'پیام مشتری')};
+ send.onclick=()=>{const message=text.value.trim();if(!message)return toast('متن پیام خالی است.');closeModal();zaviWhatsappChoice(c.whatsappPhone||c.phone,message,'پیام مشتری')};
  const cancel=document.createElement('button');cancel.type='button';cancel.className='btn subtle';cancel.textContent='بستن';cancel.onclick=closeModal;
  actions.append(send,cancel);text.closest('.form-grid')?.after(actions);
 }

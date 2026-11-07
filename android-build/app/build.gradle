@@ -1,1 +1,76 @@
-cat: android-build/app/build.gradle: No such file or directory
+plugins { id 'com.android.application' }
+
+String appVariant = providers.gradleProperty("zaviApp").getOrElse("one")
+if (!(appVariant in ["one", "admin"])) {
+    throw new GradleException("zaviApp must be one or admin")
+}
+boolean admin = appVariant == "admin"
+boolean productionMode = providers.gradleProperty("zaviProduction").getOrElse("false").toBoolean()
+
+if (productionMode) {
+    for (String name : ["ZAVI_KEYSTORE_PATH", "ZAVI_KEYSTORE_PASSWORD", "ZAVI_KEY_ALIAS", "ZAVI_KEY_PASSWORD"]) {
+        if (!System.getenv(name)) {
+            throw new GradleException("Production signing missing: " + name)
+        }
+    }
+}
+
+android {
+    namespace 'com.zavione.mobile'
+    compileSdk 36
+
+    signingConfigs {
+        production {
+            if (productionMode) {
+                storeFile file(System.getenv("ZAVI_KEYSTORE_PATH"))
+                storePassword System.getenv("ZAVI_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ZAVI_KEY_ALIAS")
+                keyPassword System.getenv("ZAVI_KEY_PASSWORD")
+            }
+        }
+    }
+
+    defaultConfig {
+        applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
+        minSdk 26
+        targetSdk 36
+        versionCode admin ? 4161 : 6670
+        versionName admin ? '1.4.61-dev.1' : '66.70-dev.1'
+        resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.dev'
+            versionNameSuffix '-debug'
+        }
+        release {
+            minifyEnabled false
+            shrinkResources false
+            debuggable false
+            signingConfig productionMode ? signingConfigs.production : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packaging {
+        resources {
+            excludes += ['/META-INF/{AL2.0,LGPL2.1}']
+        }
+    }
+}
+
+configurations.configureEach {
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+    exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.13.0'
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.biometric:biometric:1.1.0'
+}

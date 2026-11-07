@@ -1,0 +1,25 @@
+/* ZAVI ONE 66.78 — compact PDF-style layout, with no feature hiding. */
+:root{--z678-gap:clamp(10px,1.25vw,17px)}
+#content{max-width:1280px;margin-inline:auto}
+#content>.page-head{margin-block:0 var(--z678-gap);padding:0}
+#content>.card,#content>.welcome,#content>.debt-hero,#content>.ledger-intro{margin-block:var(--z678-gap);border-radius:16px}
+#content>.card{box-shadow:0 5px 18px rgba(20,42,78,.06)}
+#content .panel-head{padding:14px 16px}
+#content .panel-body,#content .settings-card{padding:16px}
+#content .form-grid{gap:11px}
+#content .action-group{gap:8px;flex-wrap:wrap}
+#content .page-head h2{font-size:19px}
+#content .page-head p,#content .tiny-note{line-height:1.65}
+#content .stat-grid,#content .report-grid,#content .debt-cards{gap:var(--z678-gap)}
+#content .stat{min-height:112px;padding:14px 16px}
+#content .stat-value{font-size:19px}
+.zavi-route-error{padding:24px!important;text-align:center}
+@media(max-width:760px){
+ #content>.page-head{display:grid;gap:8px}
+ #content>.page-head .action-group{justify-content:flex-start}
+ #content>.card,#content>.welcome,#content>.debt-hero,#content>.ledger-intro{margin-block:10px}
+ #content .panel-body,#content .settings-card{padding:13px}
+ #content .stat{min-height:105px;padding:12px}
+ #content .stat-value{font-size:17px}
+ #content .btn{min-height:38px;padding:8px 11px}
+}

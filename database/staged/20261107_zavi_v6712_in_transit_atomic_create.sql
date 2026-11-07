@@ -108,12 +108,8 @@ begin
       raise exception 'Invalid order line' using errcode='22023';
    end if;
    if sku is not null and length(sku)>100 then raise exception 'SKU too long' using errcode='22023'; end if;
-   if product_ref is not null and not exists(
-      select 1 from public.zavi_workspaces w,
-      lateral jsonb_array_elements(case when jsonb_typeof(w.payload->'products')='array' then w.payload->'products' else '[]'::jsonb end) p(item)
-      where w.id=p_workspace_id and p.item->>'id'=product_ref
-   ) then
-      raise exception 'Mapped product does not exist' using errcode='22023';
+   if product_ref is not null and length(product_ref)>160 then
+      raise exception 'Product reference too long' using errcode='22023';
    end if;
    insert into public.zavi_in_transit_lines(
       id,order_id,workspace_id,product_ref,product_name,sku,ordered_qty,unit_price_original

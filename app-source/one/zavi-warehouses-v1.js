@@ -15,7 +15,7 @@ async function rest(path,method,body){
  if(body) {h['Content-Type']='application/json';h.Prefer='return=representation'}
  var response=await fetch(c.url+path,{method:method||'GET',headers:h,body:body?JSON.stringify(body):undefined});
  var data;try{data=await response.json()}catch(e){}
- if(!response.ok)throw Error(response.status===401||response.status===403?tr('دسترسی گدام تأیید نشد.','د ګدام لاسرسی رد شو.','Warehouse access denied.'):response.status===409?tr('کود گدام تکراری است.','د ګدام کوډ تکراري دی.','Warehouse code already exists.'):(data&&data.message)||tr('خطای سرور.','د سرور تېروتنه.','Server error.'));
+ if(!response.ok)throw Error(response.status===401||response.status===403?tr('دسترسی گدام تأیید نشد.','د ګدام لاسرسی رد شو.','Warehouse access denied.'):response.status===409?tr('نام یا کود گدام تکراری است.','د ګدام نوم یا کوډ تکراري دی.','Warehouse name or code already exists.'):(data&&data.message)||tr('خطای سرور.','د سرور تېروتنه.','Server error.'));
  if(owner()?.id!==c.id)throw Error(tr('فروشگاه تغییر کرد.','پلورنځی بدل شو.','Store changed.'));
  return data
 }

@@ -3,9 +3,9 @@
  */
 (()=>{'use strict';
 const dict={
- fa:{start:'اسکن بارکد',close:'بستن دوربین',ready:'بارکد را مقابل دوربین بگیرید.',unavailable:'اسکن دوربینی پشتیبانی نمی‌شود؛ بارکد را دستی وارد کنید.',secure:'دوربین به HTTPS یا اپ نصب‌شده نیاز دارد.',denied:'اجازه دوربین داده نشد؛ بارکد را دستی وارد کنید.',retry:'دوربین متوقف شد. دوباره کوشش کنید.'},
- ps:{start:'د بارکوډ سکن',close:'کمره بندول',ready:'بارکوډ د کمرې مخې ته ونیسئ.',unavailable:'د کمرې سکن نشته؛ کوډ په لاس ولیکئ.',secure:'کمره HTTPS یا نصب شوی اپ غواړي.',denied:'د کمرې اجازه نشته؛ کوډ په لاس ولیکئ.',retry:'کمره بنده شوه. بیا هڅه وکړئ.'},
- en:{start:'Scan barcode',close:'Close camera',ready:'Point the camera at the barcode.',unavailable:'Camera scanning unavailable; enter the barcode manually.',secure:'Camera requires HTTPS or an installed app.',denied:'Camera permission denied; enter the code manually.',retry:'Camera stopped. Please try again.'}
+ fa:{start:'اسکن بارکد',close:'بستن دوربین',switch:'دوربین جلو / عقب',ready:'بارکد را مقابل دوربین بگیرید.',unavailable:'اسکن دوربینی پشتیبانی نمی‌شود؛ بارکد را دستی وارد کنید.',secure:'دوربین به HTTPS یا اپ نصب‌شده نیاز دارد.',denied:'اجازه دوربین داده نشد؛ بارکد را دستی وارد کنید.',retry:'دوربین متوقف شد. دوباره کوشش کنید.'},
+ ps:{start:'د بارکوډ سکن',close:'کمره بندول',switch:'مخ / شا کمره',ready:'بارکوډ د کمرې مخې ته ونیسئ.',unavailable:'د کمرې سکن نشته؛ کوډ په لاس ولیکئ.',secure:'کمره HTTPS یا نصب شوی اپ غواړي.',denied:'د کمرې اجازه نشته؛ کوډ په لاس ولیکئ.',retry:'کمره بنده شوه. بیا هڅه وکړئ.'},
+ en:{start:'Scan barcode',close:'Close camera',switch:'Front / rear camera',ready:'Point the camera at the barcode.',unavailable:'Camera scanning unavailable; enter the barcode manually.',secure:'Camera requires HTTPS or an installed app.',denied:'Camera permission denied; enter the code manually.',retry:'Camera stopped. Please try again.'}
 };
 const ids=new Set(['zaviBarcodeScan','zaviWarehouseScan','fld_sku']);
 const messages=()=>{const l=(document.documentElement.lang||'fa-AF').toLowerCase();return dict[l.startsWith('en')?'en':l.startsWith('ps')?'ps':'fa']};
@@ -35,10 +35,14 @@ function deliver(value,token){
 }
 function panel(s){
  const box=document.createElement('section');box.id='zaviCameraPanel';box.className='zavi-camera-panel';box.setAttribute('role','region');box.setAttribute('aria-label',messages().start);
+ const actions=document.createElement('div');actions.className='zavi-camera-actions';
  const button=document.createElement('button');button.type='button';button.className='btn subtle';button.textContent=messages().close;button.addEventListener('click',stop);
+ const flip=document.createElement('button');flip.type='button';flip.className='btn subtle zavi-camera-switch';flip.textContent=messages().switch;flip.setAttribute('aria-label',messages().switch);
+ flip.addEventListener('click',()=>{const next=s.facing==='environment'?'user':'environment';void start(s.id,next)});
+ actions.append(button,flip);
  const video=document.createElement('video');video.id='zaviCameraVideo';video.autoplay=true;video.muted=true;video.playsInline=true;video.setAttribute('playsinline','');video.setAttribute('aria-label',messages().ready);
  const note=document.createElement('p');note.className='field-hint';note.setAttribute('role','status');note.textContent=messages().ready;
- box.append(button,video,note);
+ box.append(actions,video,note);
  const host=s.input.closest('.zavi-barcode-box')||s.input.closest('.field')||s.input.parentElement;
  host.append(box);s.panel=box;s.video=video;
 }
@@ -66,17 +70,17 @@ async function loop(token){
  }
  if(state===s&&s.detector)frame=requestAnimationFrame(()=>loop(token));
 }
-async function start(id='zaviBarcodeScan'){
+async function start(id='zaviBarcodeScan',facing='environment'){
  if(!ids.has(id))return;
  const input=document.getElementById(id);if(!input){notify(messages().unavailable);return}
  stop();
  if(!window.isSecureContext){notify(messages().secure);return}
  if(!navigator.mediaDevices?.getUserMedia){notify(messages().unavailable);return}
- const token=serial,s={id,input,panel:null,video:null,stream:null,cancel:null,detector:null,checking:false,failures:0,lastFrame:0};
+ const token=serial,s={id,input,facing:facing==='user'?'user':'environment',panel:null,video:null,stream:null,cancel:null,detector:null,checking:false,failures:0,lastFrame:0};
  state=s;panel(s);
  try{
   // IMPORTANT for Safari: invoke getUserMedia immediately in the user click, before any await.
-  const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
+  const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:s.facing},width:{ideal:1280},height:{ideal:720}}});
   if(state!==s||token!==serial||!input.isConnected){stream.getTracks().forEach(t=>t.stop());return}
   s.stream=stream;s.video.srcObject=stream;
   try{await s.video.play()}catch(_){}

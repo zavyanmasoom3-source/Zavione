@@ -2741,24 +2741,42 @@ function z644CsvPreview(file){
  reader.onload=()=>{try{
   if(KEY!==tenant)return toast('حساب فروشگاه عوض شده؛ فایل را دوباره انتخاب کنید.');
   const rows=parseCSVText(reader.result),preview=window.ZaviBusinessPlus644.previewImport(rows,db.products);
+  const warehouseApi=window.ZaviInvoiceWarehouseV6710,warehouseOptions=warehouseApi?.options?.()||[];
   z644PendingImport={preview,tenant,revision};
   const rejected=preview.rejected.slice(0,12).map(r=>`<li>ردیف ${r.line} — ${escapeHtml(r.name||r.sku||'—')}: ${escapeHtml(r.reason)}</li>`).join('');
   const sample=preview.accepted.slice(0,8).map(r=>`<li>${escapeHtml(r.product.name)} · ${escapeHtml(r.product.sku||'بدون بارکد')} · ${escapeHtml(r.product.salePrice)}</li>`).join('');
-  showModal('بررسی محصولات قبل از ورود',`<div class="z644-import-summary"><strong>مجاز: ${preview.count} محصول</strong><strong>ردشده: ${preview.blocked}</strong></div><h4>نمونه محصولات قابل‌ثبت</h4><ol>${sample||'<li>هیچ محصول معتبر نیست.</li>'}</ol><h4>موارد نیازمند اصلاح</h4><ol>${rejected||'<li>خطایی یافت نشد.</li>'}</ol><p class="tiny-note">فقط محصولات معتبر و جدید افزوده می‌شوند. محصول قبلی هیچ تغییری نمی‌کند.</p>${preview.count?`<button type="button" class="btn primary" id="z644ConfirmImport" ${window.zaviCloudCanEdit?.()===false?'disabled':''}>ثبت محصولات تأییدشده</button>`:''}`,'',false);
+  const warehousePicker=warehouseOptions.length?`<div class="field"><label for="z644ImportWarehouse">گدام مقصد محصولات</label><select id="z644ImportWarehouse">${warehouseOptions.map(([wid,label])=>`<option value="${escapeHtml(wid)}">${escapeHtml(label)}</option>`).join('')}</select><small class="field-hint">${warehouseApi?.readyForSales?.()===true?'موجودی آغازین CSV در همین گدام ثبت می‌شود.':'این انتخاب برای مقداردهی اولیه گدام محفوظ می‌ماند.'}</small></div>`:'<p class="tiny-note">هنوز گدام فعالی ساخته نشده؛ محصولات وارد می‌شوند و پس از ساخت گدام می‌توانید موجودی را مقداردهی کنید.</p>';
+  showModal('بررسی محصولات قبل از ورود',`<div class="z644-import-summary"><strong>مجاز: ${preview.count} محصول</strong><strong>ردشده: ${preview.blocked}</strong></div><h4>نمونه محصولات قابل‌ثبت</h4><ol>${sample||'<li>هیچ محصول معتبر نیست.</li>'}</ol><h4>موارد نیازمند اصلاح</h4><ol>${rejected||'<li>خطایی یافت نشد.</li>'}</ol>${warehousePicker}<p class="tiny-note">فقط محصولات معتبر و جدید افزوده می‌شوند. محصول قبلی هیچ تغییری نمی‌کند.</p>${preview.count?`<button type="button" class="btn primary" id="z644ConfirmImport" ${window.zaviCloudCanEdit?.()===false?'disabled':''}>ثبت محصولات تأییدشده</button>`:''}`,'',false);
  }catch(err){z644PendingImport=null;toast(err.message||'فایل محصولات قابل بررسی نیست.');}};
  reader.onerror=()=>toast('خواندن فایل CSV ممکن نشد.');reader.readAsText(file,'utf-8');
 }
 function z644ConfirmImport(){
  const p=z644PendingImport;if(!p||!p.preview.count)return toast('فایلی برای ثبت انتخاب نشده است.');
  if(p.tenant!==KEY||p.revision!==(db.updatedAt||0)){z644PendingImport=null;return toast('اطلاعات فروشگاه عوض شده؛ CSV را دوباره بررسی کنید.');}
+ const warehouseApi=window.ZaviInvoiceWarehouseV6710,warehouseOptions=warehouseApi?.options?.()||[],warehouseReady=warehouseApi?.readyForSales?.()===true;
+ const warehouseId=warehouseOptions.length?String(document.getElementById('z644ImportWarehouse')?.value||''):'';
+ if(warehouseOptions.length&&!warehouseOptions.some(([wid])=>String(wid)===warehouseId))return toast('گدام مقصد معتبر را انتخاب کنید.');
  if(!confirm(`${p.preview.count} محصول تأییدشده وارد گدام شود؟ ${p.preview.blocked} ردیف ردشده وارد نخواهد شد.`))return;
  // Re-check immediately before commit so overlapping codes cannot slip through.
- const accepted=p.preview.accepted.map(x=>x.product);
+ const accepted=p.preview.accepted.map(x=>x.product),hasOpening=accepted.some(x=>Number(x.openingQty)>0);
+ if(warehouseReady&&hasOpening&&typeof crypto?.randomUUID!=='function')return toast('برای ورود امن موجودی چندگدامه، این دستگاه باید UUID امن پشتیبانی کند.');
+ const batchReference=warehouseReady&&hasOpening?'csv-import:'+crypto.randomUUID():'';
+ const prepared=accepted.map(x=>{
+  const id=newId('p'),movementId=warehouseReady&&Number(x.openingQty)>0?crypto.randomUUID():'';
+  return {product:{...x,id,...(warehouseId?{warehouseId}:{}),...(movementId?{warehouseOpeningMovementId:movementId,warehouseOpeningReference:batchReference}:{})},movementId};
+ });
  const succeeded=commit(n=>{
   const codes=new Set(n.products.flatMap(prod=>zaviProductCodes(prod)));
-  for(const x of accepted){if(x.sku&&codes.has(normalizeName(x.sku)))throw Error('بارکد هم‌اکنون در گدام موجود است.');if(x.sku)codes.add(normalizeName(x.sku));n.products.push({...x,id:newId('p')});}
+  const ids=new Set(n.products.map(prod=>String(prod.id)));
+  for(const item of prepared){const x=item.product;if(ids.has(String(x.id)))throw Error('شناسه محصول تکراری شد؛ CSV را دوباره بررسی کنید.');if(x.sku&&codes.has(normalizeName(x.sku)))throw Error('بارکد هم‌اکنون در گدام موجود است.');if(x.sku)codes.add(normalizeName(x.sku));ids.add(String(x.id));n.products.push(x);}
  });
- if(succeeded){z644PendingImport=null;closeModal();toast(`${accepted.length} محصول به گدام اضافه شد.`);}
+ if(succeeded){
+  if(warehouseReady&&warehouseId&&batchReference){
+   const lines=prepared.filter(item=>item.movementId&&Number(item.product.openingQty)>0).map(item=>({operation_id:item.movementId,product_ref:item.product.id,quantity:Number(item.product.openingQty)}));
+   if(lines.length){try{warehouseApi.stageDocument({warehouseId,direction:'in',reference:batchReference,lines})}catch(err){console.warn('CSV warehouse staging failed',err);toast('محصولات ذخیره شدند؛ حرکت موجودی در شروع بعدی دوباره بازیابی می‌شود.');}}
+  }
+  z644PendingImport=null;closeModal();toast(`${accepted.length} محصول به گدام اضافه شد.`);
+ }
 }
 document.addEventListener('change',e=>{if(e.target?.id==='z644CsvImport')z644CsvPreview(e.target.files?.[0]);});
 document.addEventListener('submit',e=>{if(e.target?.id!=='z644ThermalForm')return;e.preventDefault();if(window.zaviCloudCanEdit&&!window.zaviCloudCanEdit())return toast('تغییر تنظیمات چاپ فقط برای مالک مجاز است.');const f=e.target.elements;const w=Number(f.paperWidth.value),footer=f.footer.value.trim();if(![58,80].includes(w)||footer.length>160)return toast('تنظیمات پرنتر معتبر نیست.');if(commit(n=>{n.printPrefs={paperWidth:w,footer};}))toast('تنظیمات چاپ حرارتی ذخیره شد.');},true);

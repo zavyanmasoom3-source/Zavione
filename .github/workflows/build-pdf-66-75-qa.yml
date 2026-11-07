@@ -1,4 +1,4 @@
-name: Build ZAVI ONE 66.75 PDF APKs
+name: Build ZAVI ONE 66.76 PDF APKs
 
 on:
   push:
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   android-qa:
-    name: Build and verify 66.75 PDF APKs
+    name: Clean build and verify 66.76 / ADMIN 1.4.67 APKs
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -50,42 +50,44 @@ jobs:
       - name: Verify source tests
         run: node --test tests/*.test.cjs
 
-      - name: Build ZAVI ONE 66.75
+      - name: Clean build ZAVI ONE 66.76
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf android-build/app/src/main/assets
+          rm -rf android-build/app/src/main/assets android-build/app/build android-build/.gradle
           mkdir -p android-build/app/src/main/assets release
           cp -a app-source/one/. android-build/app/src/main/assets/
           chmod +x android-build/gradlew
-          ./android-build/gradlew -p android-build --no-daemon -PzaviApp=one :app:assembleDebug
-          cp android-build/app/build/outputs/apk/debug/app-debug.apk release/ZAVI_ONE_66.75_pdf_final_QA.apk
+          ./android-build/gradlew -p android-build --no-daemon --no-build-cache clean
+          ./android-build/gradlew -p android-build --no-daemon --no-build-cache -PzaviApp=one :app:assembleDebug
+          cp android-build/app/build/outputs/apk/debug/app-debug.apk release/ZAVI_ONE_66.76_pdf_final_QA.apk
 
-      - name: Build ZAVI ONE ADMIN 1.4.66
+      - name: Clean build ZAVI ONE ADMIN 1.4.67
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf android-build/app/src/main/assets
+          rm -rf android-build/app/src/main/assets android-build/app/build android-build/.gradle
           mkdir -p android-build/app/src/main/assets
           cp -a app-source/admin/. android-build/app/src/main/assets/
-          ./android-build/gradlew -p android-build --no-daemon -PzaviApp=admin :app:assembleDebug
-          cp android-build/app/build/outputs/apk/debug/app-debug.apk release/ZAVI_ONE_ADMIN_1.4.66_pdf_final_QA.apk
+          ./android-build/gradlew -p android-build --no-daemon --no-build-cache clean
+          ./android-build/gradlew -p android-build --no-daemon --no-build-cache -PzaviApp=admin :app:assembleDebug
+          cp android-build/app/build/outputs/apk/debug/app-debug.apk release/ZAVI_ONE_ADMIN_1.4.67_pdf_final_QA.apk
 
-      - name: Verify APK identities and PDF payload
+      - name: Verify APK identities, versions and PDF payload
         shell: bash
         run: |
           set -euo pipefail
           AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
-          "$AAPT" dump badging release/ZAVI_ONE_66.75_pdf_final_QA.apk | grep "versionCode='6675' versionName='66.75-pdf-final-debug'"
-          "$AAPT" dump badging release/ZAVI_ONE_ADMIN_1.4.66_pdf_final_QA.apk | grep "versionCode='4166' versionName='1.4.66-pdf-final-debug'"
-          unzip -l release/ZAVI_ONE_66.75_pdf_final_QA.apk | grep 'assets/zavi-pdf-final-v6760.css'
-          unzip -l release/ZAVI_ONE_66.75_pdf_final_QA.apk | grep 'assets/zavi-unified20-manifest.json'
-          unzip -p release/ZAVI_ONE_66.75_pdf_final_QA.apk assets/zavi-unified20-manifest.json | grep '66.75-pdf-final'
-          unzip -l release/ZAVI_ONE_ADMIN_1.4.66_pdf_final_QA.apk | grep 'assets/zavi-admin-pdf-final-v1467.css'
+          "$AAPT" dump badging release/ZAVI_ONE_66.76_pdf_final_QA.apk | grep "versionCode='6676' versionName='66.76-pdf-final-debug'"
+          "$AAPT" dump badging release/ZAVI_ONE_ADMIN_1.4.67_pdf_final_QA.apk | grep "versionCode='4167' versionName='1.4.67-pdf-final-debug'"
+          unzip -l release/ZAVI_ONE_66.76_pdf_final_QA.apk | grep 'assets/zavi-pdf-final-v6760.css'
+          unzip -l release/ZAVI_ONE_66.76_pdf_final_QA.apk | grep 'assets/zavi-unified20-manifest.json'
+          unzip -p release/ZAVI_ONE_66.76_pdf_final_QA.apk assets/zavi-unified20-manifest.json | grep '66.76-pdf-final'
+          unzip -l release/ZAVI_ONE_ADMIN_1.4.67_pdf_final_QA.apk | grep 'assets/zavi-admin-pdf-final-v1467.css'
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ZAVI-PDF-66.75-QA-APKs
+          name: ZAVI-PDF-66.76-QA-APKs
           path: release/*.apk
           if-no-files-found: error
           retention-days: 14

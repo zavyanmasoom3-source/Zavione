@@ -1,179 +1,111 @@
-name: Build ZAVI ONE Android APKs
+name: ZAVI ONE source-of-truth Android build
 
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [dev]
     paths:
       - '.github/workflows/build-zavi-apks.yml'
-      - 'ZAVI_ANDROID_GITHUB_SOURCES_V31.zip'
-
-  workflow_dispatch:
+      - 'android-build/**'
+      - 'app-source/one/**'
+      - 'app-source/admin/**'
 
 permissions:
   contents: read
 
 jobs:
-
-  build-android:
-
+  build:
     name: Build ${{ matrix.app }}
-
     runs-on: ubuntu-latest
-
-    timeout-minutes: 40
-
+    timeout-minutes: 35
     strategy:
       fail-fast: false
-
       matrix:
         include:
-
-          - app: ZAVI_ONE
-            archive: ZAVI_ONE_ANDROID_V31_SOURCE.zip
-
-          - app: ZAVI_ONE_ADMIN
-            archive: ZAVI_ONE_ADMIN_ANDROID_V31_SOURCE.zip
+          - app: one
+            artifact: ZAVI_ONE_DEV_APK
+          - app: admin
+            artifact: ZAVI_ONE_ADMIN_DEV_APK
 
     steps:
-
-      # STEP 1: Download project
-
-      - name: Checkout project
+      - name: Checkout dev source
         uses: actions/checkout@v4
 
-
-      # STEP 2: Install Java
-
-      - name: Install Java 17
+      - name: Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-
-      # STEP 3: Install Android SDK
-      # Avoid deprecated Android SDK tools package.
-
-      - name: Install Android SDK
+      - name: Prepare Android SDK
         shell: bash
         run: |
           set -euo pipefail
-
-          echo "Checking Android SDK..."
-
-          echo "ANDROID_HOME=${ANDROID_HOME:-unset}"
-
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
-            -type f \
-            -path "*/bin/sdkmanager" \
-            | head -n 1)"
-
+          SDKMANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
           test -x "$SDKMANAGER"
-
-          echo "Accepting SDK licenses..."
-
           yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install "platforms;android-36" "build-tools;36.0.0"
 
-          echo "Installing Android platform..."
-
-          "$SDKMANAGER" --install \
-            "platforms;android-36" \
-            "build-tools;36.0.0"
-
-
-      # STEP 4: Install Gradle
-
-      - name: Install Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.13'
-
-
-      # STEP 5: Extract Android source
-
-      - name: Extract Android project
+      - name: Stage current application source
         shell: bash
         run: |
           set -euo pipefail
+          SRC="app-source/${{ matrix.app }}"
+          DST="android-build/app/src/main/assets"
+          test -f "$SRC/index.html"
+          rm -rf "$DST"
+          mkdir -p "$DST"
+          cp -a "$SRC/." "$DST/"
+          test -s "$DST/index.html"
 
-          echo "Extracting ZAVI Android project..."
+          python3 - <<'PY'
+          from pathlib import Path
+          app="${{ matrix.app }}"
+          p=Path("android-build/app/src/main/assets/index.html")
+          s=p.read_text(encoding="utf-8")
+          assert len(s) > 5000, f"{app}: index.html unexpectedly small"
+          assert "<html" in s.lower() and "</html>" in s.lower(), f"{app}: malformed HTML shell"
+          print(app, "source bytes", len(s))
+          PY
 
-          test -s ZAVI_ANDROID_GITHUB_SOURCES_V31.zip
-
-          mkdir -p "$RUNNER_TEMP/bundle"
-
-          mkdir -p "$RUNNER_TEMP/android-project"
-
-          unzip -oq \
-            ZAVI_ANDROID_GITHUB_SOURCES_V31.zip \
-            -d "$RUNNER_TEMP/bundle"
-
-          test -s \
-            "$RUNNER_TEMP/bundle/${{ matrix.archive }}"
-
-          unzip -oq \
-            "$RUNNER_TEMP/bundle/${{ matrix.archive }}" \
-            -d "$RUNNER_TEMP/android-project"
-
-          test -f \
-            "$RUNNER_TEMP/android-project/settings.gradle"
-
-          test -f \
-            "$RUNNER_TEMP/android-project/app/build.gradle"
-
-          echo "Android project extracted successfully."
-
-
-      # STEP 6: Build APK
-
-      - name: Build Android APK
-        shell: bash
-        working-directory: ${{ runner.temp }}/android-project
-        run: |
-          set -euo pipefail
-
-          echo "Building APK..."
-
-          gradle \
-            --no-daemon \
-            --stacktrace \
-            :app:assembleDebug
-
-          echo "APK build completed."
-
-
-      # STEP 7: Verify APK
-
-      - name: Verify Android APK
+      - name: Verify Gradle source integrity
         shell: bash
         run: |
           set -euo pipefail
+          test -s android-build/app/build.gradle
+          ! grep -q '^cat: .*No such file or directory' android-build/app/build.gradle
+          chmod +x android-build/gradlew
+          cd android-build
+          ./gradlew --version
+          ./gradlew --no-daemon :app:tasks -PzaviApp=${{ matrix.app }} >/dev/null
 
-          APK="$RUNNER_TEMP/android-project/app/build/outputs/apk/debug/app-debug.apk"
-
+      - name: Build fresh debug APK
+        working-directory: android-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviProduction=false
+          APK="app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
+          "${ANDROID_HOME}/build-tools/36.0.0/apksigner" verify --verbose "$APK"
+          sha256sum "$APK"
 
-          echo "Checking APK signature..."
+      - name: Prove embedded source is current
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="android-build/app/build/outputs/apk/debug/app-debug.apk"
+          unzip -p "$APK" assets/index.html > /tmp/apk-index.html
+          cmp --silent "app-source/${{ matrix.app }}/index.html" /tmp/apk-index.html || {
+            echo "::error::APK assets do not match current app-source/${{ matrix.app }}"
+            exit 1
+          }
+          echo "Embedded index.html exactly matches current repository source."
 
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" \
-            verify \
-            --verbose \
-            "$APK"
-
-          echo "APK verified successfully."
-
-
-      # STEP 8: Upload APK
-
-      - name: Upload APK for download
+      - name: Upload installable APK
         uses: actions/upload-artifact@v4
-
         with:
-          name: ${{ matrix.app }}_V31_TEST_APK
-
-          path: ${{ runner.temp }}/android-project/app/build/outputs/apk/debug/app-debug.apk
-
+          name: ${{ matrix.artifact }}
+          path: android-build/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-
-          retention-days: 30
+          retention-days: 14

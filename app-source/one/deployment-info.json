@@ -1,6 +1,6 @@
 {
   "app": "ZAVI ONE",
-  "version": "66.70-dev.1",
+  "version": "66.75-pdf-final",
   "type": "DEVELOPMENT_SOURCE_OF_TRUTH",
   "status": "IN_DEVELOPMENT",
   "production_database_changes": false,
@@ -23,7 +23,7 @@
     "Publish candidate offline cache refresh",
     "V65.31 professional simple dark/light theme, small dialogs, accessibility and low-GPU safeguards"
   ],
-  "release": "V66.70-dev.1 — unified source build",
+  "release": "V66.75-pdf-final — five-PDF design contract",
   "new_in_v47": [
     "12 month chart full fiscal year",
     "local management queue",

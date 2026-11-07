@@ -3208,20 +3208,22 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
   if(rate<=0||!Number.isFinite(rate))throw Error('نرخ تبدیل معتبر وارد کنید.');
   const discount=window.ZaviDecimal.convertMoney(disOriginal,String(rate)),paid=window.ZaviDecimal.convertMoney(paidOriginal,String(rate));
   if(isPurchase&&!String(f.purchaseOrigin.value||'').trim())throw Error('نام کشور خرید را وارد کنید.');
+  const warehouseId=z671WarehouseMode?String(f.warehouseId?.value||''):'';
+  if(z671WarehouseMode&&!z671WarehouseOptions.some(([id])=>String(id)===warehouseId))throw Error('گدام معتبر و فعال را انتخاب کنید.');
   // Prior to saving, confirm selling stock is sufficient by product, including repeated rows.
   if(kind==='sale'||kind==='purchase_return'){
-   box.querySelectorAll('.line-stock-error').forEach(el=>el.textContent='');
+   box.querySelectorAll('.line-stock-error').forEach(el=>el.textContent='');box.querySelectorAll('[data-z671-stock-error]').forEach(el=>{el.hidden=true;el.textContent=''});
    const usage={};for(const l of enteredRows){const p=findNamedProduct(l.name,l.sku);if(!p)throw Error(`محصولی «${l.name}» در گدام نیست. نخست آن را در بخش خرید ثبت کنید.`);usage[p.id]=(usage[p.id]||0)+l.qty}
    const ownerOversell=kind==='sale'&&z20Option('allowOversell')&&window.zaviCloudRestoreInfo?.()?.role==='owner';
    let firstInvalid=null;
    for(const [pid,q] of Object.entries(usage)){
-    const available=stockOf(pid);
+    const available=z671StockFor(pid)??0;
     if(available+.00001>=q||ownerOversell)continue;
     const message=`موجودی کافی نیست؛ موجود: ${fmtQty(available)} · درخواست: ${fmtQty(q)}`;
     for(const row of box.querySelectorAll('.order-line')){
      const p=findNamedProduct(row.querySelector('[data-field="productName"]').value,row.querySelector('[data-field="productSku"]').value);
      if(p?.id!==pid)continue;
-     const el=row.querySelector('.line-stock-error');if(el)el.textContent=message;
+     const el=row.querySelector('.line-stock-error');if(el)el.textContent=message;const fieldErr=row.querySelector('[data-z671-stock-error]');if(fieldErr){fieldErr.hidden=false;fieldErr.textContent=message}row.classList.add('z671-invalid');
      if(!firstInvalid)firstInvalid=row.querySelector('[data-field="qty"]');
     }
    }

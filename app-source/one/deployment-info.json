@@ -1,8 +1,8 @@
 {
   "app": "ZAVI ONE",
-  "version": "65.33-rc1",
-  "type": "ZAVI_PUBLISH_CANDIDATE",
-  "status": "RELEASE_CANDIDATE",
+  "version": "66.70-dev.1",
+  "type": "DEVELOPMENT_SOURCE_OF_TRUTH",
+  "status": "IN_DEVELOPMENT",
   "production_database_changes": false,
   "customer_data_deleted": false,
   "features": [
@@ -23,7 +23,7 @@
     "Publish candidate offline cache refresh",
     "V65.31 professional simple dark/light theme, small dialogs, accessibility and low-GPU safeguards"
   ],
-  "release": "V65.33 — Responsive Blue Design / Release Candidate",
+  "release": "V66.70-dev.1 — unified source build",
   "new_in_v47": [
     "12 month chart full fiscal year",
     "local management queue",
@@ -121,7 +121,7 @@
     "Production migrations NOT DEPLOYED: verified restore and real two-tenant PostgreSQL auth tests required"
   ],
   "device_backend": "deployed-on-wbbmwfnmurpphwxesssx-2026-10-22",
-  "web_version": "65.30-rc1",
+  "web_version": "66.70-dev.1",
   "production_verified": false,
   "scroll_release": "V65.14 — one scrollable full-height navigation drawer for mobile and desktop; iOS Safari and Android safe scrolling; no DB changes",
   "v6515_changes": [
@@ -201,8 +201,8 @@
     "financial_mutations": false,
     "verified_on_real_device": false
   },
-  "client_publish_candidate": "65.27-rc1",
-  "release_version": "65.27-rc1",
+  "client_publish_candidate": "66.70-dev.1",
+  "release_version": "66.70-dev.1",
   "invoice_studio_ready_for_staging": true,
   "v6528_changes": [
     "Simple guided our-payables workflow and opening balance explanation",
@@ -229,5 +229,7 @@
     "Preserves full permission-scoped navigation and financial logic",
     "No database or customer records changed",
     "PWA shell version increment for same-host cache migration"
-  ]
+  ],
+  "build_source": "app-source/one",
+  "build_policy": "APK must embed current repository source directly; legacy APK extraction is forbidden"
 }

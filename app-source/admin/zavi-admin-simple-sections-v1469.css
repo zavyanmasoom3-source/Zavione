@@ -1,0 +1,12 @@
+/* ZAVI ONE ADMIN 1.4.69 — compact PDF-style layout; all controls remain available. */
+#view{max-width:1280px;margin-inline:auto}
+#view>section,#view>.card,#view>.panel,#view>.zavi-section{border-radius:16px}
+#view .card,#view .panel{box-shadow:0 5px 18px rgba(8,28,65,.08)}
+#view .section-head,#view .panel-head{padding:14px 16px}
+#view .form-grid{gap:11px}
+#view .button,.workspace button{min-height:38px}
+@media(max-width:760px){
+ #view{padding-inline:10px}
+ #view .card,#view .panel{padding:13px}
+ #view .button{padding:8px 11px}
+}

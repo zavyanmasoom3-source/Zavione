@@ -1,0 +1,46 @@
+/* ZAVI ONE unified PDF layout — one responsive contract for phone and iPad. */
+:root{
+  --zavi-page-max:1180px;
+  --zavi-page-gutter:clamp(12px,2.4vw,32px);
+}
+html,body{width:100%;min-width:0;max-width:100%;overflow-x:hidden}
+body{box-sizing:border-box}
+body *,body *::before,body *::after{box-sizing:border-box}
+#content,.main,.main-content,main[role="main"]{
+  width:100%;max-width:var(--zavi-page-max);min-width:0;
+  margin-inline:auto;padding-inline:var(--zavi-page-gutter);
+}
+#content>*{min-width:0;max-width:100%}
+#content img,#content svg,#content canvas,#content video{max-width:100%;height:auto}
+#content input,#content select,#content textarea,#content button{max-width:100%;min-width:0}
+#content .layout-2,#content .stat-grid,#content .form-grid,#content .zrf-tiles,
+#content .z63-finance-grid,#content .z6527-studio-form{
+  min-width:0;
+}
+#content .table-wrap,.table-wrap,.transaction-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+#content table{max-width:100%;border-collapse:collapse}
+@media (max-width:767px){
+  #content{padding-inline:12px}
+  #content .layout-2,#content .z63-finance-grid{grid-template-columns:minmax(0,1fr)!important}
+  #content .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+  #content .form-grid{grid-template-columns:minmax(0,1fr)!important}
+  #content .card,.panel,.settings-card,.report-card,.form-card{max-width:100%;overflow:hidden}
+  #content .panel-head,.page-head{gap:8px;flex-wrap:wrap}
+}
+@media (min-width:768px) and (max-width:1199px){
+  #content{padding-inline:clamp(18px,3vw,30px)}
+}
+@media (orientation:landscape) and (max-height:650px){
+  #content{padding-block:10px}
+  #content .welcome{min-height:0}
+  #content .layout-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #content .stat-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (min-width:1024px) and (orientation:landscape){
+  #content{max-width:1180px}
+  #content .layout-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media print{
+  html,body{overflow:visible!important}
+  #content{max-width:none;padding:0}
+}

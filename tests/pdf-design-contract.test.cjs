@@ -21,8 +21,8 @@ test('ZAVI ONE 66.75 PDF design contract is embedded and persisted',()=>{
 
 test('Android identities are versioned for 66.77 and ADMIN 1.4.68',()=>{
   const gradle=read('android-build/app/build.gradle');
-  assert.match(gradle,/versionCode admin \? 4167 : 6676/);
-  assert.match(gradle,/versionName admin \? '1\.4\.67-pdf-final' : '66\.76-pdf-final'/);
+  assert.match(gradle,/versionCode admin \? 4168 : 6677/);
+  assert.match(gradle,/versionName admin \? '1\.4\.68-pdf-final' : '66\.77-pdf-final'/);
 });
 
 test('Inline receipt template cannot terminate the parent HTML script',()=>{
@@ -40,7 +40,7 @@ test('All known ONE sections stay routable when stale module flags exist',()=>{
   const index=read('app-source/one/index.html');
   assert.match(index,/function zaviRouteIsKnown\(id\)/);
   assert.match(index,/window\.zaviCurrentPage=page/);
-  assert.match(index,/const available=organized\.filter\(\[id\]\=>zaviRouteIsKnown\(id\)\)/);
+  assert.match(index,/const available=organized\.filter\(\[id\]\)=>zaviRouteIsKnown\(id\)\);/);
   assert.doesNotMatch(index,/if\(!zaviModuleEnabled\(p\)&&p!==['"]settings['"]&&p!==['"]subscription['"]\)/);
   assert.doesNotMatch(index,/if\(!zaviModuleEnabled\(page\)&&page!==['"]settings['"]&&page!==['"]subscription['"]\)page=['"]settings['"]/);
 });

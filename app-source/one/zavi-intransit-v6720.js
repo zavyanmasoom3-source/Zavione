@@ -4,9 +4,11 @@
  * after the existing reviewed Purchase form is opened, reviewed and submitted.
  */
 (()=>{'use strict';
-const VERSION=1, PENDING='zavi_v6720_pending_receipt_';
+const VERSION=2, PENDING='zavi_v6720_pending_receipt_', SYNCQ='zavi_v6721_server_queue_';
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid=()=>crypto?.randomUUID?.()||('z672_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2));
+const uid=()=>{if(typeof crypto?.randomUUID==='function')return crypto.randomUUID();const b=new Uint8Array(16);crypto.getRandomValues(b);b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20)};
+const isUuid=x=>/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(x||''));
+const norm=x=>String(x??'').trim().replace(/\s+/g,' ').toLocaleLowerCase();
 const num=x=>{const n=Number(x);return Number.isFinite(n)?n:NaN};
 const round=x=>Math.round((Number(x)+Number.EPSILON)*100)/100;
 const ctx=()=>window.zaviCloudRestoreInfo?.()?.workspace||'local';
@@ -18,6 +20,121 @@ const productOptions=()=>Array.isArray(db?.products)?db.products:[];
 function savePending(p){localStorage.setItem(pendingKey(),JSON.stringify(p))}
 function loadPending(){try{const p=JSON.parse(localStorage.getItem(pendingKey())||'null');return p&&p.workspace===ctx()?p:null}catch{return null}}
 function clearPending(){localStorage.removeItem(pendingKey())}
+function serverQueueKey(){return SYNCQ+ctx()}
+function serverQueue(){try{const q=JSON.parse(localStorage.getItem(serverQueueKey())||'[]');return Array.isArray(q)?q:[]}catch{return []}}
+function saveServerQueue(q){localStorage.setItem(serverQueueKey(),JSON.stringify(q))}
+function cloudContext(){
+ const info=window.zaviCloudRestoreInfo?.()||{},session=window.zaviCloudGetAuthSession?.()||{},cfg=window.zaviCloudGetPublicConfig?.()||{};
+ if(info.role!=='owner'||!info.workspace||!session?.user?.id||!cfg?.url||!cfg?.key)return null;
+ return {workspace:String(info.workspace),user:String(session.user.id),url:String(cfg.url).replace(/\/$/,''),key:String(cfg.key)};
+}
+async function cloudRequest(path,method='GET',body){
+ const x=cloudContext();if(!x)throw Error('TRANSIT_OWNER_SESSION_REQUIRED');
+ if(navigator.onLine===false)throw Error('TRANSIT_OFFLINE');
+ const session=await window.zaviCloudRefreshAuthSession?.();
+ const now=cloudContext();if(!session?.access_token||!now||now.workspace!==x.workspace||now.user!==x.user)throw Error('TRANSIT_SESSION_CHANGED');
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),18000);
+ try{
+  const headers={apikey:x.key,Authorization:'Bearer '+session.access_token};
+  if(body!==undefined){headers['Content-Type']='application/json';headers.Prefer='return=representation'}
+  const r=await fetch(x.url+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store',signal:ctrl.signal});
+  const data=await r.json().catch(()=>null);
+  if(!r.ok){const e=Error(String(data?.message||data?.error||('HTTP '+r.status)));e.status=r.status;throw e}
+  return data;
+ }finally{clearTimeout(timer)}
+}
+function serverLinePayload(o){
+ return o.items.map(i=>({id:i.id,product_ref:i.productId||null,product_name:i.name,sku:i.sku||null,ordered_qty:Number(i.orderedQty),unit_price_original:Number(i.unitPriceOriginal||0)}));
+}
+function serverRequestedStatus(o){return o.status==='cancelled'?'cancelled':'shipped'}
+async function syncOrderServer(o){
+ if(!o||!isUuid(o.id)||!isUuid(o.warehouseId)||o.items.some(i=>!isUuid(i.id)))throw Error('TRANSIT_LOCAL_ID_INVALID');
+ const x=cloudContext();if(!x||x.workspace!==String(ctx()))throw Error('TRANSIT_OWNER_SESSION_REQUIRED');
+ const rows=await cloudRequest('/rest/v1/zavi_in_transit_orders?select=id&workspace_id=eq.'+encodeURIComponent(x.workspace)+'&id=eq.'+encodeURIComponent(o.id)+'&limit=1');
+ const lines=serverLinePayload(o);
+ const total=round(o.items.reduce((sum,i)=>sum+Number(i.orderedQty||0)*Number(i.unitPriceOriginal||0),0));
+ if(Array.isArray(rows)&&rows.length){
+  return cloudRequest('/rest/v1/rpc/zavi_v6721_update_in_transit','POST',{
+   p_order_id:o.id,p_workspace_id:x.workspace,p_destination_warehouse_id:o.warehouseId,
+   p_supplier_name:o.supplierName,p_country_name:o.country,p_currency_code:o.currency,
+   p_exchange_rate:o.exchangeRate,p_freight_original:o.freightOriginal||0,p_customs_original:o.customsOriginal||0,
+   p_other_costs_original:o.otherCostsOriginal||0,p_tracking_number:o.trackingNumber||null,p_carrier:o.carrier||null,
+   p_expected_date:o.etaDate||null,p_requested_status:serverRequestedStatus(o),p_notes:o.notes||null,p_lines:lines
+  });
+ }
+ const created=await cloudRequest('/rest/v1/rpc/zavi_v671_create_in_transit','POST',{
+  p_order_id:o.id,p_workspace_id:x.workspace,p_destination_warehouse_id:o.warehouseId,
+  p_supplier_name:o.supplierName,p_country_name:o.country,p_currency_code:o.currency,p_exchange_rate:o.exchangeRate,
+  p_purchase_total_original:total,p_freight_original:o.freightOriginal||0,p_customs_original:o.customsOriginal||0,
+  p_other_costs_original:o.otherCostsOriginal||0,p_tracking_number:o.trackingNumber||null,p_carrier:o.carrier||null,
+  p_expected_date:o.etaDate||null,p_status:'shipped',p_notes:o.notes||null,p_lines:lines
+ });
+ if(o.status==='cancelled')await syncOrderServer(o);
+ return created;
+}
+function queueOrderServer(orderId){
+ if(!isUuid(orderId))return false;
+ const q=serverQueue();if(!q.some(x=>x.kind==='order'&&x.orderId===orderId)){q.push({kind:'order',orderId});saveServerQueue(q)}
+ return true;
+}
+function productRefForReceipt(order,itemId,tx){
+ const item=order?.items?.find(x=>x.id===itemId);if(!item)return '';
+ if(item.productId)return String(item.productId);
+ const product=(db?.products||[]).find(p=>norm(p.name)===norm(item.name)&&(!item.sku||norm(p.sku)===norm(item.sku)))
+   ||(db?.products||[]).find(p=>norm(p.name)===norm(item.name));
+ if(product?.id)return String(product.id);
+ const txItem=tx?.items?.find(x=>norm(x.productName)===norm(item.name));
+ return String(txItem?.productId||'');
+}
+function queueReceiptServer(tx){
+ if(!tx?.inTransitOrderId||!Array.isArray(tx.inTransitReceiptItems))return false;
+ const order=orders().find(o=>o.id===tx.inTransitOrderId);if(!order||!isUuid(order.id))return false;
+ queueOrderServer(order.id);
+ let q=serverQueue(),changed=false;
+ for(const r of tx.inTransitReceiptItems){
+  const receiptKey=String(tx.inTransitReceiptToken||tx.id)+':'+String(r.itemId);
+  let existing=q.find(x=>x.kind==='receipt'&&x.receiptKey===receiptKey);
+  if(existing)continue;
+  const productRef=productRefForReceipt(order,r.itemId,tx);
+  const receiptId=isUuid(r.receiptId)?r.receiptId:uid();
+  q.push({kind:'receipt',receiptKey,receiptId,orderId:order.id,lineId:r.itemId,quantity:Number(r.qty),productRef,note:tx.inTransitDiscrepancy||null});
+  changed=true;
+ }
+ if(changed)saveServerQueue(q);
+ return changed;
+}
+let serverSyncing=false;
+async function flushServer(){
+ if(serverSyncing||navigator.onLine===false||!cloudContext())return false;
+ serverSyncing=true;
+ try{
+  let q=serverQueue();
+  while(q.length){
+   let index=q.findIndex(x=>x.kind==='order');if(index<0)index=0;
+   const op=q[index];
+   try{
+    if(op.kind==='order'){
+     const o=orders().find(x=>x.id===op.orderId);
+     if(!o){q.splice(index,1);saveServerQueue(q);continue}
+     await syncOrderServer(o);
+    }else if(op.kind==='receipt'){
+     if(!isUuid(op.receiptId)||!isUuid(op.orderId)||!isUuid(op.lineId)||!(Number(op.quantity)>0)||!op.productRef)throw Error('TRANSIT_RECEIPT_MAPPING_INVALID');
+     await cloudRequest('/rest/v1/rpc/zavi_v671_receive_in_transit','POST',{
+      p_receipt_id:op.receiptId,p_order_id:op.orderId,p_line_id:op.lineId,p_quantity:op.quantity,p_product_ref:op.productRef,p_note:op.note
+     });
+     await window.ZaviInvoiceWarehouseV6710?.sync?.().catch(()=>{});
+    }else{q.splice(index,1);saveServerQueue(q);continue}
+    q.splice(index,1);saveServerQueue(q);
+   }catch(error){
+    if(error?.name==='AbortError'||/offline|network|fetch/i.test(String(error?.message||'')))break;
+    console.warn('ZAVI in-transit server sync',error);
+    window.dispatchEvent(new CustomEvent('zavi:intransit-sync-error',{detail:{message:String(error?.message||error).slice(0,180),pending:q.length}}));
+    break;
+   }
+  }
+  return q.length===0;
+ }finally{serverSyncing=false}
+}
 function mutate(fn){
  if(typeof commit!=='function')throw Error('ذخیره‌سازی حسابداری آماده نیست.');
  let ok=false;const saved=commit(n=>{if(!Array.isArray(n.inTransitOrders))n.inTransitOrders=[];n.inTransitSchemaVersion=VERSION;fn(n.inTransitOrders,n);ok=true});if(saved===false||!ok)throw Error('سفارش ذخیره نشد.');
@@ -58,6 +175,7 @@ function createOrder(existingId=''){
  <div class="field"><label>عرضه‌کننده / شرکت</label><input name="supplierName" maxlength="100" value="${esc(old?.supplierName||'')}" required></div>
  <div class="field"><label>کشور خرید</label><input name="country" maxlength="80" value="${esc(old?.country||'')}" placeholder="نام کشور را آزاد بنویسید" required></div>
  <div class="field"><label>شماره پیگیری</label><input name="trackingNumber" maxlength="100" value="${esc(old?.trackingNumber||'')}" placeholder="Tracking / AWB / Container"></div>
+ <div class="field"><label>شرکت حمل / Carrier</label><input name="carrier" maxlength="120" value="${esc(old?.carrier||'')}" placeholder="نام شرکت حمل"></div>
  <div class="field"><label>تاریخ تقریبی رسیدن</label><input name="etaDate" type="date" value="${esc(old?.etaDate||'')}"></div>
  <div class="field"><label>ارز سفارش</label><select name="currency">${currencyOptions}</select></div>
  <div class="field"><label>نرخ تبدیل: ۱ ارز = چند ${esc(base)}</label><input name="exchangeRate" type="number" min="0.000001" step="any" value="${esc(old?.exchangeRate??1)}" required></div>
@@ -65,6 +183,7 @@ function createOrder(existingId=''){
  <div class="field"><label>حمل‌ونقل</label><input name="freightOriginal" type="number" min="0" step="any" value="${esc(old?.freightOriginal||0)}"></div>
  <div class="field"><label>گمرک</label><input name="customsOriginal" type="number" min="0" step="any" value="${esc(old?.customsOriginal||0)}"></div>
  <div class="field"><label>سایر مصارف</label><input name="otherCostsOriginal" type="number" min="0" step="any" value="${esc(old?.otherCostsOriginal||0)}"></div>
+ <div class="field full"><label>یادداشت سفارش</label><textarea name="notes" maxlength="1200" placeholder="جزئیات حمل، بسته‌بندی یا توافق">${esc(old?.notes||'')}</textarea></div>
  </div><div class="z672-items-head"><b>کالاهای سفارش</b><button type="button" class="btn tiny subtle" id="z672AddItem">+ محصول</button></div>
  <div id="z672Items">${(old?.items?.length?old.items:[{}]).map(itemRow).join('')}</div>${productDatalist()}
  <p class="z672-note">ثبت سفارش در راه هیچ موجودی، صندوق یا قرضی را تغییر نمی‌دهد. فقط هنگام تأیید تحویل، فاکتور خرید واقعی ساخته می‌شود.</p>`,'ذخیره سفارش');
@@ -80,8 +199,9 @@ function createOrder(existingId=''){
   if(!(rate>0))throw Error('نرخ تبدیل همان معامله را وارد کنید.');
   const costs=['freightOriginal','customsOriginal','otherCostsOriginal'].map(k=>num(form.elements[k].value||0));if(costs.some(n=>n<0||!Number.isFinite(n)))throw Error('مصارف سفارش معتبر نیست.');
   const items=readItems(host);if(old){for(const it of items){const before=old.items.find(x=>x.id===it.id);if(before&&it.orderedQty+1e-9<Number(before.receivedQty||0))throw Error('تعداد سفارش نمی‌تواند از مقدار تحویل‌شده کمتر شود.');it.receivedQty=Number(before?.receivedQty||0)}}
-  const record={id:old?.id||uid(),createdAt:old?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),supplierName:supplier,country,currency,exchangeRate:rate,trackingNumber:form.elements.trackingNumber.value.trim(),etaDate:form.elements.etaDate.value||'',warehouseId:form.elements.warehouseId.value,freightOriginal:round(costs[0]),customsOriginal:round(costs[1]),otherCostsOriginal:round(costs[2]),items,receipts:Array.isArray(old?.receipts)?old.receipts:[],status:old?.status==='cancelled'?'cancelled':'in_transit'};
+  const record={id:old?.id||uid(),createdAt:old?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),supplierName:supplier,country,currency,exchangeRate:rate,trackingNumber:form.elements.trackingNumber.value.trim(),carrier:form.elements.carrier.value.trim(),etaDate:form.elements.etaDate.value||'',warehouseId:form.elements.warehouseId.value,freightOriginal:round(costs[0]),customsOriginal:round(costs[1]),otherCostsOriginal:round(costs[2]),notes:form.elements.notes.value.trim(),items,receipts:Array.isArray(old?.receipts)?old.receipts:[],status:old?.status==='cancelled'?'cancelled':'in_transit'};
   mutate(list=>{const i=list.findIndex(x=>x.id===record.id);if(i>=0)list[i]=record;else list.push(record)});
+  queueOrderServer(record.id);void flushServer();
   closeModal();toast('سفارش در راه ذخیره شد. موجودی تغییر نکرد.');openManager();
  }catch(err){toast(err.message||'سفارش ذخیره نشد.')}};
 }
@@ -95,7 +215,7 @@ function receive(id){
   const qtys=[...document.querySelectorAll('#z672ReceiveRows input[data-item]')].map(input=>({itemId:input.dataset.item,qty:num(input.value||0)})).filter(x=>x.qty>0);
   if(!qtys.length)throw Error('حداقل یک مقدار تحویل‌شده وارد کنید.');
   for(const q of qtys){const item=remaining.find(i=>i.id===q.itemId);if(!item||q.qty>item.remaining+1e-9)throw Error('مقدار تحویل از مقدار باقی‌مانده بیشتر است.')}
-  const token=uid(),pending={version:VERSION,workspace:ctx(),token,orderId:o.id,items:qtys,discrepancy:form.elements.discrepancy.value.trim(),createdAt:Date.now()};savePending(pending);
+  const token=uid(),pending={version:VERSION,workspace:ctx(),token,orderId:o.id,items:qtys.map(x=>({...x,receiptId:uid()})),discrepancy:form.elements.discrepancy.value.trim(),createdAt:Date.now()};savePending(pending);
   closeModal();openOrder('purchase','',String(o.country||'').trim().toLowerCase()!=='افغانستان');
   setTimeout(()=>prefillPurchase(o,pending),50);
  }catch(err){toast(err.message||'تحویل آماده نشد.')}};
@@ -143,7 +263,7 @@ function reconcile(){
  for(const tx of tagged){try{applyReceiptFromInvoice(tx)}catch(e){console.warn('ZAVI in-transit reconcile',e)}}
  const p=loadPending();if(p&&tagged.some(t=>t.inTransitReceiptToken===p.token))clearPending();
 }
-function cancelOrder(id){const o=orders().find(x=>x.id===id);if(!o)return;if(o.items.some(i=>Number(i.receivedQty||0)>0))return toast('سفارشی که تحویل مرحله‌ای دارد لغو کامل نمی‌شود.');mutate(list=>{const x=list.find(v=>v.id===id);if(x){x.status='cancelled';x.updatedAt=new Date().toISOString()}});openManager()}
+function cancelOrder(id){const o=orders().find(x=>x.id===id);if(!o)return;if(o.items.some(i=>Number(i.receivedQty||0)>0))return toast('سفارشی که تحویل مرحله‌ای دارد لغو کامل نمی‌شود.');mutate(list=>{const x=list.find(v=>v.id===id);if(x){x.status='cancelled';x.updatedAt=new Date().toISOString()}});queueOrderServer(id);void flushServer();openManager()}
 function openManager(){
  reconcile();
  const list=[...orders()].sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
@@ -157,8 +277,11 @@ document.addEventListener('click',e=>{
  e.preventDefault();e.stopImmediatePropagation();
  if(b.dataset.action==='purchase_internal')openOrder('purchase','',false);else openManager();
 },true);
-window.addEventListener('zavi:invoice-saved',e=>{const tx=(db?.tx||[]).find(t=>t.id===e.detail?.invoiceId);if(tx&&applyReceiptFromInvoice(tx)){const p=loadPending();if(p?.token===tx.inTransitReceiptToken)clearPending()}});
-window.addEventListener('zavi-cloud-workspace-selected',()=>setTimeout(reconcile,400));
-window.ZaviInTransitV6720=Object.freeze({open:openManager,currentInvoiceMeta,reconcile});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',reconcile,{once:true});else reconcile();
+window.addEventListener('zavi:invoice-saved',e=>{const tx=(db?.tx||[]).find(t=>t.id===e.detail?.invoiceId);if(!tx)return;if(applyReceiptFromInvoice(tx)){const p=loadPending();if(p?.token===tx.inTransitReceiptToken)clearPending()}if(tx.inTransitOrderId){queueReceiptServer(tx);void flushServer()}});
+window.addEventListener('online',()=>void flushServer());
+window.addEventListener('focus',()=>{if(navigator.onLine!==false)void flushServer()});
+window.addEventListener('zavi-cloud-workspace-selected',()=>setTimeout(()=>{reconcile();for(const o of orders())queueOrderServer(o.id);for(const tx of (db?.tx||[]).filter(t=>t.inTransitOrderId))queueReceiptServer(tx);void flushServer()},400));
+window.ZaviInTransitV6720=Object.freeze({open:openManager,currentInvoiceMeta,reconcile,flushServer,pendingServer:()=>serverQueue().length});
+function boot(){reconcile();for(const o of orders())queueOrderServer(o.id);for(const tx of (db?.tx||[]).filter(t=>t.inTransitOrderId))queueReceiptServer(tx);if(navigator.onLine!==false)void flushServer()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

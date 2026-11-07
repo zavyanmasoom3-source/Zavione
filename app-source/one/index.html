@@ -2949,6 +2949,10 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
  const productList=`<datalist id="zawiProductNames">${db.products.map(p=>`<option value="${escapeHtml(p.name)}" label="${escapeHtml(p.sku||p.category||'')}"></option>${p.sku?`<option value="${escapeHtml(p.sku)}" label="${escapeHtml(p.name)}"></option>`:''}${(Array.isArray(p.barcodes)?p.barcodes:[]).map(c=>`<option value="${escapeHtml(c)}" label="${escapeHtml(p.name)}"></option>`).join('')}`).join('')}</datalist>`;
  const categoryList=`<datalist id="zawiInvoiceCategories">${[...PRODUCT_CATS,'سایر'].map(c=>`<option value="${escapeHtml(c)}"></option>`).join('')}</datalist>`;
  const initialUnit=Z6528Currencies.some(x=>x[0]===db.currency)?db.currency:'AFN';
+ const z671WarehouseApi=window.ZaviInvoiceWarehouseV6710;
+ const z671WarehouseOptions=z671WarehouseApi?.options?.()||[];
+ const z671WarehouseMode=z671WarehouseOptions.length>0;
+ const z671WarehouseField=z671WarehouseMode?selectField('warehouseId','گدام',z671WarehouseOptions,z671WarehouseOptions[0][0]):'';
  const fxForm=isPurchase?`<div class="form-section-title">واحد پول خرید</div><div class="form-grid">${selectField('originalCurrency','پول فاکتور',Z6528Currencies,initialUnit)}
  <div class="field"><label>کشور خرید</label><input name="purchaseOrigin" list="zaviPurchaseCountryNames" maxlength="80" value="${escapeHtml(foreignPurchase?'':'افغانستان')}" placeholder="نام کشور را آزاد بنویسید" required><datalist id="zaviPurchaseCountryNames">${purchaseCountries().slice(1).map(([code,label])=>`<option value="${escapeHtml(label)}">${escapeHtml(code)}</option>`).join('')}</datalist><small class="field-hint">نام کشور آزاد است و به فهرست محدود نمی‌شود.</small></div>
  <div class="field"><label>نرخ تبدیل: ۱ واحد پول = چند ${escapeHtml(db.currency)}؟</label><input name="exchangeRate" type="number" min="0.000001" step="any" value="${initialUnit===db.currency?1:''}" placeholder="نرخ روز خرید" required><small class="field-hint">نرخ همین معامله محفوظ می‌ماند.</small></div>
@@ -2958,6 +2962,8 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
  <div class="field"><label>${contactLabels[0]} ${isSale?'':'(اختیاری)'}</label><input name="freeContactName" list="zawiContactNames" maxlength="100" value="${escapeHtml(existingContact?.name||'')}" placeholder="نام را آزاد بنویسید">${contactList}</div>
  <div class="field"><label>${contactLabels[1]}</label><input name="freeContactPhone" type="tel" maxlength="40" value="${escapeHtml(existingContact?.phone||'')}" placeholder="07XXXXXXXX"></div>
  ${kind==='sale'?`<input type="hidden" name="accountId" value="${escapeHtml(db.accounts[0]?.id||'a_cash')}">`:selectField('accountId',isReturn?(isSale?'صندوق بازپرداخت':'صندوق دریافت برگشت'):'حساب پول نقد',accountOptions())}
+ ${z671WarehouseField}
+ ${z671WarehouseMode?`<p class="z671-warehouse-note">موجودی و حرکت این فاکتور فقط در گدام انتخاب‌شده محاسبه می‌شود. حرکت آفلاین با شناسه پایدار بعداً دقیقاً یک‌بار همگام می‌شود.</p>`:''}
  ${field('discount','تخفیف فاکتور',0,'number','min="0" step="any"')}
  </div>${fxForm}${kind==='purchase'?`<div class="form-grid" style="margin-top:12px">${field('shippingOriginal','انتقال (به پول فاکتور)',0,'number','min="0" step="any"')}${field('customsOriginal','گمرک (به پول فاکتور)',0,'number','min="0" step="any"')}${field('otherCostsOriginal','سایر مصارف (به پول فاکتور)',0,'number','min="0" step="any"')}</div>`:''}
  <div class="form-section-title">${isPurchase?'محصولهای خریداری‌شده':'محصولهای فروخته‌شده'} · ${escapeHtml(window.ZaviIndustryForms6529.label(orderIndustry))}</div>
@@ -2979,6 +2985,8 @@ function openOrder(kind,defaultContactId='',foreignPurchase=false){
  const orderDialog=document.querySelector('#overlay .modal');
  if(orderDialog)orderDialog.classList.add('z645-order-dialog');
  const form=document.getElementById('dialogForm'),f=form.elements,box=document.getElementById('orderItems');let count=0;
+ const z671StockFor=pid=>z671WarehouseMode?z671WarehouseApi.stock(String(f.warehouseId?.value||''),String(pid)):stockOf(pid);
+ const z671MovementId=()=>{if(crypto?.randomUUID)return crypto.randomUUID();const b=new Uint8Array(16);crypto.getRandomValues(b);b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=[...b].map(x=>x.toString(16).padStart(2,'0')).join('');return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20)};
  const z710PaymentList=document.getElementById('z710PaymentList');
  const z710CurrencyOptions=Z6528Currencies;
  const z710Methods=[['cash','نقدی'],['bank','بانک / کارت'],['hawala','حواله / پول موبایلی']];

@@ -22,7 +22,7 @@ test('ZAVI ONE 66.75 PDF design contract is embedded and persisted',()=>{
 test('Android identities are versioned for 66.78 and ADMIN 1.4.69',()=>{
   const gradle=read('android-build/app/build.gradle');
   assert.match(gradle,/versionCode admin \? 4169 : 6678/);
-  assert.match(gradle,/versionName admin \? '1\.4\.68-pdf-final' : '66\.77-pdf-final'/);
+  assert.match(gradle,/versionName admin \? '1\.4\.69-pdf-final' : '66\.78-pdf-final'/);
 });
 
 test('Inline receipt template cannot terminate the parent HTML script',()=>{

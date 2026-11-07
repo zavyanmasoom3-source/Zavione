@@ -8,9 +8,9 @@ const q=(s,p=document)=>p.querySelector(s);
 const mk=(tag,cl,text)=>{const e=document.createElement(tag);if(cl)e.className=cl;if(text!==undefined)e.textContent=String(text);return e};
 const language=()=>{const l=(document.documentElement.lang||'fa-AF').toLowerCase();return l.startsWith('en')?'en':l.startsWith('ps')?'ps':'fa'};
 const dict={
- fa:{title:'پروفایل شخصی من',description:'نام و عکس خود را برای نمایش کوچک در داشبورد انتخاب کنید.',name:'نام نمایشی',namePlaceholder:'نام خود را بنویسید',photo:'انتخاب عکس',deletePhoto:'حذف عکس',save:'ذخیره پروفایل',saved:'پروفایل شخصی ذخیره شد.',unavailable:'برای ذخیره پروفایل وارد حساب ابری فروشگاه شوید.',limit:'این عکس و نام فقط در همین دستگاه برای حساب شما محفوظ می‌شود؛ اطلاعات فاکتور و نام رسمی فروشگاه تغییر نمی‌کند.',badPhoto:'عکس JPG، PNG یا WebP تا ۵ مگابایت انتخاب کنید.',badName:'نام را بین ۲ تا ۵۰ حرف وارد کنید.',badSave:'حافظۀ دستگاه برای این عکس کافی نیست.',business:'فروشگاه و نوع تجارت',appearance:'ظاهر، زبان و فونت',finance:'حساب‌ها و ارز',documents:'فاکتور و ابزارها',security:'امنیت و پشتیبان',advanced:'تنظیمات پیشرفته',sectionHelp:'برای دیدن گزینه‌ها این بخش را باز کنید.',hello:'سلام'},
- en:{title:'My personal profile',description:'Choose your name and picture to appear discreetly on your dashboard.',name:'Display name',namePlaceholder:'Your name',photo:'Choose picture',deletePhoto:'Remove picture',save:'Save profile',saved:'Your personal profile has been saved.',unavailable:'Sign in to your store cloud account to save a personal profile.',limit:'This name and photo are stored on this device for your account only. They do not change invoices or the store legal name.',badPhoto:'Choose JPG, PNG or WebP under 5 MB.',badName:'Use 2 to 50 characters for your name.',badSave:'Could not save the photo to device storage.',business:'Store & industry',appearance:'Appearance & language',finance:'Accounts & currency',documents:'Invoices & tools',security:'Security & backups',advanced:'Advanced settings',sectionHelp:'Open to see more options.',hello:'Hello'},
- ps:{title:'زما شخصي پروفایل',description:'خپل نوم او عکس وټاکئ چې په داشبورډ کې په کوچنۍ بڼه ښکاره شي.',name:'ښکاره نوم',namePlaceholder:'خپل نوم ولیکئ',photo:'عکس وټاکئ',deletePhoto:'عکس لرې کړئ',save:'پروفایل خوندي کړئ',saved:'شخصي پروفایل خوندي شو.',unavailable:'د پروفایل لپاره خپل کلاوډ حساب ته ننوځئ.',limit:'نوم او عکس یوازې پر دې وسیله ستاسو د حساب لپاره خوندي کېږي. رسمي اسناد نه بدلوي.',badPhoto:'تر ۵ MB پورې JPG، PNG یا WebP عکس وټاکئ.',badName:'نوم له ۲ تر ۵۰ تورو ولیکئ.',badSave:'په وسیله کې د عکس ساتلو ځای نشته.',business:'دوکان او سوداګري',appearance:'بڼه، ژبه او فونټ',finance:'حسابونه او اسعار',documents:'بلونه او وسایل',security:'امنیت او بیک اپ',advanced:'نور تنظیمات',sectionHelp:'د نورو اختیارونو لپاره یې پرانیزئ.',hello:'سلام'}
+ fa:{title:'پروفایل شخصی من',description:'نام و عکس خود را برای نمایش کوچک در داشبورد انتخاب کنید.',name:'نام نمایشی',namePlaceholder:'نام خود را بنویسید',photo:'انتخاب عکس',deletePhoto:'حذف عکس',save:'ذخیره پروفایل',saved:'پروفایل شخصی ذخیره شد.',unavailable:'برای ذخیره پروفایل وارد حساب ابری فروشگاه شوید.',limit:'این عکس و نام فقط در همین دستگاه برای حساب شما محفوظ می‌شود؛ اطلاعات فاکتور و نام رسمی فروشگاه تغییر نمی‌کند.',badPhoto:'عکس JPG، PNG یا WebP تا ۵ مگابایت انتخاب کنید.',badName:'نام را بین ۲ تا ۵۰ حرف وارد کنید.',badSave:'حافظۀ دستگاه برای این عکس کافی نیست.',account:'حساب و پروفایل',business:'فروشگاه و کسب‌وکار',appearance:'ظاهر و زبان',security:'امنیت و دسترسی',cloud:'ابر و دستگاه‌ها',accounting:'حسابداری و فاکتورها',subscription:'اشتراک',advanced:'پیشرفته',sectionHelp:'برای دیدن گزینه‌ها این بخش را باز کنید.',hello:'سلام'},
+ en:{title:'My personal profile',description:'Choose your name and picture to appear discreetly on your dashboard.',name:'Display name',namePlaceholder:'Your name',photo:'Choose picture',deletePhoto:'Remove picture',save:'Save profile',saved:'Your personal profile has been saved.',unavailable:'Sign in to your store cloud account to save a personal profile.',limit:'This name and photo are stored on this device for your account only. They do not change invoices or the store legal name.',badPhoto:'Choose JPG, PNG or WebP under 5 MB.',badName:'Use 2 to 50 characters for your name.',badSave:'Could not save the photo to device storage.',account:'Account & profile',business:'Store & business',appearance:'Appearance & language',security:'Security & access',cloud:'Cloud & devices',accounting:'Accounting & invoices',subscription:'Subscription',advanced:'Advanced',sectionHelp:'Open to see more options.',hello:'Hello'},
+ ps:{title:'زما شخصي پروفایل',description:'خپل نوم او عکس وټاکئ چې په داشبورډ کې په کوچنۍ بڼه ښکاره شي.',name:'ښکاره نوم',namePlaceholder:'خپل نوم ولیکئ',photo:'عکس وټاکئ',deletePhoto:'عکس لرې کړئ',save:'پروفایل خوندي کړئ',saved:'شخصي پروفایل خوندي شو.',unavailable:'د پروفایل لپاره خپل کلاوډ حساب ته ننوځئ.',limit:'نوم او عکس یوازې پر دې وسیله ستاسو د حساب لپاره خوندي کېږي. رسمي اسناد نه بدلوي.',badPhoto:'تر ۵ MB پورې JPG، PNG یا WebP عکس وټاکئ.',badName:'نوم له ۲ تر ۵۰ تورو ولیکئ.',badSave:'په وسیله کې د عکس ساتلو ځای نشته.',account:'حساب او پروفایل',business:'دوکان او کاروبار',appearance:'بڼه او ژبه',security:'امنیت او لاسرسی',cloud:'کلاوډ او وسایل',accounting:'حسابداري او بلونه',subscription:'ګډون',advanced:'پرمختللي',sectionHelp:'د نورو اختیارونو لپاره یې پرانیزئ.',hello:'سلام'}
 };
 const t=()=>dict[language()];
 const MAX_INPUT=5*1024*1024;
@@ -128,15 +128,17 @@ function profileCard(){
 }
 const classify=(card)=>{
  const h=card.querySelector('h3,h2,.settings-card-title')?.textContent?.toLowerCase()||'';
- const s=(h+' '+(card.className||'')).toLowerCase();
- if(/z637-customize|شخصی‌سازی|شخصی سازی|zavi-custom-card|z6515-font|theme|زبان|language|فونت|ظاهر|تم|رنگ|animation|حرکت/.test(s))return 'appearance';
- if(/account|usd|دالر|ارز|نقد|بانک|حواله|سرمایه|exchange|currency/.test(s))return 'finance';
- if(/shopform|store|rename|فروشگاه|دوکان|تجارت|مدیریت عمومی|کسب‌وکار|industry|نوع کسب/.test(s)||card.querySelector('#shopForm'))return 'business';
- if(/receipt|print|invoice|فاکتور|رسید|چاپ|csv|excel|پرنتر/.test(s))return 'documents';
- if(/backup|security|encrypt|pass|audit|health|پشتیبان|امنیت|رمز|سلامت|بازنشانی/.test(s))return 'security';
+ const v=(h+' '+(card.className||'')).toLowerCase();
+ if(/subscription|اشتراک|تمدید|مجوز|license|renew|trial|آزمایشی/.test(v))return 'subscription';
+ if(/device|دستگاه|انتقال دستگاه|cloud|ابری|sync|همگام|backup|پشتیبان|بازیابی/.test(v))return 'cloud';
+ if(/biometric|fingerprint|اثر انگشت|pin|رمز|permission|اجازه|staff|team|همکار|access|دسترسی|security|امنیت/.test(v))return 'security';
+ if(/z637-customize|شخصی‌سازی|شخصی سازی|zavi-custom-card|z6515-font|theme|زبان|language|فونت|ظاهر|تم|رنگ|animation|glass|روشن|تاریک/.test(v))return 'appearance';
+ if(/receipt|print|invoice|فاکتور|رسید|چاپ|csv|excel|پرنتر|account|حساب|currency|ارز|صندوق|cash|journal|روزنامچه/.test(v))return 'accounting';
+ if(/profile|پروفایل|avatar|نام نمایشی|account identity|حساب شخصی/.test(v))return 'account';
+ if(/shopform|store|rename|فروشگاه|دوکان|تجارت|مدیریت عمومی|کسب‌وکار|industry|نوع کسب|feature|امکانات/.test(v)||card.querySelector('#shopForm'))return 'business';
  return 'advanced';
 };
-const categories=['business','appearance','finance','documents','security','advanced'];
+const categories=['account','business','appearance','security','cloud','accounting','subscription','advanced'];
 function reorganize(){
  const content=q('#content');if(!content)return;
  if(!q('#shopForm',content)&&!q('.settings-card',content)){q('#z76-profile-card',content)?.remove();return}
@@ -161,9 +163,9 @@ function reorganize(){
   let group=q('[data-z76-group="'+id+'"]',groups);
   if(!group){
    group=mk('details','z76-settings-group');group.dataset.z76Group=id;
-   if(id==='business')group.open=true;
+   if(id==='account')group.open=true;
    const summary=mk('summary','z76-group-title');
-   const labels={business:'🏬',appearance:'🎨',finance:'💱',documents:'🧾',security:'🔐',advanced:'⚙️'};
+   const labels={account:'👤',business:'🏬',appearance:'🎨',security:'🔐',cloud:'☁️',accounting:'🧾',subscription:'💳',advanced:'⚙️'};
    summary.append(mk('span','',labels[id]+' '+t()[id]),mk('span','z76-group-count',''));
    const body=mk('div','z76-group-body');group.append(summary,body);
    groups.append(group);
@@ -178,6 +180,10 @@ function reorganize(){
  if(industry&&shopBody){shopBody.prepend(industry);
   const g=q('[data-z76-group="business"] .z76-group-count',groups);
   if(g)g.textContent=String(shopBody.children.length);
+ }
+ const accountBody=q('[data-z76-group="account"] .z76-group-body',groups);
+ if(personal&&accountBody&&!accountBody.contains(personal)){accountBody.prepend(personal);
+  const g=q('[data-z76-group="account"] .z76-group-count',groups);if(g)g.textContent=String(accountBody.children.length);
  }
 }
 function sync(){

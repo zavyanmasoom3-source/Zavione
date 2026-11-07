@@ -2,3 +2,5 @@ ZAVI ONE 66.75 PDF APK build trigger
 DB contract: database/staged/20261107_zavi_v675_pdf_design_payload.sql
 Build requested again: 2026-11-08T00:20:00+00:00
 Fixes: unified phone/iPad portrait-landscape viewport; source leak guard; no old APK reuse.
+
+Retry after test-order fix: 2026-11-08T00:24:00+00:00

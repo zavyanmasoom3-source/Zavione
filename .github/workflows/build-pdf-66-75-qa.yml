@@ -1,0 +1,91 @@
+name: Build ZAVI ONE 66.75 PDF APKs
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'release/build-pdf-66-75-qa.trigger'
+      - 'android-build/**'
+      - 'app-source/one/**'
+      - 'app-source/admin/**'
+      - 'database/staged/20261107_zavi_v675_pdf_design_payload.sql'
+      - '.github/workflows/build-pdf-66-75-qa.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-qa:
+    name: Build and verify 66.75 PDF APKs
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Prepare Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          if [ -x "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
+            SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          else
+            SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager -type f -perm -u+x 2>/dev/null | head -1 || true)"
+          fi
+          test -n "$SDKMANAGER" && test -x "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0"
+          test -x "$SDK_ROOT/build-tools/36.0.0/aapt"
+
+      - name: Verify source tests
+        run: node --test tests/*.test.cjs
+
+      - name: Build ZAVI ONE 66.75
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf android-build/app/src/main/assets
+          mkdir -p android-build/app/src/main/assets release
+          cp -a app-source/one/. android-build/app/src/main/assets/
+          chmod +x android-build/gradlew
+          ./android-build/gradlew -p android-build --no-daemon -PzaviApp=one :app:assembleDebug
+          cp android-build/app/build/outputs/apk/debug/app-debug.apk release/ZAVI_ONE_66.75_pdf_final_QA.apk
+
+      - name: Build ZAVI ONE ADMIN 1.4.66
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf android-build/app/src/main/assets
+          mkdir -p android-build/app/src/main/assets
+          cp -a app-source/admin/. android-build/app/src/main/assets/
+          ./android-build/gradlew -p android-build --no-daemon -PzaviApp=admin :app:assembleDebug
+          cp android-build/app/build/outputs/apk/debug/app-debug.apk release/ZAVI_ONE_ADMIN_1.4.66_pdf_final_QA.apk
+
+      - name: Verify APK identities and PDF payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          "$AAPT" dump badging release/ZAVI_ONE_66.75_pdf_final_QA.apk | grep "versionCode='6675' versionName='66.75-pdf-final-debug'"
+          "$AAPT" dump badging release/ZAVI_ONE_ADMIN_1.4.66_pdf_final_QA.apk | grep "versionCode='4166' versionName='1.4.66-pdf-final-debug'"
+          unzip -l release/ZAVI_ONE_66.75_pdf_final_QA.apk | grep 'assets/zavi-pdf-final-v6760.css'
+          unzip -l release/ZAVI_ONE_66.75_pdf_final_QA.apk | grep 'assets/zavi-unified20-manifest.json'
+          unzip -p release/ZAVI_ONE_66.75_pdf_final_QA.apk assets/zavi-unified20-manifest.json | grep '66.75-pdf-final'
+          unzip -l release/ZAVI_ONE_ADMIN_1.4.66_pdf_final_QA.apk | grep 'assets/zavi-admin-pdf-final-v1467.css'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI-PDF-66.75-QA-APKs
+          path: release/*.apk
+          if-no-files-found: error
+          retention-days: 14

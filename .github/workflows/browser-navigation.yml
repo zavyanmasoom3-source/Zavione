@@ -1,0 +1,40 @@
+name: Browser navigation regression
+on:
+  push:
+    branches: [dev]
+    paths: ['.github/workflows/browser-navigation.yml', 'app-source/one/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install playwright && python -m playwright install chromium
+      - name: Exercise the offline navigation controls
+        run: |
+          python -m http.server 8100 --directory app-source/one >/tmp/zavi-server.log 2>&1 &
+          python - <<'PY'
+          import time
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as driver:
+              browser = driver.chromium.launch()
+              tab = browser.new_page(viewport={"width": 1024, "height": 768})
+              tab.on('pageerror', lambda err: print('PAGE ERROR', err, flush=True))
+              tab.route('**/*', lambda route: route.continue_() if route.request.url.startswith('http://localhost:8100/') else route.abort())
+              tab.goto('http://localhost:8100/')
+              links = tab.locator('#sidebarLinks [data-go], #sidebarLinks2 [data-go]')
+              routes = links.evaluate_all('(buttons) => buttons.map(button => button.dataset.go)')
+              assert 'sales' in routes and 'settings' in routes, routes
+              failures = []
+              for route in routes:
+                  tab.locator(f'#side [data-go="{route}"]').first.evaluate('(button) => button.click()')
+                  tab.wait_for_timeout(180)
+                  result = tab.locator('#content').evaluate("""node => [node.dataset.zaviRoute, Boolean(node.querySelector('.zavi-route-error')), Boolean(node.querySelector('.welcome')), node.textContent.trim().length]""")
+                  print(route, result, flush=True)
+                  if result[0] != route or result[1] or (route != 'dashboard' and result[2]) or not result[3]:
+                      failures.append(route)
+              assert not failures, failures
+          PY

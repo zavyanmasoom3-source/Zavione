@@ -24,10 +24,13 @@ jobs:
               tab = browser.new_page(viewport={"width": 1024, "height": 768})
               tab.on('pageerror', lambda err: print('PAGE ERROR', err, flush=True))
               tab.route('**/*', lambda route: route.continue_() if route.request.url.startswith('http://localhost:8100/') else route.abort())
+              tab.on('console', lambda msg: print('TRACE', msg.text, flush=True) if msg.text.startswith('NAV') else None)
+              tab.add_init_script("""for(const key of ['stopPropagation','stopImmediatePropagation']){const old=Event.prototype[key];Event.prototype[key]=function(){if(this.type==='click')console.log('NAV stop',new Error().stack);return old.call(this)}};document.addEventListener('click',e=>console.log('NAV capture',e.target.outerHTML.slice(0,150)),true);document.addEventListener('click',e=>console.log('NAV bubble',e.target.dataset.go));""")
               tab.goto('http://localhost:8100/')
               links = tab.locator('#sidebarLinks [data-go], #sidebarLinks2 [data-go]')
               routes = links.evaluate_all('(buttons) => buttons.map(button => button.dataset.go)')
               assert 'sales' in routes and 'settings' in routes, routes
+              print('DIRECT', tab.evaluate("""() => {try {go('sales');return [page,document.querySelector('#content').dataset.zaviRoute, document.querySelector('#content').innerText.slice(0,80)]}catch(e){return String(e.stack)}}"""),flush=True)
               failures = []
               for route in routes:
                   tab.locator(f'#side [data-go="{route}"]').first.evaluate('(button) => button.click()')

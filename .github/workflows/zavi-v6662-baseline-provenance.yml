@@ -1,0 +1,147 @@
+name: ZAVI V66.62 historical baseline provenance gate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-v6662-baseline-provenance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-original-apks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout current dev source
+        uses: actions/checkout@v4
+      - name: Ensure Android build tools for manifest and signature inspection
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "build-tools;36.0.0" >/dev/null
+      - name: Download exact historical release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p audit-apks
+          gh release download zavi-v6662-one-debug-qa --repo "$GITHUB_REPOSITORY" \
+            --pattern ZAVI_one_V6662_DEBUG_QA.apk --dir audit-apks
+          gh release download zavi-v6662-admin-debug-qa --repo "$GITHUB_REPOSITORY" \
+            --pattern ZAVI_admin_V6662_DEBUG_QA.apk --dir audit-apks
+          gh release view zavi-v6662-one-debug-qa --repo "$GITHUB_REPOSITORY" \
+            --json targetCommitish --jq .targetCommitish | tee audit-apks/one-release-target.txt
+          gh release view zavi-v6662-admin-debug-qa --repo "$GITHUB_REPOSITORY" \
+            --json targetCommitish --jq .targetCommitish | tee audit-apks/admin-release-target.txt
+      - name: Audit APK metadata, signatures and exact bundled HTML against dev source
+        id: audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os, re, subprocess, zipfile
+          from pathlib import Path
+
+          root = Path('audit-apks')
+          sdk = Path(os.environ['ANDROID_HOME']) / 'build-tools' / '36.0.0'
+          expected_sha = 'd238c4c8d5ae5d53de7ff5f60b55a3dba839123b'
+          variants = [
+              ('one', 'ZAVI_one_V6662_DEBUG_QA.apk', 62226180, 'com.zavione.one'),
+              ('admin', 'ZAVI_admin_V6662_DEBUG_QA.apk', 61815754, 'com.zavione.one.admin'),
+          ]
+          output = {'historical_commit': expected_sha, 'build_branch': os.environ.get('GITHUB_REF_NAME'), 'apks': {}, 'blocking_findings': []}
+          for app, filename, expected_size, package_id in variants:
+              path = root / filename
+              data = path.read_bytes()
+              result = {'filename': filename, 'size_bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
+              output['apks'][app] = result
+              if len(data) != expected_size:
+                  output['blocking_findings'].append(f'{app}: release APK bytes differ from historical release metadata')
+              target = (root / f'{app}-release-target.txt').read_text().strip()
+              result['release_target'] = target
+              if target != expected_sha:
+                  output['blocking_findings'].append(f'{app}: release tag target is not historical commit {expected_sha}')
+              with zipfile.ZipFile(path) as apk:
+                  bad = apk.testzip()
+                  if bad:
+                      output['blocking_findings'].append(f'{app}: corrupt APK ZIP entry: {bad}')
+                  asset_names = [x for x in apk.namelist() if x.startswith('assets/') and not x.endswith('/')]
+                  result['asset_count'] = len(asset_names)
+                  if 'assets/index.html' not in asset_names:
+                      output['blocking_findings'].append(f'{app}: missing original assets/index.html')
+                      continue
+                  embedded = apk.read('assets/index.html')
+                  dev_path = Path('app-source') / app / 'index.html'
+                  dev_bytes = dev_path.read_bytes() if dev_path.is_file() else None
+                  result['embedded_index_sha256'] = hashlib.sha256(embedded).hexdigest()
+                  result['dev_index_sha256'] = hashlib.sha256(dev_bytes).hexdigest() if dev_bytes is not None else None
+                  result['dev_index_matches_baseline'] = dev_bytes == embedded
+                  common = 0
+                  matched = 0
+                  for asset_name in asset_names:
+                      rel_path = asset_name.removeprefix('assets/')
+                      candidate = Path('app-source') / app / rel_path
+                      if candidate.is_file():
+                          common += 1
+                          if hashlib.sha256(candidate.read_bytes()).digest() == hashlib.sha256(apk.read(asset_name)).digest():
+                              matched += 1
+                  result['shared_asset_paths'] = common
+                  result['byte_identical_assets'] = matched
+              badging = subprocess.run([str(sdk / 'aapt'), 'dump', 'badging', str(path)], text=True, capture_output=True, check=True).stdout
+              package_match = re.search(r"package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'", badging)
+              if not package_match:
+                  output['blocking_findings'].append(f'{app}: package metadata was not readable')
+              else:
+                  found_package, version_code, version_name = package_match.groups()
+                  result.update(package_id=found_package, version_code=version_code, version_name=version_name)
+                  if found_package != package_id:
+                      output['blocking_findings'].append(f'{app}: package ID differs from expected {package_id}')
+                  if app == 'one' and not version_name.startswith('66.62'):
+                      output['blocking_findings'].append(f'{app}: manifest versionName is {version_name}, NOT V66.62')
+              signed = subprocess.run([str(sdk / 'apksigner'), 'verify', '--verbose', '--print-certs', str(path)], text=True, capture_output=True)
+              result['signature_verification_exit'] = signed.returncode
+              cert = re.search(r'Signer #1 certificate SHA-256 digest: ([a-fA-F0-9]+)', signed.stdout)
+              result['certificate_sha256'] = cert.group(1) if cert else None
+              if signed.returncode or not cert:
+                  output['blocking_findings'].append(f'{app}: APK signing identity could not be verified')
+              print(f'{app}: bytes={len(data)} package={result.get("package_id")} version={result.get("version_name")} assets={result.get("asset_count")} same_as_dev={result.get("dev_index_matches_baseline")} cert={result["certificate_sha256"]}')
+          (root / 'baseline-provenance.json').write_text(json.dumps(output, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+              f.write('# ZAVI ONE V66.62 historical baseline verification\n\n')
+              f.write('Audit ONLY. No source, customer data, or database mutation.\n\n')
+              f.write('| App | APK bytes | Manifest version | Package ID | Certificate SHA-256 | Embedded HTML matches dev? |\n')
+              f.write('|---|---:|---|---|---|---|\n')
+              for app, item in output['apks'].items():
+                  f.write(f'| {app} | {item.get("size_bytes")} | {item.get("version_name", "unknown")} | {item.get("package_id", "unknown")} | {item.get("certificate_sha256", "unknown")} | {item.get("dev_index_matches_baseline", "unknown")} |\n')
+              f.write('\n## Blocking findings\n')
+              f.write('\n'.join('- ' + x + '\n' for x in output['blocking_findings']) or 'No metadata failures. A source-provenance mismatch still requires manual review.\n')
+          PY
+      - name: Upload immutable historical baseline provenance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_V6662_BASELINE_PROVENANCE
+          path: audit-apks/baseline-provenance.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Block incorrectly labeled V66.62 source or APK
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('audit-apks/baseline-provenance.json').read_text())
+          problems = report['blocking_findings']
+          for app, item in report['apks'].items():
+              if not item.get('dev_index_matches_baseline'):
+                  problems.append(f'{app}: dev app-source/index.html is not the historical V66.62 APK source')
+          if problems:
+              for problem in problems:
+                  print('::error::' + problem)
+              raise SystemExit(1)
+          print('Both exact historic APKs passed manifest, signature, and source identity gates.')
+          PY

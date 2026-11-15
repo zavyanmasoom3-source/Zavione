@@ -65,6 +65,16 @@ for(const app of ['one','admin']){
   assert(invoiceCss.includes('@media print')&&!invoiceCss.includes('width:148mm!important'),
     'new theme must not hardcode a print format');
   assert(read('zavi-dual-dashboard-v1.css').includes('z63-quick-grid'),'dashboard layout missing');
+  const cleanup=read('zavi-mobile-cleanup-v6563.js');
+  const layout=read('zavi-v6564-layout.js');
+  new vm.Script(cleanup,{filename:'zavi-mobile-cleanup-v6563.js'});
+  new vm.Script(layout,{filename:'zavi-v6564-layout.js'});
+  for(const key of ["'customers'","'warehouses'","'receive'","'pay'"]){
+    assert(cleanup.includes(key),'Dashboard shortcut missing: '+key);
+  }
+  assert(cleanup.includes("z63-secondary-actions"),'Old receive/pay operations must remain accessible');
+  assert(layout.includes("$('.zrf-search-wrap',home)||hero"),'Global search must precede quick destinations');
+
   assert(html.includes('zavi-assistants-dock-v1.js'),'original assistant dock script not loaded');
   assert(sw.includes("'zavi-assistants-dock-v1.js'"),'assistant dock must be available offline');
   const dockJs=read('zavi-assistants-dock-v1.js');

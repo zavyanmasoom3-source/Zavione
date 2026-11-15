@@ -6,9 +6,9 @@
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
 const translations={
- fa:{shortcuts:'عملیات سریع',newSale:'فروش جدید',newPurchase:'خرید جدید',receive:'دریافت وجه',pay:'پرداخت وجه',financial:'خلاصه حساب‌ها',help:'راهنما و آموزش',restore:'بخش‌های تکمیلی',noPermission:'این بخش برای حساب شما فعال نیست'},
- ps:{shortcuts:'چټک کارونه',newSale:'نوی پلور',newPurchase:'نوی پېرود',receive:'پیسې ترلاسه کول',pay:'پیسې ورکول',financial:'د حسابونو لنډیز',help:'لارښود',restore:'نورې برخې',noPermission:'دا برخه ستاسو لپاره فعاله نه ده'},
- en:{shortcuts:'Quick actions',newSale:'New sale',newPurchase:'New purchase',receive:'Receive payment',pay:'Make payment',financial:'Financial overview',help:'Help and guides',restore:'More sections',noPermission:'This feature is not enabled'}
+ fa:{shortcuts:'عملیات سریع',newSale:'فروش جدید',newPurchase:'خرید جدید',customers:'مشتریان',warehouses:'گدام‌ها',moreMoney:'دریافت و پرداخت',receive:'دریافت وجه',pay:'پرداخت وجه',financial:'خلاصه حساب‌ها',help:'راهنما و آموزش',restore:'بخش‌های تکمیلی',noPermission:'این بخش برای حساب شما فعال نیست'},
+ ps:{shortcuts:'چټک کارونه',newSale:'نوی پلور',newPurchase:'نوی پېرود',customers:'پېرودونکي',warehouses:'ګدامونه',moreMoney:'ترلاسه کول او ورکړه',receive:'پیسې ترلاسه کول',pay:'پیسې ورکول',financial:'د حسابونو لنډیز',help:'لارښود',restore:'نورې برخې',noPermission:'دا برخه ستاسو لپاره فعاله نه ده'},
+ en:{shortcuts:'Quick actions',newSale:'New sale',newPurchase:'New purchase',customers:'Customers',warehouses:'Warehouses',moreMoney:'Receive and pay',receive:'Receive payment',pay:'Make payment',financial:'Financial overview',help:'Help and guides',restore:'More sections',noPermission:'This feature is not enabled'}
 };
 function lang(){const l=($('#zaviTopLanguage')?.value||document.documentElement.lang||'fa').toLowerCase();return l.startsWith('en')?'en':l.startsWith('ps')?'ps':'fa'}
 function isDash(root){return !!root?.classList.contains('zrf-dashboard')&&!!$(':scope > .zrf-home',root)}
@@ -43,7 +43,10 @@ function addShortcuts(home){
  if(existing){
   existing.setAttribute('aria-label',t.shortcuts);
   const heading=$(':scope > h3',existing);if(heading)heading.textContent=t.shortcuts;
-  const names={sale:t.newSale,purchase:t.newPurchase,receive:t.receive,pay:t.pay};
+  const names={sale:t.newSale,purchase:t.newPurchase,customers:t.customers,warehouses:t.warehouses,
+   receive:t.receive,pay:t.pay};
+  const summary=$('.z63-secondary-actions > summary',existing);
+  if(summary)summary.textContent=t.moreMoney;
   for(const [key,value] of Object.entries(names)){
    const label=$('[data-z63-quick="'+key+'"] span:last-child',existing);
    if(label&&label.textContent!==value)label.textContent=value;
@@ -53,15 +56,25 @@ function addShortcuts(home){
  const el=document.createElement('section');el.className='z63-quick-panel';el.setAttribute('aria-label',t.shortcuts);
  const label=document.createElement('h3');label.textContent=t.shortcuts;el.append(label);
  const grid=document.createElement('div');grid.className='z63-quick-grid';
- const defs=[['sale',t.newSale,'🛒'],['purchase',t.newPurchase,'🛍'],['receive',t.receive,'↓'],['pay',t.pay,'↑']];
- for(const [key,text,ico] of defs){
+ function addButton(target,key,text,ico){
   const b=document.createElement('button');b.type='button';b.className='z63-quick-tile z63-quick-'+key;
   b.dataset.z63Quick=key;
   const glyph=document.createElement('span');glyph.className='z63-quick-glyph';glyph.textContent=ico;
+  glyph.setAttribute('aria-hidden','true');
   const title=document.createElement('span');title.textContent=text;
-  b.append(glyph,title);grid.append(b);
+  b.append(glyph,title);target.append(b);
  }
+ // 4 approved quick destinations. All legacy payment operations remain
+ // immediately accessible in the expanded secondary operations drawer.
+ const defs=[['sale',t.newSale,'🛒'],['purchase',t.newPurchase,'🛍'],['customers',t.customers,'👥'],['warehouses',t.warehouses,'▣']];
+ for(const [key,text,ico] of defs)addButton(grid,key,text,ico);
  el.append(grid);
+ const more=document.createElement('details');more.className='z63-secondary-actions';
+ const summary=document.createElement('summary');summary.textContent=t.moreMoney;
+ const secondary=document.createElement('div');secondary.className='z63-secondary-grid';
+ addButton(secondary,'receive',t.receive,'↓');
+ addButton(secondary,'pay',t.pay,'↑');
+ more.append(summary,secondary);el.append(more);
  const wrap=$('.z63-finance-wrap',home);
  const features=$('.zrf-tiles',home);
  if(wrap)wrap.before(el);else if(features)features.after(el);else home.append(el);
@@ -91,9 +104,11 @@ function organizePage(content){
  if(isDash(content))organizeHome(content);
 }
 function quickGo(key){
- const attempts={sale:['sale','sales'],purchase:['purchase','purchases'],receive:['customer_payment','payment_in','receipt','money'],pay:['supplier_payment','payment_out','payment','money']};
+ const attempts={sale:['sale','sales'],purchase:['purchase','purchases'],
+  customers:['contacts'],warehouses:['products'],
+  receive:['customer_payment','payment_in','receipt','money'],pay:['supplier_payment','payment_out','payment','money']};
  if(nativeAction(attempts[key]||[]))return;
- const fallback={sale:'sales',purchase:'purchases',receive:'money',pay:'money'}[key];
+ const fallback={sale:'sales',purchase:'purchases',customers:'contacts',warehouses:'products',receive:'money',pay:'money'}[key];
  const nav=$$('[data-go]').find(e=>e.dataset.go===fallback&&!e.closest('.zrf-home,.z63-quick-panel'));
  if(nav)nav.click();
  if(key==='receive'||key==='pay'){

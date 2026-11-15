@@ -7,9 +7,6 @@ if (!(appVariant in ["one", "admin"])) {
 boolean admin = appVariant == "admin"
 boolean productionMode = providers.gradleProperty("zaviProduction").getOrElse("false").toBoolean()
 boolean legacyBaselineQa = providers.gradleProperty("zaviLegacyBaselineQa").getOrElse("false").toBoolean()
-if (legacyBaselineQa && admin) {
-    throw new GradleException("The V66.62 original-design QA currently targets ZAVI ONE only")
-}
 if (legacyBaselineQa && productionMode) {
     throw new GradleException("Legacy baseline is for isolated debug QA; never sign as production")
 }
@@ -42,8 +39,8 @@ android {
         applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
         minSdk 26
         targetSdk 36
-        versionCode admin ? 4170 : (legacyBaselineQa ? 6681 : 6679)
-        versionName admin ? '1.4.70-pdf-final' : (legacyBaselineQa ? '66.62-original-design-qa1' : '66.79-pdf-final')
+        versionCode admin ? (legacyBaselineQa ? 4171 : 4170) : (legacyBaselineQa ? 6681 : 6679)
+        versionName admin ? (legacyBaselineQa ? '1.4.54-original-design-qa1' : '1.4.70-pdf-final') : (legacyBaselineQa ? '66.62-original-design-qa1' : '66.79-pdf-final')
         resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
     }
 

@@ -81,6 +81,21 @@ jobs:
           ./gradlew --version
           ./gradlew --no-daemon :app:tasks -PzaviApp=${{ matrix.app }} >/dev/null
 
+      - name: Prove Release cannot fall back to debug signing
+        working-directory: android-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ./gradlew --no-daemon :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviProduction=false > /tmp/zavi-release-denied.log 2>&1; then
+            echo "::error::Unsigned or debug-signed Release was unexpectedly allowed."
+            exit 1
+          fi
+          grep -F 'ZAVI release blocked:' /tmp/zavi-release-denied.log || {
+            cat /tmp/zavi-release-denied.log
+            echo "::error::Release failed for a reason other than the explicit signing guard."
+            exit 1
+          }
+
       - name: Build fresh debug APK
         working-directory: android-build
         shell: bash

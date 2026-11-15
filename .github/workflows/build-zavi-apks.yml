@@ -33,6 +33,14 @@ jobs:
       - name: Checkout dev source
         uses: actions/checkout@v4
 
+      - name: Node 22 for UI theme smoke tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify dual-theme and offline UI shell for both apps
+        run: node tests/dual-theme-compatibility.cjs
+
       - name: Java 17
         uses: actions/setup-java@v4
         with:

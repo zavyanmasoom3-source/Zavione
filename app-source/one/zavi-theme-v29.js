@@ -85,7 +85,7 @@
   apply(preference,false);
   let pending=false;
   const observer=new MutationObserver(mutations=>{
-   const found=mutations.some(m=>[...m.addedNodes].some(n=>
+   const found=mutations.some(m=>m.target?.id==='view'||[...m.addedNodes].some(n=>
     n.nodeType===1&&(n.matches?.('.zavi-theme-picker,[data-zavi-theme-choice],.nav-item[data-page="settings"]')||
     n.querySelector?.('.zavi-theme-picker,[data-zavi-theme-choice],.nav-item[data-page="settings"]'))));
    if(found&&!pending){pending=true;requestAnimationFrame(()=>{pending=false;syncControls()})}

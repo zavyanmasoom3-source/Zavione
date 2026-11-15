@@ -58,7 +58,15 @@ function ensure(){
  eyebrow.textContent=native?.querySelector("h2")?.textContent?.trim()||tr.title;
  title.textContent=tr.welcome;
  subtitle.textContent=native?.querySelector("p")?.textContent?.trim()||"";
- hero.querySelector(".z62-date").textContent=localeDate();
+ const dateWrap=hero.querySelector(".z62-date");
+ const [solar,greg]=localeDate().split("  |  ");
+ if(solar&&greg){
+  dateWrap.replaceChildren();
+  const solarPart=document.createElement("bdi");solarPart.dir="rtl";solarPart.textContent=solar;
+  const divider=document.createElement("span");divider.className="z62-date-separator";divider.textContent="|";
+  const gregPart=document.createElement("bdi");gregPart.dir="ltr";gregPart.textContent=greg;
+  dateWrap.append(solarPart,divider,gregPart);
+ }else dateWrap.textContent=solar||"";
  hero.querySelector(".z62-sale-label").textContent=tr.sale;
  // Always leave accounting options available via their original screens.
  const btn=home.querySelector("[data-zrf-details]");

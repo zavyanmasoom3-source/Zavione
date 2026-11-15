@@ -1,0 +1,96 @@
+/* Sales invoice: two-themed workspace, always-readable printable paper.
+ * Printing remains A5/A4/thermal-dependent on the existing invoice workflow.
+ * This sheet changes presentation only, not calculations or document fields.
+ */
+html[data-zavi-theme]{
+ --zinv-paper:#FFFFFF;--zinv-ink:#0F172A;--zinv-muted:#52647E;
+ --zinv-rule:#C8D7EC;--zinv-soft:#F4F8FF;
+}
+html[data-zavi-theme] body{
+ background:linear-gradient(180deg,var(--zui-canvas),var(--zui-canvas-end))!important;
+ color:var(--zui-text)!important;
+}
+html[data-zavi-theme] .tools{
+ width:100%;max-width:850px;margin:0 auto 12px;
+ display:flex;flex-wrap:wrap;align-items:center;gap:9px;justify-content:center;
+ padding:9px;background:var(--zui-surface);color:var(--zui-text);
+ border:1px solid var(--zui-border);border-radius:16px;
+ box-shadow:var(--zui-shadow);
+}
+html[data-zavi-theme] .tools :is(label,span,small){
+ color:var(--zui-text)!important;-webkit-text-fill-color:var(--zui-text)!important;
+}
+html[data-zavi-theme] .tools :is(select,input){
+ min-height:44px;padding:8px 10px;
+ background:var(--zui-raised)!important;color:var(--zui-text)!important;
+ border:1px solid var(--zui-border)!important;border-radius:11px;
+}
+html[data-zavi-theme] .tools button{
+ min-height:44px;padding:9px 13px;
+ background:var(--zui-raised)!important;color:var(--zui-text)!important;
+ border:1px solid var(--zui-border)!important;border-radius:11px!important;
+ box-shadow:none!important;
+}
+html[data-zavi-theme] .tools button:nth-of-type(2),
+html[data-zavi-theme] .tools button:nth-of-type(4){
+ background:linear-gradient(118deg,var(--zui-primary),var(--zui-primary-strong))!important;
+ border-color:var(--zui-primary)!important;color:var(--zui-on-primary)!important;
+}
+html[data-zavi-theme] .paper{
+ background:var(--zinv-paper)!important;color:var(--zinv-ink)!important;
+ border:1px solid var(--zinv-rule)!important;
+ border-radius:12px!important;box-shadow:var(--zui-shadow)!important;
+ max-width:100%;
+}
+html[data-zavi-theme] .paper .masthead{
+ background:linear-gradient(120deg,var(--zui-primary),var(--zui-primary-strong))!important;
+ color:var(--zui-on-primary)!important;
+}
+html[data-zavi-theme] .paper .masthead :is(.doc,.brand,.brand b,.brand small){
+ color:var(--zui-on-primary)!important;
+}
+html[data-zavi-theme] .paper .stripe{
+ background:linear-gradient(90deg,var(--zui-primary),var(--zui-primary-strong))!important;
+}
+html[data-zavi-theme] .paper :is(.section,.summary,.notes,.signs){
+ background:var(--zinv-paper)!important;color:var(--zinv-ink)!important;
+ border-color:var(--zinv-rule)!important;
+}
+html[data-zavi-theme] .paper :is(.tiny,.inputline span){
+ color:var(--zinv-muted)!important;
+}
+html[data-zavi-theme] .paper .section .title{
+ color:var(--zui-primary)!important;
+}
+html[data-zavi-theme] .paper :is(input,textarea,select){
+ background:var(--zinv-paper)!important;color:var(--zinv-ink)!important;
+ border-color:var(--zinv-rule)!important;box-shadow:none!important;
+}
+html[data-zavi-theme] .paper .table th{
+ color:var(--zui-on-primary)!important;background:var(--zui-primary)!important;
+}
+html[data-zavi-theme] .paper .table td{
+ color:var(--zinv-ink)!important;border-color:var(--zinv-rule)!important;
+}
+html[data-zavi-theme] .paper .table tbody tr:nth-child(even){
+ background:var(--zinv-soft)!important;
+}
+html[data-zavi-theme] :is(button,input,select,textarea):focus-visible{
+ outline:3px solid var(--zui-focus)!important;outline-offset:2px!important;
+}
+@media(max-width:650px){
+ html[data-zavi-theme] body{padding:8px!important}
+ html[data-zavi-theme] .tools{gap:7px;padding:8px}
+ html[data-zavi-theme] .tools button{flex:1 1 auto;max-width:100%}
+ html[data-zavi-theme] .paper{border-radius:10px!important}
+}
+@media print{
+ html[data-zavi-theme] body{
+  background:var(--zinv-paper)!important;color:var(--zinv-ink)!important;padding:0!important;
+ }
+ html[data-zavi-theme] .tools{display:none!important}
+ html[data-zavi-theme] .paper{
+  width:148mm!important;max-width:none!important;min-height:210mm!important;
+  box-shadow:none!important;border:0!important;border-radius:0!important;
+ }
+}

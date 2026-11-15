@@ -93,12 +93,22 @@ with sync_playwright() as p:
                             if values["overflow"]:reason="HORIZONTAL_OVERFLOW"
                 if route=="NEW_SALE":
                     page.goto(BASE,wait_until="domcontentloaded")
-                    page.wait_for_timeout(550)
+                    page.wait_for_timeout(300)
+                    if page.locator("html.zawi-locked").count():
+                        page.locator("#zawiPinOne").fill("246810")
+                        page.locator("#zawiPinSubmit").click()
+                        page.wait_for_function("!document.documentElement.classList.contains('zawi-locked')",timeout=13000)
+                    page.wait_for_timeout(300)
             except Exception as ex:
                 state,reason="capture_error",str(ex)[:350]
                 try:
                     page.goto(BASE,wait_until="domcontentloaded",timeout=15000)
-                    page.wait_for_timeout(350)
+                    page.wait_for_timeout(250)
+                    if page.locator("html.zawi-locked").count():
+                        page.locator("#zawiPinOne").fill("246810")
+                        page.locator("#zawiPinSubmit").click()
+                        page.wait_for_function("!document.documentElement.classList.contains('zawi-locked')",timeout=13000)
+                    page.wait_for_timeout(250)
                 except Exception:
                     pass
             results.append({"screen":screen,"theme":theme,"result":state,"reason":reason})

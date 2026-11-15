@@ -12,7 +12,10 @@ function moveQuick(c,home){
  const quick=$('.z63-quick-panel',home);
  if(!quick)return;
  const hero=$('.z62-hero',home);
- if(hero&&hero.nextElementSibling!==quick)hero.after(quick);
+ // Keep the existing live global search directly after the welcome header.
+ // Position approved quick destinations below that search, without cloning it.
+ const preceding=$('.zrf-search-wrap',home)||hero;
+ if(preceding&&preceding.nextElementSibling!==quick)preceding.after(quick);
  quick.classList.add('z64-single-actions');
  // The original large quick-actions panels remain on their original routes,
  // but any dashboard clones are omitted to prevent duplicate actions.

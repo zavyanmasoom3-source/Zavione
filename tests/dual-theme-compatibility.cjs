@@ -10,6 +10,8 @@ for(const app of ['one','admin']){
  const read=name=>fs.readFileSync(path.join(base,name),'utf8');
  const html=read('index.html'),style=read('zavi-dual-design-v1.css');
  const theme=read('zavi-theme-v29.js'),sw=read('sw.js');
+ const rawHead=html.slice(0,html.indexOf('</head>'));
+ assert(!rawHead.includes(String.fromCharCode(92)+'n<'),app+': escaped newline text must never leak from HTML head into rendered UI');
  const script=html.match(/<script id="zavi-theme-bootstrap-v29">([\s\S]*?)<\/script>/);
  assert(script,app+': early theme bootstrap absent');
  new vm.Script(script[1],{filename:app+'-bootstrap.js'});

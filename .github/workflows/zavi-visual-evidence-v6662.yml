@@ -1,0 +1,38 @@
+name: ZAVI V66.62 redesign - REAL browser screenshot evidence
+on:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-visual-evidence-v6662.yml'
+      - 'tests/visual_reference_capture.py'
+      - 'app-source/one/**'
+      - 'app-source/admin/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evidence:
+    name: Screenshot ten routes light and dark - no production data
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install browser tools
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Capture actual application DOM screenshots without changing finance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 8100 --bind 127.0.0.1 --directory app-source/one >/tmp/zavi-one.log 2>&1 &
+          python -m http.server 8101 --bind 127.0.0.1 --directory app-source/admin >/tmp/zavi-admin.log 2>&1 &
+          python tests/visual_reference_capture.py
+      - name: Upload captured real screenshots and manifest, even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_REAL_LIGHT_DARK_SCREEN_EVIDENCE
+          path: visual-evidence/
+          if-no-files-found: warn
+          retention-days: 14

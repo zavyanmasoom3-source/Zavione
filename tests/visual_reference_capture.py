@@ -97,9 +97,21 @@ with sync_playwright() as p:
                                 y:r?.y,x:r?.x,width:r?.width,height:r?.height,
                                 overlay:document.getElementById('overlay')?.innerHTML.slice(0,300)};
                             }""")
+                            # Read-only diagnosis: call the existing navigation
+                            # function once to separate event-interception from CSS.
+                            direct=page.evaluate("""() => {
+                              let error='',called=false;
+                              try {if(typeof go==='function'){go('more');called=true}}
+                              catch(ex){error=String(ex)}
+                              const e=document.getElementById('side');
+                              return {called,error,sidebarClass:e?.className,
+                                sideDisplay:e&&getComputedStyle(e).display,
+                                overlay:document.getElementById('overlay')?.innerHTML.slice(0,260)};
+                            }""")
+                            diagnostic['directNavigation']=direct
                             (ROOT/f"more_failure_{theme}.json").write_text(
                               json.dumps(diagnostic,ensure_ascii=False,indent=2),encoding="utf-8")
-                            state,reason="route_failed","More drawer failed to open through its real navigation"
+                            state,reason="route_failed","More drawer did not open on actual click; direct route diagnosed separately"
                         else:
                             dock_status=page.evaluate("""() => {
                               const dock=document.getElementById('zaviAssistantsDock');

@@ -40,12 +40,26 @@ with sync_playwright() as p:
         page.on("pageerror", lambda e: js_errors.append(str(e)))
         page.route("**/*", lambda route: route.continue_() if route.request.url.startswith(BASE) else route.abort())
         page.goto(BASE, wait_until="domcontentloaded", timeout=45000)
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(450)
+        # Exercise the real first-use local PIN form on this disposable context.
+        # This is not an auth bypass and never unlocks cloud/accounting privileges.
+        if page.locator("html.zawi-locked").count():
+            page.locator("#zawiPinOne").fill("246810")
+            if page.locator("#zawiPinRepeatRow").is_visible():
+                page.locator("#zawiPinRepeat").fill("246810")
+            page.locator("#zawiPinSubmit").click()
+            try:
+                page.wait_for_function("!document.documentElement.classList.contains('zawi-locked')", timeout=13000)
+            except Exception:
+                print("PRIVATE PIN ENTRY FAILED:",page.locator("#zawiPinError").inner_text(),flush=True)
+        page.wait_for_timeout(450)
         for screen, route in SCREENS:
             state = "not_captured"
             reason = ""
             try:
-                if route == "MORE":
+                if page.locator("html.zawi-locked").count():
+                    state,reason="blocked_locked","Screen is hidden by the real private PIN gate; do not mislabel login as module screenshot"
+                elif route == "MORE":
                     state,reason = "not_available", "Standalone More route was not established in current source navigation"
                 elif route == "NEW_SALE":
                     open_button = page.locator("#topSaleBtn")

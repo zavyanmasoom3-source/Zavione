@@ -86,6 +86,10 @@ function compactHelp(c){
 function renderHome(c){
  const home=$(':scope > .zrf-home',c);if(!home)return;
  moveQuick(c,home);moveCharts(c,home);mergeRate(c,home);compactHelp(c);
+ // Put the REAL ledger-backed KPIs immediately after the four shortcuts.
+ // Moving existing nodes retains calculation/state and avoids demo figures.
+ const quick=$('.z63-quick-panel',home),finance=$('.z63-finance-wrap',home);
+ if(quick&&finance&&quick.nextElementSibling!==finance)quick.after(finance);
  const title=$('.z64-charts-heading',home);if(title)title.textContent=T[locale()].charts;
 }
 function organizeSettings(c){

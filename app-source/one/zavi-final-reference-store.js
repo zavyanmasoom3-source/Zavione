@@ -126,8 +126,10 @@ function start(){
  });observer.observe(content,{childList:true});refresh();
  document.addEventListener('input',e=>{if(e.target.classList?.contains('zrf-search'))originalSearch(e.target.value,e.target.nextElementSibling)});
  document.addEventListener('click',e=>{
+  // "More" belongs to the native drawer; All-sections remains on its
+  // dedicated data-zrf-menu button, preserving access to every feature.
   const more=e.target.closest('[data-go="more"]');
-  if(more&&!e.target.closest('#zrf-all')){e.preventDefault();e.stopImmediatePropagation();openAll();return}
+  if(more&&!e.target.closest('#zrf-all'))return;
   const menu=e.target.closest('[data-zrf-menu]');if(menu){e.preventDefault();openAll();return}
   if(e.target.closest('[data-zrf-close]')||e.target.id==='zrf-all'){closeAll();return}
   const prox=e.target.closest('[data-zrf-proxy]');if(prox){const original=prox.__original;closeAll();original?.click();return}

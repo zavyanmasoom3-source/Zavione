@@ -9,9 +9,20 @@ const copy={
 };
 function lang(){const v=(document.querySelector("#zaviTopLanguage")?.value||document.documentElement.lang||"fa").toLowerCase();return v.startsWith("en")?"en":v.startsWith("ps")?"ps":"fa"}
 function localeDate(){
- const native=document.querySelector("#content > .welcome .zv-today");
- if(native&&native.textContent.trim())return native.textContent.trim();
- const l=lang();try{return new Intl.DateTimeFormat(l==="ps"?"ps-AF":l==="en"?"en-GB":"fa-AF",{year:"numeric",month:"long",day:"numeric"}).format(new Date())}catch(_){return new Date().toLocaleDateString()}
+ const l=lang(),today=new Date();
+ // Two real calendar readings of the SAME current instant; never demo values.
+ try{
+  const locale=l==="ps"?"ps-AF-u-ca-persian":"fa-AF-u-ca-persian";
+  const solar=new Intl.DateTimeFormat(locale,{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(today);
+  const greg=new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric"}).format(today);
+  return (solar+"  |  "+greg).replace(/[\\u06f0-\\u06f9\\u0660-\\u0669]/g,ch=>{
+   const n=ch.codePointAt(0);return String(n>=0x6f0?n-0x6f0:n-0x660);
+  });
+ }catch(_){
+  const native=document.querySelector("#content > .welcome .zv-today");
+  const greg=new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric"}).format(today);
+  return (native?.textContent?.trim()||"")+"  |  "+greg;
+ }
 }
 function ensure(){
  const content=document.getElementById("content");
@@ -42,8 +53,10 @@ function ensure(){
  const title=hero.querySelector(".z62-title");
  const subtitle=hero.querySelector(".z62-subtitle");
  // Use actual trade-specific wording from the current workspace; don't fake shop data.
- eyebrow.textContent=tr.welcome;
- title.textContent=native?.querySelector("h2")?.textContent?.trim()||tr.title;
+ // Preserve the business-specific title as metadata; prioritize the
+ // previously approved ZAVI ONE welcome headline in both themes.
+ eyebrow.textContent=native?.querySelector("h2")?.textContent?.trim()||tr.title;
+ title.textContent=tr.welcome;
  subtitle.textContent=native?.querySelector("p")?.textContent?.trim()||"";
  hero.querySelector(".z62-date").textContent=localeDate();
  hero.querySelector(".z62-sale-label").textContent=tr.sale;

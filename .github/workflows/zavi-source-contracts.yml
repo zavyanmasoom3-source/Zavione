@@ -1,0 +1,28 @@
+name: ZAVI source unit regressions and version safety
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-source-contracts.yml'
+      - 'android-build/app/build.gradle'
+      - 'tests/pdf-design-contract.test.cjs'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify all source contracts, finance and backup unit tests
+        run: node --test tests/*.test.cjs
+      - name: Assert current and historic QA version separation
+        run: |
+          grep -Fq "legacyBaselineQa ? 4171 : 4170" android-build/app/build.gradle
+          grep -Fq "legacyBaselineQa ? 6681 : 6679" android-build/app/build.gradle
+          grep -Fq "applicationIdSuffix legacyBaselineQa ? '.legacyqa' : '.dev'" android-build/app/build.gradle
+          grep -Fq "if (legacyBaselineQa && productionMode)" android-build/app/build.gradle

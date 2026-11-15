@@ -1,0 +1,54 @@
+name: Publish original blue V66.62 QA APK direct link
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/publish-v6662-old-blue-qa.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve verified signed legacy APK from successful source-preserving run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-apk
+          gh run download 43699499786 --repo "$GITHUB_REPOSITORY" \
+            --name ZAVI_ONE_V6662_OLD_BLUE_DESIGN_QA_APK \
+            --dir release-apk
+          FILE=release-apk/ZAVI_ONE_V6662_ORIGINAL_DESIGN_FIXED_QA.apk
+          test -f "$FILE"
+          test "$(wc -c < "$FILE")" -eq 62229797
+          echo '8b3f366be81ee5a3bed3652d090249b01d713ac5018a0a53a1057554d5685ed8  release-apk/ZAVI_ONE_V6662_ORIGINAL_DESIGN_FIXED_QA.apk' | sha256sum --check -
+          unzip -t "$FILE" | tail -1
+          mv "$FILE" release-apk/ZAVI_ONE_V6662_OLD_BLUE_FIXED_QA_2026-11-15.apk
+      - name: Create public prerelease for direct APK download
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag=zavi-v6662-old-blue-fixed-qa-20261115
+          asset=release-apk/ZAVI_ONE_V6662_OLD_BLUE_FIXED_QA_2026-11-15.apk
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" "$asset" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$tag" "$asset" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "ZAVI ONE V66.62 original blue - fixed contrast QA (62 MB)" \
+              --prerelease \
+              --notes "Android-only testing build; original blue V66.62 WebView assets + minimal contrast/navigation fixes. SHA256: 8b3f366be81ee5a3bed3652d090249b01d713ac5018a0a53a1057554d5685ed8. Debug package com.zavione.one.legacyqa installs side by side; preserves existing original installation. Not a stable or production release; accounting and offline sync need device QA."
+          fi
+          gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json url,assets --jq '{url: .url, assets: [.assets[] | {name: .name, size: .size, url: .url}]}'

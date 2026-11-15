@@ -86,6 +86,22 @@ with sync_playwright() as p:
                     if not more.count():
                         state,reason="not_available","No actual More navigation button in mobile bottom bar"
                     else:
+                        page.evaluate("""() => {
+                          window.__moreClickTrace=[];
+                          for(const method of ['stopPropagation','stopImmediatePropagation']){
+                            const original=Event.prototype[method];
+                            Event.prototype[method]=function(...args){
+                              if(this.type==='click'&&this.target?.closest?.('[data-go="more"]')){
+                                window.__moreClickTrace.push({method,stack:(new Error()).stack?.slice(0,1400)});
+                              }
+                              return original.apply(this,args);
+                            };
+                          }
+                          window.addEventListener('click',e=>{
+                            if(e.target?.closest?.('[data-go="more"]'))
+                              window.__moreClickTrace.push({phase:'window-capture',target:e.target.tagName});
+                          },true);
+                        }""")
                         more.first.click()
                         page.wait_for_timeout(400)
                         drawer=page.locator('#side.mobile-drawer')
@@ -108,6 +124,7 @@ with sync_playwright() as p:
                                 sideDisplay:e&&getComputedStyle(e).display,
                                 overlay:document.getElementById('overlay')?.innerHTML.slice(0,260)};
                             }""")
+                            diagnostic['trace']=page.evaluate("window.__moreClickTrace || []")
                             diagnostic['directNavigation']=direct
                             (ROOT/f"more_failure_{theme}.json").write_text(
                               json.dumps(diagnostic,ensure_ascii=False,indent=2),encoding="utf-8")

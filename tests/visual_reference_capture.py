@@ -90,6 +90,15 @@ with sync_playwright() as p:
                         page.wait_for_timeout(400)
                         drawer=page.locator('#side.mobile-drawer')
                         if not drawer.count() or not drawer.is_visible():
+                            diagnostic=page.evaluate("""() => {
+                              const el=document.getElementById('side');
+                              const r=el?.getBoundingClientRect();
+                              return {drawerClass:el?.className,display:el&&getComputedStyle(el).display,
+                                y:r?.y,x:r?.x,width:r?.width,height:r?.height,
+                                overlay:document.getElementById('overlay')?.innerHTML.slice(0,300)};
+                            }""")
+                            (ROOT/f"more_failure_{theme}.json").write_text(
+                              json.dumps(diagnostic,ensure_ascii=False,indent=2),encoding="utf-8")
                             state,reason="route_failed","More drawer failed to open through its real navigation"
                         else:
                             dock_status=page.evaluate("""() => {

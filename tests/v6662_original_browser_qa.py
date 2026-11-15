@@ -64,7 +64,7 @@ with sync_playwright() as p:
         results.append({"screen":"javascript","theme":mode,"errors":errors[:30]})
         ctx.close()
     browser.close()
-(OUT/"manifest.json").write_text(json.dumps(results,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+(OUT/"manifest.json").write_text(json.dumps(results,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 print(json.dumps(results,ensure_ascii=False,indent=2))
 if not any(r.get("state")=="rendered_unverified" for r in results):
     raise SystemExit("No original V66.62 module rendered in isolated browser; investigate lock and routes")

@@ -155,3 +155,57 @@ html[data-zavi-theme] #content.zrf-dashboard .z62-date-separator{
   justify-content:center!important;
  }
 }
+
+/* Four approved primary quick destinations; money operations stay available
+   without dominating the dashboard when the disclosure is closed. */
+html[data-zavi-theme] #content.zrf-dashboard .z63-quick-panel{
+ padding:11px!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-quick-panel > h3{
+ color:var(--zui-text)!important;margin:0 0 7px!important;
+ font-size:13px!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-quick-grid{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:7px!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-quick-grid > .z63-quick-tile{
+ display:flex!important;flex-direction:column!important;gap:5px!important;
+ padding:7px 4px!important;min-height:70px!important;
+ justify-content:center!important;align-items:center!important;text-align:center!important;
+ color:var(--zui-text)!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-quick-grid > .z63-quick-tile .z63-quick-glyph{
+ width:26px!important;height:26px!important;line-height:26px!important;
+ border-radius:8px!important;font-size:16px!important;text-align:center!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-quick-grid > .z63-quick-tile span:last-child{
+ font-size:11px!important;font-weight:700!important;line-height:1.45!important;
+ overflow-wrap:anywhere;white-space:normal!important;min-width:0;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-secondary-actions{
+ border-top:1px solid var(--zui-border)!important;margin:10px 0 0!important;
+ padding-top:6px!important;background:transparent!important;color:var(--zui-muted)!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-secondary-actions > summary{
+ color:var(--zui-muted)!important;font-size:12px!important;font-weight:600!important;
+ padding:3px 5px!important;cursor:pointer!important;line-height:1.6!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-secondary-grid{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:8px!important;margin:7px 0 2px!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-secondary-grid .z63-quick-tile{
+ background:var(--zui-raised)!important;color:var(--zui-text)!important;
+ border:1px solid var(--zui-border)!important;border-radius:11px!important;
+ min-height:44px!important;display:flex!important;align-items:center!important;
+ justify-content:center!important;gap:7px!important;padding:7px!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z63-secondary-grid .z63-quick-tile span{
+ color:inherit!important;-webkit-text-fill-color:inherit!important;
+}
+@media(max-width:350px){
+ html[data-zavi-theme] #content.zrf-dashboard .z63-quick-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}

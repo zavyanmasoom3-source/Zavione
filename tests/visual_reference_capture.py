@@ -52,7 +52,8 @@ with sync_playwright() as p:
                 page.wait_for_function("!document.documentElement.classList.contains('zawi-locked')", timeout=13000)
             except Exception:
                 print("PRIVATE PIN ENTRY FAILED:",page.locator("#zawiPinError").inner_text(),flush=True)
-        page.wait_for_timeout(450)
+        # Let the application's real introduction animation finish before capture.
+        page.wait_for_timeout(5000)
         for screen, route in SCREENS:
             state = "not_captured"
             reason = ""

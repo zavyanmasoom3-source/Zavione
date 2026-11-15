@@ -75,7 +75,36 @@ with sync_playwright() as p:
                 if page.locator("html.zawi-locked").count():
                     state,reason="blocked_locked","Screen is hidden by the real private PIN gate; do not mislabel login as module screenshot"
                 elif route == "MORE":
-                    state,reason = "not_available", "Standalone More route was not established in current source navigation"
+                    more=page.locator('#mobileBottom [data-go="more"]')
+                    if not more.count():
+                        state,reason="not_available","No actual More navigation button in mobile bottom bar"
+                    else:
+                        more.first.click()
+                        page.wait_for_timeout(400)
+                        drawer=page.locator('#side.mobile-drawer')
+                        if not drawer.count() or not drawer.is_visible():
+                            state,reason="route_failed","More drawer failed to open through its real navigation"
+                        else:
+                            dock_status=page.evaluate("""() => {
+                              const dock=document.getElementById('zaviAssistantsDock');
+                              const r=dock?.getBoundingClientRect();
+                              return {visible:!!dock&&getComputedStyle(dock).display!=='none',
+                                y:r?.y,height:r?.height,
+                                assistants:['z637AiButton','z605-launch'].map(id=>{
+                                  const e=document.getElementById(id);
+                                  return {id,present:!!e,insideDrawer:!!e?.closest('#side.mobile-drawer'),
+                                    visible:!!e&&getComputedStyle(e).display!=='none'}
+                                })};
+                            }""")
+                            (ROOT/f"more_assistants_{theme}.json").write_text(
+                                json.dumps(dock_status,ensure_ascii=False,indent=2),encoding="utf-8")
+                            page.screenshot(path=str(ROOT/f"{screen}_{theme}.png"),full_page=False)
+                            state="captured_drawer_unverified"
+                            if not all(a.get('insideDrawer') for a in dock_status['assistants']):
+                                reason="Assistant launcher missing from accessible More drawer"
+                            shade=page.locator('#drawerShade')
+                            if shade.count():shade.first.click()
+
                 elif route == "NEW_SALE":
                     open_button = page.locator("#topSaleBtn")
                     if open_button.count():

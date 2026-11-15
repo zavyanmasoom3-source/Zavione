@@ -148,7 +148,10 @@ with sync_playwright() as p:
                             if not all(a.get('insideDrawer') for a in dock_status['assistants']):
                                 reason="Assistant launcher missing from accessible More drawer"
                             shade=page.locator('#drawerShade')
-                            if shade.count():shade.first.click()
+                            if shade.count():
+                                # Do not click its obscured center; dispatch through
+                                # the original delegated close handler after capture.
+                                shade.first.evaluate("(node) => node.click()")
 
                 elif route == "NEW_SALE":
                     open_button = page.locator("#topSaleBtn")

@@ -1,0 +1,50 @@
+/* V66.62 legacy-look repair only. This is NOT the 66.79 redesign.
+ * Existing colors, layout, modules, accounting and the three legacy themes remain.
+ * Addresses unreadable light-theme action tiles, touch targets and floating tool occlusion.
+ */
+html[data-zavi-theme="light"] :is(
+ #content.zrf-dashboard .z63-quick-tile:not(.active),
+ .zavi-v37-actions .zavi-v37-action:not(.active):not(.zavi-v37-sale),
+ .zavi-theme-choice:not(.is-selected),
+ #content .settings-card:not(.active)
+){
+ color:#17324d!important;-webkit-text-fill-color:#17324d!important;
+}
+html[data-zavi-theme="light"] :is(
+ #content.zrf-dashboard .z63-quick-tile:not(.active),
+ .zavi-v37-actions .zavi-v37-action:not(.active):not(.zavi-v37-sale),
+ .zavi-theme-choice:not(.is-selected)
+) :is(span,small,strong,b,svg) {
+ color:inherit!important;-webkit-text-fill-color:inherit!important;
+ opacity:1!important;
+}
+html[data-zavi-theme="light"] #content .settings-card :is(p,.muted,small,.hint){
+ color:#46627f!important;opacity:1!important;
+}
+html[data-zavi-theme="light"] #content :is(input,select,textarea){
+ color:#153553!important;-webkit-text-fill-color:currentColor;
+}
+html[data-zavi-theme="dark"] :is(#content .settings-card,#content .z63-quick-tile) :is(p,.muted,small){
+ opacity:1!important;
+}
+html :is(.mobile-bottom button,.mobile-bottom a,#sidebarLinks button,#sidebarLinks2 button,
+ #content [data-action],#content [data-go]){
+ min-height:44px;
+ touch-action:manipulation;
+}
+html #content :is(.table-wrap,.table-scroll){max-width:100%;overflow-x:auto}
+html #content .page-head{min-width:0}
+html #content .page-head :is(h1,h2){overflow-wrap:anywhere}
+@media(max-width:760px){
+ html #content {padding-bottom:calc(96px + env(safe-area-inset-bottom))!important}
+ html #z637AiButton,html .z637-ai-button{
+  bottom:calc(86px + env(safe-area-inset-bottom))!important;
+  max-width:56px!important;
+ }
+ html #z605-launch{bottom:calc(151px + env(safe-area-inset-bottom))!important}
+ html .mobile-bottom{padding-bottom:env(safe-area-inset-bottom)}
+}
+@media(prefers-reduced-motion:reduce){
+ html :is(.z63-quick-tile,.zavi-v37-action){animation:none!important;transition:none!important}
+}
+@media print{html #z637AiButton,html .z637-ai-button{display:none!important}}

@@ -11,6 +11,7 @@ on:
       - 'android-build/**'
       - 'app-source/one/**'
       - 'app-source/admin/**'
+      - 'tests/dual-theme-compatibility.cjs'
 
 permissions:
   contents: read

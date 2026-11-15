@@ -37,7 +37,7 @@ function retitle(btn,text,sub,icon,route){
 function dashboard(content){
  const home=q(':scope > .zrf-home',content);if(!home)return;
  const t=labels[lang()];
- // Only top Welcome/ثبت فروش and bottom navigation/فروش remain as direct sales entry points.
+ // Keep the main invoice CTA, the four approved quick destinations and the mobile navigation available.
  // This is the original INVOICE button; never relabel it as a second debtor shortcut.
  const invoice=q('.zrf-primary.zrf-invoice',home);
  if(invoice){
@@ -52,16 +52,11 @@ function dashboard(content){
  }
  retitle(q('.zrf-primary.zrf-contact',home),t.reports,t.reportsSub,'▤','reports');
  retitle(q('.zrf-tile[data-zrf-go="sales"]',home),t.debts,t.debtsSub,'♙','debtors');
- const quick=q('.z63-quick-tile[data-z63-quick="sale"]',home);
- if(quick){
-  quick.removeAttribute('data-z63-quick');quick.dataset.z65Route='products';
-  const label=qa('span',quick).find(el=>!el.classList.contains('z63-quick-glyph'));
-  if(label)label.textContent=t.inventory;
-  const ico=q('.z63-quick-glyph',quick);if(ico)ico.textContent='⬡';
- }
- // Avoid another copy of the duplicated above-the-fold section after product reports.
- qa('.z63-quick-tile[data-z63-quick="sale"],.zrf-tile[data-zrf-go="sales"]',home)
-  .forEach(el=>{el.removeAttribute('data-zrf-invoice');el.removeAttribute('data-z63-quick');el.removeAttribute('data-zrf-go')});
+ // The source-of-truth dashboard now has an approved Sales shortcut.
+ // Do not repurpose/remove its data-z63-quick or listener: it is intentionally
+ // distinct from the large invoice CTA and is required for all 3 languages.
+ qa('.zrf-tile[data-zrf-go="sales"]',home)
+   .forEach(el=>{el.removeAttribute('data-zrf-invoice');el.removeAttribute('data-zrf-go')});
 }
 function compactSettings(content){
  const hub=q('.zavi-clean-settings-hub',content);

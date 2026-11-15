@@ -68,6 +68,13 @@ with sync_playwright() as p:
         if any(x.get('present') and not x.get('insideSidebar') for x in assistant_status):
             print("WARNING: assistant launcher still outside menu",assistant_status,flush=True)
 
+        quick=page.evaluate("""() => [...document.querySelectorAll('#content .z63-quick-panel [data-z63-quick]')]
+          .map(el=>({key:el.dataset.z63Quick,text:el.textContent.trim(),
+            visible:getComputedStyle(el).display!=='none'}))""")
+        (ROOT/f"shortcuts_01_dashboard_{theme}.json").write_text(
+            json.dumps(quick,ensure_ascii=False,indent=2),encoding="utf-8")
+
+
         for screen, route in SCREENS:
             state = "not_captured"
             reason = ""

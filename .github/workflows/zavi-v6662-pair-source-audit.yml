@@ -44,6 +44,40 @@ jobs:
               assert not j['apps'][app]['new_design_present']
           print('PASS: exact historical ONE and ADMIN assets preserved')
           PY
+      - name: Pin the historical native Android source revision
+        run: |
+          set -euo pipefail
+          HISTORICAL=2657ab68531bb3c6877e05fc2bee67ba59ab17f8
+          git fetch --no-tags --depth=1 origin "$HISTORICAL"
+          test "$(git rev-parse FETCH_HEAD)" = "$HISTORICAL"
+          printf '%s  %s\n' \
+            '89c3c2ad9f120cf3302d342c2b429051071e2d80' 'android-build/app/src/main/java/com/zavione/mobile/MainActivity.java' \
+            '95b8f77b04b44293525800b5adeff3db292f186e' 'android-build/app/src/main/AndroidManifest.xml' \
+            '0f495c5afa8248cb49810b3d6ceded034958f13f' 'android-build/app/build.gradle' \
+            '31d00125f396f6320a4dadb4c97e989638510594' 'android-build/app/src/main/res/drawable/ic_launcher.xml' \
+            '9224f97b798d8a102da614116c88d27be337fdd7' 'android-build/app/src/main/res/values/styles.xml' \
+            | while read -r expected file; do
+                actual=$(git show "$HISTORICAL:$file" | git hash-object --stdin)
+                if [ "$actual" != "$expected" ]; then
+                  echo "::error::Historical native source changed: $file"
+                  exit 1
+                fi
+                echo "PIN VERIFIED $file"
+              done
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('original/audit/provenance.json')
+          report=json.loads(p.read_text())
+          report['historical_native_source']={
+            'commit':'2657ab68531bb3c6877e05fc2bee67ba59ab17f8',
+            'workflow_tag':'zavi-v6662-one-debug-qa',
+            'native_source_blob_pins_checked':5,
+            'production_signing_compatibility':'UNVERIFIED',
+            'byte_identical_native_rebuild':'UNVERIFIED'
+          }
+          p.write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
+          PY
       - name: Upload provenance report, no private data
         if: always()
         uses: actions/upload-artifact@v4

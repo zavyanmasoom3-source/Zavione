@@ -90,7 +90,7 @@ html[data-zavi-theme] :is(button,input,select,textarea):focus-visible{
  }
  html[data-zavi-theme] .tools{display:none!important}
  html[data-zavi-theme] .paper{
-  width:148mm!important;max-width:none!important;min-height:210mm!important;
+  /* Keep existing A4/A5/thermal print size and transform rules untouched. */
   box-shadow:none!important;border:0!important;border-radius:0!important;
  }
 }

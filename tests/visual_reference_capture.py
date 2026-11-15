@@ -103,6 +103,16 @@ with sync_playwright() as p:
                                  })""")
                                 (ROOT/f"layout_01_dashboard_{theme}.json").write_text(
                                     json.dumps(layout,ensure_ascii=False,indent=2),encoding="utf-8")
+                                fixed=page.evaluate("""() => [...document.querySelectorAll('body *')]
+                                  .filter(el => { const c=getComputedStyle(el),r=el.getBoundingClientRect();
+                                    return c.position==='fixed'&&c.visibility!=='hidden'&&c.display!=='none'&&r.width>20&&r.height>20;
+                                  }).slice(0,50).map(el => {
+                                    const r=el.getBoundingClientRect();
+                                    return {id:el.id,cls:String(el.className||'').slice(0,110),
+                                      x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)};
+                                  })""")
+                                (ROOT/f"fixed_01_dashboard_{theme}.json").write_text(
+                                    json.dumps(fixed,ensure_ascii=False,indent=2),encoding="utf-8")
                             if values["overflow"]:reason="HORIZONTAL_OVERFLOW"
                 if route=="NEW_SALE":
                     page.goto(BASE,wait_until="domcontentloaded")

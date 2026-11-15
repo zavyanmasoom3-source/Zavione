@@ -29,12 +29,12 @@ with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     for theme in ("light", "dark"):
         context = browser.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=1, locale="fa-IR")
-        context.add_init_script(f"""() => {{
+        context.add_init_script(f"""(() => {{
           try {{
             localStorage.setItem('zavi_theme_preference_v29', '{theme}');
             localStorage.setItem('zavi_public_language_v11','fa-AF');
           }} catch (_) {{}}
-        }}""")
+        }})()""")
         page = context.new_page()
         js_errors = []
         page.on("pageerror", lambda e: js_errors.append(str(e)))
@@ -92,7 +92,7 @@ with sync_playwright() as p:
         context.close()
     for theme in ("light","dark"):
         c=browser.new_context(viewport={"width":390,"height":844})
-        c.add_init_script(f"() => {{ try {{ localStorage.setItem('zavi_theme_preference_v29','{theme}') }} catch(_) {{}} }}")
+        c.add_init_script(f"(() => {{ try {{ localStorage.setItem('zavi_theme_preference_v29','{theme}') }} catch(_) {{}} }})()")
         t=c.new_page()
         t.route("**/*",lambda route:route.continue_() if route.request.url.startswith(ADMIN) else route.abort())
         try:

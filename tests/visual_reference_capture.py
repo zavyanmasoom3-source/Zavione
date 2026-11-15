@@ -54,6 +54,20 @@ with sync_playwright() as p:
                 print("PRIVATE PIN ENTRY FAILED:",page.locator("#zawiPinError").inner_text(),flush=True)
         # Let the application's real introduction animation finish before capture.
         page.wait_for_timeout(5000)
+
+        assistant_status = page.evaluate("""() => ['z637AiButton','z605-launch'].map(id => {
+          const el=document.getElementById(id);
+          if (!el) return {id,present:false};
+          const cs=getComputedStyle(el),r=el.getBoundingClientRect();
+          return {id,present:true,hidden:el.hidden||cs.display==='none',
+            position:cs.position,insideSidebar:!!el.closest('#side .sidebar-footer'),
+            x:Math.round(r.x),y:Math.round(r.y)};
+        })""")
+        (ROOT/f"assistants_01_dashboard_{theme}.json").write_text(
+            json.dumps(assistant_status,ensure_ascii=False,indent=2),encoding="utf-8")
+        if any(x.get('present') and not x.get('insideSidebar') for x in assistant_status):
+            print("WARNING: assistant launcher still outside menu",assistant_status,flush=True)
+
         for screen, route in SCREENS:
             state = "not_captured"
             reason = ""

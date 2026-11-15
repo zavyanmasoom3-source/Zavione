@@ -134,6 +134,16 @@ jobs:
           cp "$APK" qa-output/ZAVI_ONE_V6662_ORIGINAL_DESIGN_FIXED_QA.apk
           sha256sum qa-output/*.apk
 
+      - name: Assert complete 265-file historical business-code integrity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/v6662/verify_original_apk_assets.py \
+            --original original-baseline/ZAVI_one_V6662_DEBUG_QA.apk \
+            --qa android-build/app/build/outputs/apk/debug/app-debug.apk \
+            --css tools/v6662/legacy-ui-fixes.css \
+            --output qa-output/verified-original-source-assets.json
+
       - name: Upload the REAL 62MB old-design QA APK and provenance
         uses: actions/upload-artifact@v4
         if: always()

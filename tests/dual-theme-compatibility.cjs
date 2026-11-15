@@ -65,6 +65,13 @@ for(const app of ['one','admin']){
   assert(invoiceCss.includes('@media print')&&!invoiceCss.includes('width:148mm!important'),
     'new theme must not hardcode a print format');
   assert(read('zavi-dual-dashboard-v1.css').includes('z63-quick-grid'),'dashboard layout missing');
+  assert(html.includes('zavi-assistants-dock-v1.js'),'original assistant dock script not loaded');
+  assert(sw.includes("'zavi-assistants-dock-v1.js'"),'assistant dock must be available offline');
+  const dockJs=read('zavi-assistants-dock-v1.js');
+  new vm.Script(dockJs,{filename:'zavi-assistants-dock-v1.js'});
+  assert(dockJs.includes("IDS=['z637AiButton','z605-launch']"),'both existing assistant launchers must be preserved');
+  assert(style.includes('#side .sidebar-footer .zavi-assistants-dock'),'dock styling absent');
+
   assert(sw.includes("'zavi-dual-dashboard-v1.css'"),'dashboard UI must be cached');
  }
  console.log('PASS '+app+': bootstrap, CSS, SW and dual-theme state machine');

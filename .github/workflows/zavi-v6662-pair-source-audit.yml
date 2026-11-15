@@ -1,0 +1,54 @@
+name: Audit historical V66.62 ONE and ADMIN source assets
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-v6662-pair-source-audit.yml'
+      - 'tools/v6662/audit_original_pair.py'
+permissions:
+  contents: read
+jobs:
+  audit-both-originals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exact original APKs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p original/one original/admin original/audit
+          gh release download zavi-v6662-one-debug-qa --repo "$GITHUB_REPOSITORY" --pattern ZAVI_one_V6662_DEBUG_QA.apk --dir original/one
+          gh release download zavi-v6662-admin-debug-qa --repo "$GITHUB_REPOSITORY" --pattern ZAVI_admin_V6662_DEBUG_QA.apk --dir original/admin
+      - name: Verify exact byte-for-byte assets for both programs
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tools/v6662/audit_original_pair.py
+          python3 tools/v6662/audit_original_pair.py \
+            --one original/one/ZAVI_one_V6662_DEBUG_QA.apk \
+            --admin original/admin/ZAVI_admin_V6662_DEBUG_QA.apk \
+            --one-dest original/one-assets \
+            --admin-dest original/admin-assets \
+            --output original/audit/provenance.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          j=json.loads(Path('original/audit/provenance.json').read_text())
+          assert j['apps']['one']['asset_count']==265
+          assert j['apps']['admin']['asset_count']==174
+          assert j['apps']['one']['model_sha256']==j['apps']['admin']['model_sha256']
+          for app in ('one','admin'):
+              assert not j['apps'][app]['missing_local_files']
+              assert not j['apps'][app]['new_design_present']
+          print('PASS: exact historical ONE and ADMIN assets preserved')
+          PY
+      - name: Upload provenance report, no private data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_V6662_ONE_ADMIN_SOURCE_AUDIT
+          path: original/audit/provenance.json
+          retention-days: 30
+          if-no-files-found: warn

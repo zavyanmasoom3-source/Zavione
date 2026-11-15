@@ -74,6 +74,12 @@ for(const app of ['one','admin']){
   }
   assert(cleanup.includes("z63-secondary-actions"),'Old receive/pay operations must remain accessible');
   assert(layout.includes("$('.zrf-search-wrap',home)||hero"),'Global search must precede quick destinations');
+  const referenceUI=read('zavi-final-reference-store.js');
+  assert(referenceUI.includes("if(more&&!e.target.closest('#zrf-all'))return;"),
+    'Native More drawer must not be intercepted by the visual All-sections feature');
+  assert(referenceUI.includes("const menu=e.target.closest('[data-zrf-menu]')"),
+    'All-sections full feature dialog must remain available');
+
 
   assert(html.includes('zavi-assistants-dock-v1.js'),'original assistant dock script not loaded');
   assert(sw.includes("'zavi-assistants-dock-v1.js'"),'assistant dock must be available offline');

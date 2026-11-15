@@ -1,0 +1,45 @@
+name: ZAVI V66.62 old blue app - real browser route audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-v6662-old-blue-browser-audit.yml'
+      - 'tests/v6662_original_browser_qa.py'
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download historical 62MB APK, never use current redesigned app
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p original-baseline qa-output
+          gh release download zavi-v6662-one-debug-qa --repo "$GITHUB_REPOSITORY" --pattern 'ZAVI_one_V6662_DEBUG_QA.apk' --dir original-baseline
+          python3 tools/v6662/restore_legacy_assets.py --apk original-baseline/ZAVI_one_V6662_DEBUG_QA.apk --dest qa-browser-app --report qa-output/source-audit.json
+      - name: Install Chromium browser tools
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Capture real historical design and audit route navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 8188 --bind 127.0.0.1 --directory qa-browser-app >/tmp/zavi-old-browser.log 2>&1 &
+          python tests/v6662_original_browser_qa.py
+      - name: Upload visual QA evidence and source check
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_V6662_ORIGINAL_BLUE_BROWSER_QA
+          path: qa-output/
+          if-no-files-found: warn
+          retention-days: 14

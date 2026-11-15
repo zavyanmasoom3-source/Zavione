@@ -54,9 +54,9 @@ for(const app of ['one','admin']){
  if(app==='one'){
   const invoice=read('invoice.html');
   const invoiceCss=read('zavi-dual-invoice-v1.css');
-  const invoiceBootstrap=invoice.match(/<script id="zavi-theme-bootstrap-v29">([\\s\\S]*?)<\\/script>/);
+  const invoiceBootstrap=invoice.split('<script id="zavi-theme-bootstrap-v29">')[1]?.split('</script>')[0];
   assert(invoiceBootstrap, 'invoice theme bootstrap missing');
-  new vm.Script(invoiceBootstrap[1],{filename:'invoice-theme-bootstrap.js'});
+  new vm.Script(invoiceBootstrap,{filename:'invoice-theme-bootstrap.js'});
   assert(invoice.includes('zavi-dual-design-v1.css')&&invoice.includes('zavi-dual-invoice-v1.css'),
     'invoice must load both palette and print-safe UI stylesheet');
   assert(sw.includes("'zavi-dual-invoice-v1.css'"),'invoice UI must be available offline');

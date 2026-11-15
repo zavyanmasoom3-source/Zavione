@@ -205,3 +205,43 @@ html[dir="ltr"][data-zavi-theme] :is(.sidebar,.topbar,.page-head){direction:ltr}
  html[data-zavi-theme] body{background:var(--zui-surface)!important}
  html[data-zavi-theme] :is(.mobile-bottom,.admin-mobile-nav,.sidebar){display:none!important}
 }
+
+/* Dock assistant controls in navigation instead of covering invoice/form content.
+   Selectors deliberately outrank legacy position:fixed !important launchers. */
+html[data-zavi-theme] #side .sidebar-footer .zavi-assistants-dock{
+ display:block!important;min-width:0;max-width:100%;margin:0 0 13px!important;
+ padding:8px 9px!important;border:1px solid var(--zui-border)!important;
+ background:var(--zui-raised)!important;border-radius:12px!important;
+ color:var(--zui-text)!important;
+}
+html[data-zavi-theme] #side .zavi-assistants-title{
+ display:block;color:var(--zui-muted)!important;font-size:11px;line-height:1.5!important;
+ margin:0 0 6px;
+}
+html[data-zavi-theme] #side .zavi-assistants-buttons{
+ display:flex;gap:8px;align-items:center;justify-content:center;min-width:0;
+}
+html[data-zavi-theme] body #side .sidebar-footer :is(#z637AiButton,#z605-launch){
+ position:static!important;inset:auto!important;bottom:auto!important;left:auto!important;
+ right:auto!important;z-index:auto!important;transform:none!important;
+ flex:0 0 44px!important;width:44px!important;height:44px!important;
+ min-width:44px!important;min-height:44px!important;
+ padding:0!important;margin:0!important;border-radius:12px!important;
+ border:1px solid var(--zui-border)!important;box-shadow:none!important;
+ background:var(--zui-blue-soft)!important;color:var(--zui-primary)!important;
+ -webkit-text-fill-color:var(--zui-primary)!important;
+}
+html[data-zavi-theme] body #side #z637AiButton svg{
+ width:22px!important;height:22px!important;
+ color:var(--zui-primary)!important;
+}
+html[data-zavi-theme] body #side #z637AiButton::before{
+ content:none!important;display:none!important;animation:none!important;
+}
+html[data-zavi-theme] body #side #z605-launch[hidden],
+html.zawi-locked body #side #z637AiButton{
+ display:none!important;
+}
+@media print{
+ html[data-zavi-theme] #side .zavi-assistants-dock{display:none!important}
+}

@@ -91,6 +91,18 @@ with sync_playwright() as p:
                             filename=ROOT/f"{screen}_{theme}.png"
                             page.screenshot(path=str(filename),full_page=True)
                             state="captured_unverified"
+                            if route=="dashboard":
+                                # Record component bounds and actual computed colors for the first-page audit.
+                                layout=page.evaluate("""() => [...document.querySelectorAll(
+                                   '#content, #content > *, .zrf-home > *, .z62-hero, .z63-quick-panel, .z63-quick-grid, .zrf-tiles, .zrf-primary-row, .z63-finance-grid, .zrf-income-chart'
+                                 )].slice(0,70).map(el => {
+                                    const r=el.getBoundingClientRect(), cs=getComputedStyle(el);
+                                    return {tag:el.tagName,cls:String(el.className||'').slice(0,140),
+                                      x:Math.round(r.x),y:Math.round(r.y),w:Math.round(r.width),h:Math.round(r.height),
+                                      bg:cs.backgroundColor,color:cs.color,display:cs.display};
+                                 })""")
+                                (ROOT/f"layout_01_dashboard_{theme}.json").write_text(
+                                    json.dumps(layout,ensure_ascii=False,indent=2),encoding="utf-8")
                             if values["overflow"]:reason="HORIZONTAL_OVERFLOW"
                 if route=="NEW_SALE":
                     page.goto(BASE,wait_until="domcontentloaded")

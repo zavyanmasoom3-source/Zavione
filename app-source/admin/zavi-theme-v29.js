@@ -23,7 +23,10 @@
   root.setAttribute('data-zavi-appearance',theme);
   root.setAttribute('data-zavi-theme-preference',preference);
   const color=document.querySelector('meta[name="theme-color"]');
-  if(color)color.content=theme==='dark'?'#0B1220':'#EAF2FF';
+  if(color&&typeof getComputedStyle==='function'){
+   const statusColor=getComputedStyle(root).getPropertyValue('--zui-canvas').trim();
+   if(statusColor)color.content=statusColor;
+  }
   return theme;
  }
  function addAdminPicker(){

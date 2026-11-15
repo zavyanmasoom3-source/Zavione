@@ -29,6 +29,35 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Restore exact historical native Android wrapper for original-design QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          HISTORIC=2657ab68531bb3c6877e05fc2bee67ba59ab17f8
+          git fetch --no-tags --depth=1 origin "$HISTORIC"
+          test "$(git rev-parse FETCH_HEAD)" = "$HISTORIC"
+          for path in \
+            android-build/app/src/main/java/com/zavione/mobile/MainActivity.java \
+            android-build/app/src/main/AndroidManifest.xml \
+            android-build/app/src/main/res/xml/zavi_camera_paths.xml \
+            android-build/app/src/main/res/drawable/ic_launcher.xml \
+            android-build/app/src/main/res/values/styles.xml; do
+            git show "$HISTORIC:$path" > "$path"
+          done
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          git show "$HISTORIC:android-build/icons/one.webp" > android-build/app/src/main/res/drawable-nodpi/zavi_owner_logo.webp
+          python3 - <<'PY'
+          from pathlib import Path
+          m=Path('android-build/app/src/main/AndroidManifest.xml')
+          s=m.read_text()
+          assert s.count('android:icon="@drawable/ic_launcher"')==1
+          assert s.count('android:roundIcon="@drawable/ic_launcher"')==1
+          s=s.replace('android:icon="@drawable/ic_launcher"','android:icon="@drawable/zavi_owner_logo"')
+          s=s.replace('android:roundIcon="@drawable/ic_launcher"','android:roundIcon="@drawable/zavi_owner_logo"')
+          m.write_text(s)
+          PY
+          echo 'Historic native wrapper restored from exact successful release build commit.'
+          
       - name: Download exact 62 MB historical APK (not current redesign)
         shell: bash
         env:

@@ -108,3 +108,50 @@ html[data-zavi-theme] #content.zrf-dashboard :is(.zrf-tile,.z63-quick-tile,.zrf-
   transition:none!important;animation:none!important;
  }
 }
+
+
+/* Page 1 QA: keep both calendars on ONE line; use bidi isolates rather than
+ * treating the mixed-script date as one RTL text node. Keep sale action visible.
+ */
+html[data-zavi-theme] #content.zrf-dashboard .z62-date{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ flex-wrap:nowrap!important;gap:6px!important;direction:ltr!important;
+ font-variant-numeric:tabular-nums!important;text-align:center!important;
+ white-space:nowrap!important;min-width:0;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z62-date bdi{
+ color:var(--zui-on-primary)!important;unicode-bidi:isolate;
+ white-space:nowrap!important;
+}
+html[data-zavi-theme] #content.zrf-dashboard .z62-date-separator{
+ color:var(--zui-on-primary)!important;opacity:.75;
+}
+@media(max-width:600px){
+ html[data-zavi-theme] body #content.zrf-dashboard .z62-hero{
+  display:flex!important;flex-direction:column!important;align-items:stretch!important;
+  min-height:0!important;gap:9px!important;padding:13px 14px!important;
+ }
+ html[data-zavi-theme] #content.zrf-dashboard .z62-hero-copy{
+  width:100%!important;max-width:100%!important;text-align:right!important;
+ }
+ html[data-zavi-theme] #content.zrf-dashboard .z62-title{
+  font-size:clamp(17px,4.8vw,23px)!important;line-height:1.35!important;
+  margin:4px 0 3px!important;white-space:normal!important;
+ }
+ html[data-zavi-theme] #content.zrf-dashboard .z62-subtitle{
+  font-size:11px!important;line-height:1.6!important;margin:0!important;
+ }
+ html[data-zavi-theme] #content.zrf-dashboard .z62-hero-tools{
+  width:100%!important;max-width:100%!important;display:flex!important;
+  flex-direction:column!important;gap:8px!important;align-items:stretch!important;
+ }
+ html[data-zavi-theme] #content.zrf-dashboard .z62-date{
+  width:100%!important;max-width:100%!important;min-height:36px!important;
+  padding:6px!important;border-radius:11px!important;
+  font-size:clamp(9px,2.9vw,11px)!important;letter-spacing:0!important;
+ }
+ html[data-zavi-theme] body #content.zrf-dashboard .z62-hero .z62-sale{
+  width:100%!important;max-width:100%!important;min-height:44px!important;
+  justify-content:center!important;
+ }
+}

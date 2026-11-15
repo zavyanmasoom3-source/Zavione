@@ -51,5 +51,19 @@ for(const app of ['one','admin']){
  api.set('glass');
  assert.equal(rootElement.attributes['data-zavi-theme'],'dark',app+': legacy glass must migrate to dark');
  assert.equal(rootElement.attributes['data-zavi-theme-preference'],'dark',app+': migration must not expose a third palette');
+ if(app==='one'){
+  const invoice=read('invoice.html');
+  const invoiceCss=read('zavi-dual-invoice-v1.css');
+  const invoiceBootstrap=invoice.match(/<script id="zavi-theme-bootstrap-v29">([\\s\\S]*?)<\\/script>/);
+  assert(invoiceBootstrap, 'invoice theme bootstrap missing');
+  new vm.Script(invoiceBootstrap[1],{filename:'invoice-theme-bootstrap.js'});
+  assert(invoice.includes('zavi-dual-design-v1.css')&&invoice.includes('zavi-dual-invoice-v1.css'),
+    'invoice must load both palette and print-safe UI stylesheet');
+  assert(sw.includes("'zavi-dual-invoice-v1.css'"),'invoice UI must be available offline');
+  assert(invoiceCss.includes('@media print')&&!invoiceCss.includes('width:148mm!important'),
+    'new theme must not hardcode a print format');
+  assert(read('zavi-dual-dashboard-v1.css').includes('z63-quick-grid'),'dashboard layout missing');
+  assert(sw.includes("'zavi-dual-dashboard-v1.css'"),'dashboard UI must be cached');
+ }
  console.log('PASS '+app+': bootstrap, CSS, SW and dual-theme state machine');
 }

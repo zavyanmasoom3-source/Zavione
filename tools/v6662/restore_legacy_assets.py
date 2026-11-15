@@ -57,7 +57,7 @@ def main():
     updated = old.replace("</head>", '<link rel="stylesheet" href="./legacy-ui-fixes.css?v=6662-qa1" data-zavi-legacy-repair="true"></head>', 1)
     html_file.write_text(updated, encoding="utf-8")
     # Ensure every local stylesheet and script in the exact historical HTML still exists.
-    references = re.findall(r'<(?:script|link)\\b[^>]+?(?:src|href)=["\\'](\\./[^"\\']+)["\\']', updated, re.I)
+    references = re.findall(r'<(?:script|link)\b[^>]+?(?:src|href)=["\'](\./[^"\']+)["\']', updated, re.I)
     missing = [ref for ref in references if not (dest / ref.split("?",1)[0].removeprefix("./")).is_file()]
     assert not missing, f"Missing embedded assets: {missing[:30]}"
     # Validate all original Javascript assets before packing the APK.
@@ -84,7 +84,7 @@ def main():
               "finance_and_sync_test":"NOT_VERIFIED",
               "original_package_upgrade":"NOT_SUPPORTED_without_matching_signing_key"}
     Path(args.report).parent.mkdir(parents=True,exist_ok=True)
-    Path(args.report).write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\\n", encoding="utf-8")
+    Path(args.report).write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n", encoding="utf-8")
     print(json.dumps(report,indent=2))
 
 if __name__ == "__main__":

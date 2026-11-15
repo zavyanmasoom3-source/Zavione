@@ -21,8 +21,12 @@ test('ZAVI ONE 66.75 PDF design contract is embedded and persisted',()=>{
 
 test('Android identities are versioned for 66.79 and ADMIN 1.4.70',()=>{
   const gradle=read('android-build/app/build.gradle');
-  assert.match(gradle,/versionCode admin \? 4170 : 6679/);
-  assert.match(gradle,/versionName admin \? '1\.4\.70-pdf-final' : '66\.79-pdf-final'/);
+  // Normal dev versions must remain unchanged; a side-by-side legacy QA
+  // version is a separate opt-in and must never masquerade as production.
+  assert.match(gradle,/versionCode admin \? \(legacyBaselineQa \? 4171 : 4170\) : \(legacyBaselineQa \? 6681 : 6679\)/);
+  assert.match(gradle,/versionName admin \? \(legacyBaselineQa \? '1\.4\.54-original-design-qa1' : '1\.4\.70-pdf-final'\) : \(legacyBaselineQa \? '66\.62-original-design-qa1' : '66\.79-pdf-final'\)/);
+  assert.match(gradle,/applicationIdSuffix legacyBaselineQa \? '\.legacyqa' : '\.dev'/);
+  assert.match(gradle,/if \(legacyBaselineQa && productionMode\)/);
 });
 
 test('Inline receipt template cannot terminate the parent HTML script',()=>{

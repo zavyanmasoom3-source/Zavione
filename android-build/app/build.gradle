@@ -48,7 +48,10 @@ android {
             minifyEnabled false
             shrinkResources false
             debuggable false
-            signingConfig productionMode ? signingConfigs.production : signingConfigs.debug
+            // Never produce a release-labeled APK signed with the debug identity.
+        if (productionMode) {
+            signingConfig signingConfigs.production
+        }
         }
     }
 
@@ -73,4 +76,17 @@ dependencies {
     implementation 'androidx.webkit:webkit:1.13.0'
     implementation 'androidx.core:core:1.13.1'
     implementation 'androidx.biometric:biometric:1.1.0'
+}
+
+ // Fail closed for every release task, including assemble, bundle and signing.
+ // In-place upgrades additionally require certificate and version verification.
+gradle.taskGraph.whenReady { graph ->
+    boolean releaseRequested = graph.allTasks.any { task ->
+        task.path.startsWith(':app:') && task.name.toLowerCase(java.util.Locale.ROOT).contains('release')
+    }
+    if (releaseRequested && !productionMode) {
+        throw new GradleException(
+            'ZAVI release blocked: use -PzaviProduction=true and validated production signing credentials. A debug key is never a release key.'
+        )
+    }
 }

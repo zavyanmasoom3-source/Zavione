@@ -15,7 +15,7 @@ function localeDate(){
   const locale=l==="ps"?"ps-AF-u-ca-persian":"fa-AF-u-ca-persian";
   const solar=new Intl.DateTimeFormat(locale,{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(today);
   const greg=new Intl.DateTimeFormat("en-GB",{day:"numeric",month:"short",year:"numeric"}).format(today);
-  return (solar+"  |  "+greg).replace(/[\\u06f0-\\u06f9\\u0660-\\u0669]/g,ch=>{
+  return (solar+"  |  "+greg).replace(/[۰-۹٠-٩]/g,ch=>{
    const n=ch.codePointAt(0);return String(n>=0x6f0?n-0x6f0:n-0x660);
   });
  }catch(_){

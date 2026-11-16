@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prove the new old-blue QA contains exactly the original business-code assets.
 
-Only index.html (one CSS link) and legacy-ui-fixes.css may differ.
+Only index.html (one CSS link + one known durable-save repair) and legacy-ui-fixes.css may differ.
 Does not test native Java behavior, accounts, real networking or upgrade safety.
 """
 import argparse
@@ -9,6 +9,7 @@ import hashlib
 import json
 import zipfile
 from pathlib import Path
+from patch_durable_save import transform as fix_durable_save
 
 ORIGINAL_SHA256 = "2eb852d7cdb026ccd828a660328bd26bb474f9880430e0ea3007f51489ee50dc"
 ORIGINAL_COUNT = 265
@@ -41,7 +42,8 @@ def verify(original, qa, css_file, output):
     expected_html = old[INDEX_NAME].replace(
         b"</head>", (EXPECTED_LINK + "</head>").encode("utf-8"), 1
     )
-    assert now[INDEX_NAME] == expected_html, "Unexpected HTML/JS mutation"
+    expected_html = fix_durable_save(expected_html.decode("utf-8")).encode("utf-8")
+    assert now[INDEX_NAME] == expected_html, "Unexpected HTML/JS mutation outside the approved durable-save fix"
     expected_css = Path(css_file).read_bytes()
     assert now[CSS_NAME] == expected_css, "Unverified visual patch"
     unchanged = [name for name in old if name != INDEX_NAME]
@@ -59,9 +61,11 @@ def verify(original, qa, css_file, output):
         "changed_original_assets": [INDEX_NAME],
         "added_assets": [CSS_NAME],
         "new_design_present": False,
-        "business_logic_modified": False,
+        "business_logic_modified": True,
+        "approved_business_logic_change": "after durable local commit, safely report backup/cloud failures and continue callbacks",
         "native_runtime_tested": False,
         "financial_operations_tested": False,
+        "durable_save_regression_tested_by_separate_node_suite": True,
         "installed_upgrade_tested": False
     }
     dest = Path(output)

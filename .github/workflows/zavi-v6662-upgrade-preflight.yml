@@ -1,0 +1,86 @@
+name: ZAVI V66.62 old-install upgrade safety preflight
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-v6662-upgrade-preflight.yml'
+      - 'tools/v6662/upgrade_preflight.py'
+      - 'tests/test_upgrade_preflight.py'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit-upgrade-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: one
+            release_tag: zavi-v6662-one-debug-qa
+            reference_name: ZAVI_one_V6662_DEBUG_QA.apk
+            historical_sha256: 2eb852d7cdb026ccd828a660328bd26bb474f9880430e0ea3007f51489ee50dc
+            qa_run_id: 43760832118
+            qa_artifact: ZAVI_ONE_V6662_OLD_BLUE_DESIGN_QA_APK
+            qa_filename: ZAVI_ONE_V6662_ORIGINAL_DESIGN_FIXED_QA.apk
+            qa_sha256: 710e27f366a205ec6b65c9ce6c559146719182a9eb4482b42a8f17a7dc27d217
+          - app: admin
+            release_tag: zavi-v6662-admin-debug-qa
+            reference_name: ZAVI_admin_V6662_DEBUG_QA.apk
+            historical_sha256: 7d42cd47fe0f82274fd648d5d215612faf1d8fec068c624354fd1f5d69a8d63b
+            qa_run_id: 43761270124
+            qa_artifact: ZAVI_ADMIN_V6662_OLD_BLUE_SOURCE_PRESERVED_QA
+            qa_filename: ZAVI_ADMIN_V6662_OLD_BLUE_SOURCE_PRESERVED_QA.apk
+            qa_sha256: 3ef4f94aa6c3ae1d45541a7c5d2b45ea234630f981b4581d58fa9b4a49841a59
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test identity preflight against forged Android identities
+        run: python3 -m unittest discover -s tests -p 'test_upgrade_preflight.py' -v
+      - name: Download original verified APK and source-preserving QA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p old qa report
+          gh release download "${{ matrix.release_tag }}" --repo "$GITHUB_REPOSITORY" --pattern "${{ matrix.reference_name }}" --dir old
+          gh run download "${{ matrix.qa_run_id }}" --repo "$GITHUB_REPOSITORY" --name "${{ matrix.qa_artifact }}" --dir qa
+          echo "${{ matrix.historical_sha256 }}  old/${{ matrix.reference_name }}" | sha256sum --check
+          echo "${{ matrix.qa_sha256 }}  qa/${{ matrix.qa_filename }}" | sha256sum --check
+      - name: Prepare Android manifest and certificate verification
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "build-tools;36.0.0" >/dev/null
+      - name: Prove QA cannot overwrite existing installation or data
+        run: |
+          set -euo pipefail
+          set +e
+          python3 tools/v6662/upgrade_preflight.py \
+            --installed-reference "old/${{ matrix.reference_name }}" \
+            --candidate "qa/${{ matrix.qa_filename }}" \
+            --apksigner "$ANDROID_HOME/build-tools/36.0.0/apksigner" \
+            --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt" \
+            --json "report/${{ matrix.app }}-upgrade-identity.json"
+          EXIT_CODE=$?
+          set -e
+          test "$EXIT_CODE" -eq 2
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          name="${{ matrix.app }}"
+          report=json.loads(Path(f'report/{name}-upgrade-identity.json').read_text())
+          assert report['safe_in_place_upgrade'] is False
+          assert any(reason.startswith('PACKAGE_MISMATCH') for reason in report['reasons'])
+          assert report['old']['package']+ '.legacyqa' == report['new']['package']
+          assert report['signing_lineage_verified'] is False
+          print('PASS (EXPECTED SAFETY BLOCK): QA installs side by side, not over customer data.')
+          PY
+      - name: Publish non-sensitive install safety report only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_V6662_UPGRADE_PREFLIGHT_${{ matrix.app }}
+          path: report/*.json
+          retention-days: 30
+          if-no-files-found: warn

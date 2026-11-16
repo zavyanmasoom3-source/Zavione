@@ -1,25 +1,22 @@
-name: Build ZAVI ONE 66.79 PDF APKs
+name: Archived PDF redesign diagnostic (manual opt-in only)
 
+# This source is NOT the owner's approved original-blue V66.62 Android product.
+# Never trigger old/new redesign packaging automatically on dev updates.
 on:
-  push:
-    branches: [dev]
-    paths:
-      - 'release/build-pdf-66-75-qa.trigger'
-      - 'android-build/**'
-      - 'app-source/one/**'
-      - 'app-source/admin/**'
-      - 'database/staged/20261107_zavi_v675_pdf_design_payload.sql'
-      - '.github/workflows/build-pdf-66-75-qa.yml'
-  pull_request:
-    branches: [main]
   workflow_dispatch:
+    inputs:
+      confirm_pdf_redesign:
+        description: 'Not approved original V66.62. Type I_APPROVE_PDF_DESIGN_QA to run this archived diagnostic.'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
   android-qa:
-    name: Clean build and verify 66.79 / ADMIN 1.4.70 APKs
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.confirm_pdf_redesign == 'I_APPROVE_PDF_DESIGN_QA' }}
+    name: Archived PDF redesign diagnostic — NOT approved V66.62 original blue
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:

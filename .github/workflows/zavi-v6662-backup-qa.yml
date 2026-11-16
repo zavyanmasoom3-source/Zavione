@@ -1,0 +1,36 @@
+name: V66.62 original 62MB backup import/export contract
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-v6662-backup-qa.yml'
+      - 'tests/v6662-original-backup-roundtrip.cjs'
+permissions:
+  contents: read
+jobs:
+  historical-backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download immutable original baseline; NEVER use dev-redesign source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p historical
+          gh release download zavi-v6662-one-debug-qa --repo "$GITHUB_REPOSITORY" \
+            --pattern ZAVI_one_V6662_DEBUG_QA.apk --dir historical
+          echo "2eb852d7cdb026ccd828a660328bd26bb474f9880430e0ea3007f51489ee50dc  historical/ZAVI_one_V6662_DEBUG_QA.apk" | sha256sum --check
+      - name: Run real old-code backup restore tests against synthetic customer data
+        shell: bash
+        env:
+          ZAVI_BASELINE_APK: historical/ZAVI_one_V6662_DEBUG_QA.apk
+        run: node --test tests/v6662-original-backup-roundtrip.cjs
+      - name: Remind that Android file picker / storage upgrade remains separate
+        run: echo "PASS only if the historical JS crypto/tenant roundtrip tests pass; this does not certify real Android transfer."

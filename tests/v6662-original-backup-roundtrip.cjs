@@ -134,6 +134,7 @@ test('original encrypted backup can decrypt and import for the SAME owner',async
   assert.equal(obj.alg,'AES-256-GCM');
   assert.equal(obj.iterations,220000);
   assert.equal(ctx.download.data.includes('QA Customer'),false,'No plaintext ledger data may appear in encrypted file');
+  ctx.messages.length=0;
   ctx.importBackup(file(ctx.download.data));
   await settle(ctx);
   assert.equal(ctx.calls,1);
@@ -145,6 +146,7 @@ test('wrong encrypted backup password does not restore data',async()=>{
   await ctx.backupSecure();
   const encrypted=ctx.download.data;
   ctx.prompt=()=> 'wrong-key';
+  ctx.messages.length=0;
   ctx.importBackup(file(encrypted));
   await settle(ctx);
   assert.equal(ctx.calls,0);

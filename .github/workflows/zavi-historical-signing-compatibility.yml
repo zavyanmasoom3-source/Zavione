@@ -1,0 +1,127 @@
+name: ZAVI historic APK vs archived signing certificate (read-only)
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-historical-signing-compatibility.yml'
+permissions:
+  contents: read
+jobs:
+  certificate-comparison:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: one
+            release: zavi-v6662-one-debug-qa
+            apk: ZAVI_one_V6662_DEBUG_QA.apk
+            digest: 49df408626e342d6a6e6c6f5cd2c27b6cfabdc1be5eab113cdafd19b30683f38
+            apk_sha: 2eb852d7cdb026ccd828a660328bd26bb474f9880430e0ea3007f51489ee50dc
+            key_file: ZAVI_ONE_100_YEAR_RELEASE.jks
+          - app: admin
+            release: zavi-v6662-admin-debug-qa
+            apk: ZAVI_admin_V6662_DEBUG_QA.apk
+            digest: 1e1ce68d63626e29435c3530106e6853dc7a25343a97354281d2084b2c5457f7
+            apk_sha: 7d42cd47fe0f82274fd648d5d215612faf1d8fec068c624354fd1f5d69a8d63b
+            key_file: ZAVI_ONE_ADMIN_100_YEAR_RELEASE.jks
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Read and attest original APK public certificate
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p historical signing-audit
+          gh release download "${{ matrix.release }}" --repo "$GITHUB_REPOSITORY" --pattern "${{ matrix.apk }}" --dir historical
+          echo "${{ matrix.apk_sha }}  historical/${{ matrix.apk }}" | sha256sum --check
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install 'build-tools;36.0.0' >/dev/null
+          output=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "historical/${{ matrix.apk }}")
+          digest=$(printf '%s\n' "$output" | sed -n -E 's/^Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)$/\1/p')
+          if [ "$digest" != "${{ matrix.digest }}" ]; then
+             echo "::error::Historical public certificate changed, refusing comparison"
+             exit 1
+          fi
+          printf 'Pinned original APK certificate verified: %s\n' "$digest"
+      - name: Compare available signing keystore's PUBLIC certificate to historical installation
+        shell: bash
+        env:
+          STORED_KEY_BASE64: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEYSTORE_BASE64 || secrets.ZAVI_ADMIN_KEYSTORE_BASE64 }}
+          STORED_KEY_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
+          STORED_KEY_ALIAS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_ALIAS || secrets.ZAVI_ADMIN_KEY_ALIAS }}
+          EXPECTED_DIGEST: ${{ matrix.digest }}
+          EXPECTED_ZIP_ENTRY: ${{ matrix.key_file }}
+          APP_VARIANT: ${{ matrix.app }}
+        run: |
+          set -euo pipefail
+          umask 077
+          keyfile="$RUNNER_TEMP/private-zavi-signing-keystore"
+          trap 'rm -f "$keyfile"' EXIT
+          if [ -z "$STORED_KEY_BASE64" ] || [ -z "$STORED_KEY_PASSWORD" ] || [ -z "$STORED_KEY_ALIAS" ]; then
+            echo '{"upgrade_identity_compatible":false,"reason":"SIGNING_SECRET_UNAVAILABLE","app":"${{ matrix.app }}","production_release_ready":false}' > signing-audit/${{ matrix.app }}.json
+            echo "::warning::No stored release signing secret available for this app; upgrade remains BLOCKED"
+            exit 0
+          fi
+          printf '%s' "$STORED_KEY_BASE64" | base64 --decode > "$keyfile"
+          python3 - <<'PY'
+          import os,zipfile
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'private-zavi-signing-keystore'
+          if zipfile.is_zipfile(p):
+              name=os.environ['EXPECTED_ZIP_ENTRY']
+              with zipfile.ZipFile(p) as z:
+                  entries=[entry for entry in z.infolist() if entry.filename == name and not entry.is_dir()]
+                  if len(entries)!=1 or entries[0].file_size>1048576:
+                      raise SystemExit('Invalid signing archive layout; no private content printed')
+                  key=z.read(entries[0])
+              p.write_bytes(key)
+          if p.stat().st_size<1000 or p.stat().st_size>1048576:
+              raise SystemExit('Invalid signing keystore size')
+          PY
+          keytype=''
+          for t in PKCS12 JKS; do
+            if keytool -list -keystore "$keyfile" -storetype "$t" -storepass "$STORED_KEY_PASSWORD" -alias "$STORED_KEY_ALIAS" >/dev/null 2>&1; then
+              keytype="$t"
+              break
+            fi
+          done
+          if [ -z "$keytype" ]; then
+            echo '{"upgrade_identity_compatible":false,"reason":"SIGNING_KEY_CANNOT_BE_OPENED","app":"${{ matrix.app }}","production_release_ready":false}' > signing-audit/${{ matrix.app }}.json
+            echo "::warning::Cannot open the saved signing keystore; upgrade remains BLOCKED"
+            exit 0
+          fi
+          cert_digest=$(keytool -exportcert -keystore "$keyfile" -storetype "$keytype" -storepass "$STORED_KEY_PASSWORD" -alias "$STORED_KEY_ALIAS" 2>/dev/null | sha256sum | cut -d' ' -f1)
+          export CERT_DIGEST="$cert_digest"
+          python3 - <<'PY'
+          import os,json
+          from pathlib import Path
+          current=os.environ['CERT_DIGEST']
+          old=os.environ['EXPECTED_DIGEST']
+          equal=(current==old)
+          report={'app':os.environ['APP_VARIANT'],
+            'installed_historical_certificate_sha256':old,
+            'saved_keystore_public_certificate_sha256':current,
+            'upgrade_identity_compatible':equal,
+            'reason':'CERTIFICATE_MATCH' if equal else 'CERTIFICATE_MISMATCH',
+            'production_release_ready':False,
+            'signing_lineage_not_tested':True,
+            'customer_data_not_read':True}
+          Path('signing-audit/'+os.environ['APP_VARIANT']+'.json').write_text(json.dumps(report,indent=2)+'\n')
+          print('Certificate comparison:',report['reason'])
+          if not equal:print('BLOCKED: never overwrite an installed app with a different signer.')
+          PY
+      - name: Upload PUBLIC certificate digest comparison only (never keys)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ORIGINAL_INSTALL_SIGNING_AUDIT_${{ matrix.app }}
+          path: signing-audit/*.json
+          retention-days: 30
+          if-no-files-found: warn

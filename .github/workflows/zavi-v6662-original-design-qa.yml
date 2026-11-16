@@ -83,6 +83,17 @@ jobs:
           ! grep -q 'zavi-showcase-v6668.css' android-build/app/src/main/assets/index.html
           grep -q 'legacy-ui-fixes.css' android-build/app/src/main/assets/index.html
 
+      - name: Fix confirmed post-commit backup/sync exception without changing the old design
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/v6662/patch_durable_save.py \
+            --html android-build/app/src/main/assets/index.html \
+            --report qa-output/durable-save-repair.json
+          ZAVI_HISTORIC_APK=original-baseline/ZAVI_one_V6662_DEBUG_QA.apk \
+          ZAVI_REPAIRED_INDEX=android-build/app/src/main/assets/index.html \
+            node --test tests/v6662-durable-save-regression.cjs
+
       - name: Set up Android build tools
         shell: bash
         run: |

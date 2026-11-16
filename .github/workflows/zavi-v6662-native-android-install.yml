@@ -1,0 +1,76 @@
+name: ZAVI V66.62 old-blue native Android install smoke (emulator)
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-v6662-native-android-install.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  android-native-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Retrieve original-blue signed QA APKs (no production app data)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p qa-apks qa-evidence
+          gh run download 43808096134 --repo "$GITHUB_REPOSITORY" --name ZAVI_ONE_V6662_OLD_BLUE_DESIGN_QA_APK --dir qa-apks/one
+          gh run download 43761270124 --repo "$GITHUB_REPOSITORY" --name ZAVI_ADMIN_V6662_OLD_BLUE_SOURCE_PRESERVED_QA --dir qa-apks/admin
+          echo 'aae18558990a5780935a50b37c104015a520ac3ddee8a6d2b73eabdc7eb46086  qa-apks/one/ZAVI_ONE_V6662_ORIGINAL_DESIGN_FIXED_QA.apk' | sha256sum --check
+          echo '3ef4f94aa6c3ae1d45541a7c5d2b45ea234630f981b4581d58fa9b4a49841a59  qa-apks/admin/ZAVI_ADMIN_V6662_OLD_BLUE_SOURCE_PRESERVED_QA.apk' | sha256sum --check
+      - name: Start Android emulator and install/launch BOTH original-design QA apps
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_4
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: |
+            set -euo pipefail
+            adb wait-for-device
+            adb shell input keyevent 82
+            adb install -r qa-apks/one/ZAVI_ONE_V6662_ORIGINAL_DESIGN_FIXED_QA.apk
+            adb install -r qa-apks/admin/ZAVI_ADMIN_V6662_OLD_BLUE_SOURCE_PRESERVED_QA.apk
+            for APP in one admin; do
+              if [ "$APP" = one ]; then
+                PACKAGE=com.zavione.one.legacyqa
+              else
+                PACKAGE=com.zavione.one.admin.legacyqa
+              fi
+              adb shell pm path "$PACKAGE" | grep -F 'package:'
+              adb shell logcat -c
+              adb shell am start -W -n "$PACKAGE/com.zavione.mobile.MainActivity"
+              sleep 14
+              adb shell pidof "$PACKAGE" | tr -d '\r' | grep -Eq '^[0-9]+'
+              adb exec-out screencap -p > "qa-evidence/${APP}-android35.png"
+              test -s "qa-evidence/${APP}-android35.png"
+              adb logcat -d -s AndroidRuntime:E > "qa-evidence/${APP}-android-runtime-errors.txt"
+              if grep -A 15 'FATAL EXCEPTION' "qa-evidence/${APP}-android-runtime-errors.txt" | grep -F "$PACKAGE"; then
+                echo "::error::Fatal exception in $PACKAGE"
+                exit 1
+              fi
+              adb shell dumpsys activity activities | grep -E "$PACKAGE|mResumedActivity" | tail -12 > "qa-evidence/${APP}-activity.txt" || true
+              adb shell am force-stop "$PACKAGE"
+            done
+            echo 'NATIVE INSTALL PASS: ONE and ADMIN launch and stay alive in isolated emulator.'
+      - name: Upload native evidence and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_V6662_ANDROID35_NATIVE_INSTALL_QA
+          path: qa-evidence/
+          retention-days: 14
+          if-no-files-found: warn

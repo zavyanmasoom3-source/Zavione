@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/workflows/zavi-v6662-old-blue-browser-audit.yml'
       - 'tests/v6662_original_browser_qa.py'
+      - 'tests/v6662-durable-save-regression.cjs'
+      - 'tools/v6662/patch_durable_save.py'
 permissions:
   contents: read
 jobs:
@@ -25,6 +27,17 @@ jobs:
           mkdir -p original-baseline qa-output
           gh release download zavi-v6662-one-debug-qa --repo "$GITHUB_REPOSITORY" --pattern 'ZAVI_one_V6662_DEBUG_QA.apk' --dir original-baseline
           python3 tools/v6662/restore_legacy_assets.py --apk original-baseline/ZAVI_one_V6662_DEBUG_QA.apk --dest qa-browser-app --report qa-output/source-audit.json
+      - name: Apply the already-tested durable-save fix to exact old-source browser stage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/v6662/patch_durable_save.py \
+            --html qa-browser-app/index.html \
+            --report qa-output/durable-save-stage.json
+          ZAVI_HISTORIC_APK=original-baseline/ZAVI_one_V6662_DEBUG_QA.apk \
+          ZAVI_REPAIRED_INDEX=qa-browser-app/index.html \
+            node --test tests/v6662-durable-save-regression.cjs
+
       - name: Install Chromium browser tools
         run: |
           python -m pip install playwright

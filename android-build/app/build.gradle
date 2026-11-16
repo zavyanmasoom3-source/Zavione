@@ -20,6 +20,51 @@ if (productionMode) {
     }
 }
 
+
+/*
+ * Production UPDATE gate: a same-package Android upgrade must be signed by the
+ * ORIGINAL installed app certificate. Public fingerprints below are from the
+ * immutable historical ONE/ADMIN APKs, not secret signing material.
+ * This intentionally fails closed while the historical signing keys differ.
+ * A distinct-signing-lineage migration or user-data export/import requires
+ * separate device-level approval and verification.
+ */
+if (productionMode) {
+    final String expectedInstalledFingerprint = admin
+        ? "1e1ce68d63626e29435c3530106e6853dc7a25343a97354281d2084b2c5457f7"
+        : "49df408626e342d6a6e6c6f5cd2c27b6cfabdc1be5eab113cdafd19b30683f38"
+    File keystoreFile = file(System.getenv("ZAVI_KEYSTORE_PATH"))
+    String keyAlias = System.getenv("ZAVI_KEY_ALIAS")
+    String storePassword = System.getenv("ZAVI_KEYSTORE_PASSWORD")
+    java.security.cert.Certificate publicCertificate = null
+    for (String storeFormat : ["PKCS12", "JKS"]) {
+        try {
+            java.security.KeyStore keyStore = java.security.KeyStore.getInstance(storeFormat)
+            keystoreFile.withInputStream { stream ->
+                keyStore.load(stream, storePassword.toCharArray())
+            }
+            publicCertificate = keyStore.getCertificate(keyAlias)
+            if (publicCertificate != null) break
+        } catch (Exception ignored) {
+            // The other supported keystore format may still be valid.
+        }
+    }
+    if (publicCertificate == null) {
+        throw new GradleException(
+            "ZAVI production update blocked: the signing certificate alias cannot be verified."
+        )
+    }
+    String actualFingerprint = java.security.MessageDigest
+        .getInstance("SHA-256").digest(publicCertificate.getEncoded()).encodeHex().toString()
+    if (actualFingerprint != expectedInstalledFingerprint) {
+        throw new GradleException(
+            "ZAVI production update blocked: signing certificate DOES NOT MATCH the archived " +
+            "installed application identity. Never distribute as an in-place update. " +
+            "A separately tested backup/import migration is required."
+        )
+    }
+}
+
 android {
     namespace 'com.zavione.mobile'
     compileSdk 36

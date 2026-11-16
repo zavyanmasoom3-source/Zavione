@@ -153,6 +153,34 @@ test('wrong encrypted backup password does not restore data',async()=>{
   assert.match(ctx.messages.join(' '),/رمز نادرست|آسیب/);
 });
 
+
+test('side-by-side simulated apps transfer the SAME financial snapshot without modifying source app',async()=>{
+  const source=sandbox();
+  const target=sandbox();
+  const untouchedSource=JSON.stringify(source.ctx.db);
+  target.ctx.db={version:1,products:[],contacts:[],accounts:[],tx:[]};
+  target.ctx.importBackup(file(await sealed(source.ctx)));
+  await settle(target.ctx);
+  assert.equal(target.ctx.calls,1);
+  const expected=JSON.parse(untouchedSource);
+  for(const field of ['products','contacts','accounts','tx']) {
+    assert.deepEqual(target.ctx.saved[field],expected[field],field+' must survive the move');
+  }
+  assert.equal(source.ctx.calls,0,'export must not rewrite the original app data');
+  assert.equal(JSON.stringify(source.ctx.db),untouchedSource);
+});
+
+test('legacy unscoped backup requires explicit warning before replacement',async()=>{
+  const answers=[];
+  const {ctx}=sandbox({confirm:message=>{answers.push(String(message));return false;}});
+  const raw=ctx.zaviExportBackupV646();
+  delete raw.zavi_backup_scope;
+  ctx.importBackup(file(raw));
+  await new Promise(resolve=>setTimeout(resolve,100));
+  assert.equal(ctx.calls,0);
+  assert.ok(answers.some(msg=>msg.includes('SHA-256')));
+});
+
 test('viewer is blocked from exporting owner financial records',async()=>{
   const {ctx}=sandbox({role:'viewer'});
   await ctx.backup();

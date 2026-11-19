@@ -1,0 +1,114 @@
+name: ZAVI ADMIN V66.62 old blue visual-only QA
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-v6662-admin-visual-polish-qa.yml'
+      - 'tools/v6662/admin-legacy-ui-polish.css'
+      - 'tools/v6662/stage_admin_visual_polish.py'
+      - 'tools/v6662/audit_original_pair.py'
+      - 'tests/v6662_admin_visual_login_qa.py'
+permissions:
+  contents: read
+jobs:
+  admin-original-design-polish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Restore exact historical Android native source, separate from new designs
+        shell: bash
+        run: |
+          set -euo pipefail
+          HISTORIC=2657ab68531bb3c6877e05fc2bee67ba59ab17f8
+          git fetch --no-tags --depth=1 origin "$HISTORIC"
+          test "$(git rev-parse FETCH_HEAD)" = "$HISTORIC"
+          for file in \
+            android-build/app/src/main/java/com/zavione/mobile/MainActivity.java \
+            android-build/app/src/main/AndroidManifest.xml \
+            android-build/app/src/main/res/xml/zavi_camera_paths.xml \
+            android-build/app/src/main/res/drawable/ic_launcher.xml \
+            android-build/app/src/main/res/values/styles.xml; do
+            git show "$HISTORIC:$file" > "$file"
+          done
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          git show "$HISTORIC:android-build/icons/admin.webp" > android-build/app/src/main/res/drawable-nodpi/zavi_owner_logo.webp
+          python3 - <<'PY'
+          from pathlib import Path
+          m=Path('android-build/app/src/main/AndroidManifest.xml')
+          s=m.read_text()
+          assert s.count('android:icon="@drawable/ic_launcher"')==1
+          assert s.count('android:roundIcon="@drawable/ic_launcher"')==1
+          s=s.replace('android:icon="@drawable/ic_launcher"','android:icon="@drawable/zavi_owner_logo"')
+          s=s.replace('android:roundIcon="@drawable/ic_launcher"','android:roundIcon="@drawable/zavi_owner_logo"')
+          m.write_text(s)
+          PY
+      - name: Retrieve both immutable historical APKs and stage original ADMIN
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p original/one original/admin qa-output
+          gh release download zavi-v6662-one-debug-qa --repo "$GITHUB_REPOSITORY" --pattern ZAVI_one_V6662_DEBUG_QA.apk --dir original/one
+          gh release download zavi-v6662-admin-debug-qa --repo "$GITHUB_REPOSITORY" --pattern ZAVI_admin_V6662_DEBUG_QA.apk --dir original/admin
+          rm -rf android-build/app/src/main/assets
+          python3 tools/v6662/audit_original_pair.py \
+            --one original/one/ZAVI_one_V6662_DEBUG_QA.apk \
+            --admin original/admin/ZAVI_admin_V6662_DEBUG_QA.apk \
+            --admin-dest android-build/app/src/main/assets \
+            --output qa-output/paired-original-source.json
+          python3 tools/v6662/stage_admin_visual_polish.py stage \
+            --original original/admin/ZAVI_admin_V6662_DEBUG_QA.apk \
+            --assets android-build/app/src/main/assets \
+            --report qa-output/admin-polish-stage.json
+      - name: Browser-smoke actual ADMIN login and responsive styling, no owner sign-in
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install playwright
+          python3 -m playwright install --with-deps chromium
+          python3 -m http.server 8190 --bind 127.0.0.1 --directory android-build/app/src/main/assets >/tmp/zavi-admin-visual-qa.log 2>&1 &
+          python3 tests/v6662_admin_visual_login_qa.py
+      - name: Install Android build platform
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-36" "build-tools;36.0.0" >/dev/null
+          chmod +x android-build/gradlew
+      - name: Compile isolated original-blue ADMIN visual QA
+        shell: bash
+        working-directory: android-build
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon :app:assembleDebug -PzaviApp=admin -PzaviLegacyBaselineQa=true -PzaviProduction=false
+      - name: Verify signer, package and strict historical source parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=android-build/app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.zavione.one.admin.legacyqa'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "versionName='1.4.54-original-design-qa1-debug'"
+          python3 tools/v6662/stage_admin_visual_polish.py verify \
+            --original original/admin/ZAVI_admin_V6662_DEBUG_QA.apk \
+            --qa "$APK" \
+            --report qa-output/admin-polish-verified.json
+          cp "$APK" qa-output/ZAVI_ADMIN_V6662_BLUE_VISUAL_ONLY_QA.apk
+      - name: Upload QA candidate, browser captures and integrity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_ADMIN_V6662_BLUE_VISUAL_ONLY_QA
+          path: qa-output/
+          retention-days: 14
+          if-no-files-found: warn

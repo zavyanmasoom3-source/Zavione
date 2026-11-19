@@ -245,3 +245,16 @@ html #overlay :is(.form-grid,.action-group)>*{min-width:0}
 @media(prefers-reduced-motion:reduce){
  html #content :is(.card,.stat,.btn,.nav-btn,.record-card){scroll-behavior:auto;animation:none!important;transition:none!important}
 }
+
+/* V66.62 primary sale action contrast correction: old blue gradients retained. */
+html[data-zavi-theme="light"] #content .page-head .btn.primary{
+ color:#103f6c!important;
+ -webkit-text-fill-color:#103f6c!important;
+ text-shadow:none!important;
+ border-color:#a5c8e8!important;
+}
+html[data-zavi-theme="dark"] #content .page-head .btn.primary{
+ color:#fff!important;
+ -webkit-text-fill-color:#fff!important;
+ text-shadow:none!important;
+}

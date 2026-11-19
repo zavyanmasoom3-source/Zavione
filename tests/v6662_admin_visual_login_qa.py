@@ -19,13 +19,13 @@ with sync_playwright() as p:
         for width, height in ((390, 844), (768, 1024)):
             ctx = browser.new_context(viewport={"width": width, "height": height},
                                       device_scale_factor=1, locale="fa-AF")
-            ctx.add_init_script("""(theme) => {
+            ctx.add_init_script("""(() => {
                 try {
-                    localStorage.setItem('zavi.visual.theme.v1', theme);
-                    localStorage.setItem('zavi_theme_preference_v29', theme);
+                    localStorage.setItem('zavi.visual.theme.v1', '%s');
+                    localStorage.setItem('zavi_theme_preference_v29', '%s');
                     localStorage.setItem('zavi_public_language_v11', 'fa-AF');
                 } catch (_) {}
-            }""", theme)
+            })()""" % (theme, theme))
             page = ctx.new_page()
             errors = []
             page.on("pageerror", lambda error: errors.append(str(error)))

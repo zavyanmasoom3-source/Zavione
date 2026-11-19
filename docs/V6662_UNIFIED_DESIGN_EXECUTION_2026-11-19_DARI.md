@@ -105,8 +105,9 @@
 - آزمون قدیمی 20 مسیر و build QA 62MB پیش‌تر موفق بوده‌اند.
 - Build ONE با CSS یکدست‌شده: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44471283331 — موفق.
 - Build ADMIN با CSS یکدست‌شده: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44471283326 — موفق.
-- آزمایش تازه بعد از آخرین اصلاح کنتراست ONE: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44472846011 — هنگام نگارش هنوز نتیجه ندارد.
-- آزمون 36 حالت صفحه ورود ADMIN: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44472708213 — هنگام نگارش هنوز نتیجه ندارد.
+- بیلد APK آزمایشی ONE بعد از آخرین اصلاح خوانایی: **SUCCESS** — https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44472845974
+- آزمایش مرورگر بعد از آخرین اصلاح کنتراست: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44472846011 — تا هنگام نگارش در جریان؛ نتیجه نهایی باید بررسی شود.
+- آزمون 36 حالت صفحه ورود ADMIN: **36/36 PASS** — 3 زبان × 3 حالت × 4 اندازه؛ https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44472708213
 
 ### محدودیت‌های عملی که عمداً حل‌شده اعلام نمی‌شوند
 - 80 و 270 تست، تست **مسیرها و رندر** هستند، نه ثبت واقعی خرید/فروش یا پرداخت.

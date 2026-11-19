@@ -1,0 +1,71 @@
+/* V66.62 historical ADMIN — presentation-only refinement.
+ * Scoped to the real owner login and admin shell. Keeps old blue palette,
+ * all existing actions, permissions, data and native historical assets intact.
+ */
+html {
+ --zavi-admin-polish-focus:#2469cf;
+ --zavi-admin-polish-ring:rgba(36,105,207,.22);
+ --zavi-admin-polish-radius:14px;
+}
+html[data-zavi-theme="dark"] {
+ --zavi-admin-polish-focus:#93c6ff;
+ --zavi-admin-polish-ring:rgba(147,198,255,.26);
+}
+html :is(#authScreen,#appScreen,#view) {min-width:0}
+html :is(#authScreen,#appScreen) {
+ text-rendering:optimizeLegibility;
+}
+html #appScreen :is(.workspace,.topbar,.breadcrumbs,.nav,.nav-item,#view){
+ min-width:0;
+}
+html #appScreen .nav-item {
+ min-height:44px;
+ border-radius:12px;
+ line-height:1.45;
+ overflow-wrap:break-word;
+ touch-action:manipulation;
+}
+html :is(#authScreen,#appScreen) :is(button,.button,[role="button"]) {
+ min-height:44px;
+ touch-action:manipulation;
+}
+html #appScreen #view :where(.card,.panel,.stat,.summary-card,.metric-card) {
+ border-radius:var(--zavi-admin-polish-radius);
+ background-clip:padding-box;
+}
+html #appScreen #view :is(.card,.panel,.stat,.summary-card,.metric-card) :is(h2,h3,p,small,strong) {
+ max-width:100%;
+ overflow-wrap:break-word;
+}
+html :is(#authScreen,#appScreen,#modalBg) :is(input,select,textarea) {
+ box-sizing:border-box;max-width:100%;min-width:0;
+}
+html :is(#authScreen,#appScreen,#modalBg) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {
+ min-height:42px;border-radius:10px;
+}
+html :is(#authScreen,#appScreen,#modalBg) :is(button,a,[role="button"],input,select,textarea):focus-visible {
+ outline:2px solid var(--zavi-admin-polish-focus);
+ outline-offset:2px;
+ box-shadow:0 0 0 4px var(--zavi-admin-polish-ring);
+}
+html #appScreen #view :is(.table-wrap,.table-scroll,.table-responsive) {
+ max-width:100%;
+ overflow-x:auto;
+ overscroll-behavior-x:contain;
+ -webkit-overflow-scrolling:touch;
+}
+html #appScreen .topbar .breadcrumbs {
+ max-width:100%;
+ overflow-wrap:break-word;
+}
+@media (hover:hover) and (pointer:fine) {
+ html #appScreen .nav-item:hover {transition:background-color .16s ease,border-color .16s ease}
+}
+@media (max-width:760px){
+ html #appScreen .topbar {gap:9px}
+ html #appScreen :is(.nav-item,.button) {max-width:100%}
+ html #appScreen #view :is(.card,.panel,.stat,.summary-card,.metric-card) {border-radius:13px}
+}
+@media (prefers-reduced-motion:reduce) {
+ html #appScreen .nav-item{animation:none!important;transition:none!important}
+}

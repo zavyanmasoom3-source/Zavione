@@ -29,6 +29,11 @@ with sync_playwright() as p:
         try:
             page.goto(BASE,wait_until="domcontentloaded",timeout=30000)
             page.wait_for_timeout(1400)
+            # Validate the exact blue-baseline visual layer is loaded, not just linked.
+            css_loaded = page.evaluate("""() => [...document.styleSheets].some(
+                sheet => sheet.href && sheet.href.includes('/legacy-ui-fixes.css'))""")
+            if not css_loaded:
+                raise RuntimeError('V66.62 visual CSS layer is missing in the rendered app')
             if page.locator("html.zawi-locked").count():
                 pin=page.locator("#zawiPinOne")
                 if pin.count() and pin.is_visible():
@@ -54,6 +59,8 @@ with sync_playwright() as p:
                             data=content.evaluate("(el)=>({chars:el.innerText.trim().length,blank:!el.textContent.trim(),overflow:document.documentElement.scrollWidth>window.innerWidth+4,heading:el.innerText.slice(0,90)})")
                             result.update(data)
                             result["state"]="rendered_unverified" if data["chars"]>30 and not data["blank"] else "empty_or_broken"
+                            if data["overflow"]:
+                                result["state"]="horizontal_overflow"
                             if result["state"]=="rendered_unverified":
                                 page.screenshot(path=str(OUT/f"{screen}_{mode}.png"),full_page=True)
                 except Exception as ex:
@@ -68,3 +75,5 @@ with sync_playwright() as p:
 print(json.dumps(results,ensure_ascii=False,indent=2))
 if not any(r.get("state")=="rendered_unverified" for r in results):
     raise SystemExit("No original V66.62 module rendered in isolated browser; investigate lock and routes")
+if any(r.get("state")=="horizontal_overflow" for r in results):
+    raise SystemExit("V66.62 original design has horizontal overflow; inspect route screenshots before release")

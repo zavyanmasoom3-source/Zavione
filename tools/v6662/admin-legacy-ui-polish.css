@@ -162,3 +162,39 @@ html #appScreen :is(.topbar,.sidebar,#view) :is(input,select,textarea){
 @media(prefers-reduced-motion:reduce){
  html #appScreen :is(.nav-item,.button,.card,.panel){transition:none!important;animation:none!important}
 }
+
+/* owner login compact override for historical important rules.
+ * The original zavi-admin-next-v1 stylesheet forces 106px logo and tall padding;
+ * these presentation-only overrides leave every authentication field available.
+ */
+@media(max-width:760px){
+ html #authScreen.auth-wrapper .auth-card{
+  padding:17px 17px 19px!important;
+  margin:10px auto 16px!important;
+  max-width:min(490px,calc(100% - 18px))!important;
+  border-radius:19px!important;
+ }
+ html #authScreen.auth-wrapper .auth-logo{
+  flex-direction:row!important;
+  justify-content:center!important;
+  align-items:center!important;
+  gap:11px!important;
+  margin-bottom:9px!important;
+ }
+ html #authScreen.auth-wrapper .auth-logo img{
+  width:53px!important;height:53px!important;
+  border-radius:13px!important;object-fit:contain!important;
+ }
+ html #authScreen.auth-wrapper .auth-logo strong{
+  font-size:19px!important;line-height:1.25!important;
+ }
+ html #authScreen.auth-wrapper .auth-logo small{
+  font-size:10px!important;line-height:1.45!important;
+ }
+ html #authScreen.auth-wrapper h1{
+  font-size:20px!important;line-height:1.35!important;margin:5px 0 7px!important;
+ }
+ html #authScreen.auth-wrapper .eyebrow{margin-block:5px!important}
+ html #authScreen.auth-wrapper .form-group{margin-bottom:9px!important}
+ html #authScreen.auth-wrapper .security-note{padding:9px 11px!important;margin-top:8px!important}
+}

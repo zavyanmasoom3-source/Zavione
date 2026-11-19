@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/zavi-v6662-old-blue-browser-audit.yml'
       - 'tests/v6662_original_browser_qa.py'
+      - 'tests/v6662_original_locale_visual_qa.py'
       - 'tests/v6662-durable-save-regression.cjs'
       - 'tools/v6662/patch_durable_save.py'
       - 'tools/v6662/legacy-ui-fixes.css'
@@ -49,6 +50,7 @@ jobs:
           set -euo pipefail
           python -m http.server 8188 --bind 127.0.0.1 --directory qa-browser-app >/tmp/zavi-old-browser.log 2>&1 &
           python tests/v6662_original_browser_qa.py
+          python tests/v6662_original_locale_visual_qa.py
       - name: Upload visual QA evidence and source check
         if: always()
         uses: actions/upload-artifact@v4

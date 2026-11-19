@@ -16,7 +16,7 @@ RECORDS = []
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     for language in ("fa-AF", "ps-AF", "en"):
-        for theme in ("light", "dark"):
+        for theme in ("light", "dark", "glass"):
             ctx = browser.new_context(viewport={"width":390,"height":844},
                                       device_scale_factor=1, locale="en-GB")
             ctx.add_init_script("""(() => {
@@ -25,7 +25,7 @@ with sync_playwright() as p:
                 localStorage.setItem('zavi.visual.theme.v1', '%s');
                 localStorage.setItem('zavi_theme_preference_v29', '%s');
               } catch (_) {}
-            })()""" % (language, theme, theme))
+            })()""" % (language, theme, theme if theme != "glass" else "dark"))
             page = ctx.new_page()
             page_errors = []
             page.on("pageerror", lambda error: page_errors.append(str(error)))
@@ -65,14 +65,16 @@ with sync_playwright() as p:
                                 metrics = page.evaluate("""() => ({
                                   overflow: document.documentElement.scrollWidth > innerWidth + 4,
                                   chars: document.querySelector('#content')?.innerText.trim().length || 0,
+                                  appliedTheme: document.documentElement.getAttribute("data-zavi-theme"),
                                   stylesheet: [...document.styleSheets].some(s =>
                                     s.href && s.href.includes('legacy-ui-fixes.css'))
                                 })""")
                                 record.update(metrics)
                                 record["ok"] = (not metrics["overflow"] and
-                                                metrics["chars"] > 30 and metrics["stylesheet"])
+                                                metrics["chars"] > 30 and metrics["stylesheet"] and
+                                                metrics["appliedTheme"] == theme)
                                 if not record["ok"]:
-                                    record["error"] = "render, viewport or CSS failure"
+                                    record["error"] = "render, viewport, theme or CSS failure"
                                 if width == 390 and route in ("dashboard","sales","settings"):
                                     page.screenshot(path=str(OUT /
                                         f"{language}_{theme}_{route}.png"),full_page=False)

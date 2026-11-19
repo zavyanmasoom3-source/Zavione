@@ -48,3 +48,61 @@ html #content .page-head :is(h1,h2){overflow-wrap:anywhere}
  html :is(.z63-quick-tile,.zavi-v37-action){animation:none!important;transition:none!important}
 }
 @media print{html #z637AiButton,html .z637-ai-button{display:none!important}}
+
+/* V66.62 visual refinement phase 1: preserve original blue design.
+ * Presentation only: no navigation, financial, offline or database logic changes.
+ */
+html {
+ --zavi-polish-radius:14px;
+ --zavi-polish-focus:#2469cf;
+ --zavi-polish-focus-ring:rgba(36,105,207,.23);
+}
+html[data-zavi-theme="dark"] {
+ --zavi-polish-focus:#91c4ff;
+ --zavi-polish-focus-ring:rgba(145,196,255,.28);
+}
+html #content,html #overlay {min-width:0;text-rendering:optimizeLegibility}
+html #content :is(.page-head,.settings-card,.z63-quick-panel,.zavi-v37-actions){min-width:0}
+html #content :where(.card,.settings-card,.z63-quick-tile,.zavi-v37-action){
+ border-radius:var(--zavi-polish-radius);background-clip:padding-box;
+}
+html #content :is(.z63-quick-tile,.zavi-v37-action){
+ transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+html #content :is(.z63-quick-tile,.zavi-v37-action) :is(span,small,strong),
+html #content :is(.page-head,.settings-card) :is(h1,h2,h3,p,small){
+ min-width:0;max-width:100%;overflow-wrap:break-word;line-height:1.45;
+}
+html #content :is(.settings-card,.page-head) :is(.action-group,.actions){
+ min-width:0;flex-wrap:wrap;
+}
+html :is(#content,#overlay) :is(input,select,textarea){
+ box-sizing:border-box;max-width:100%;min-width:0;
+}
+html :is(#content,#overlay) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea){
+ min-height:42px;border-radius:10px;
+}
+html :is(#content,#overlay,#sidebarLinks,#sidebarLinks2,.mobile-bottom)
+ :is(button,a,[role="button"],input,select,textarea):focus-visible{
+ outline:2px solid var(--zavi-polish-focus);outline-offset:2px;
+ box-shadow:0 0 0 4px var(--zavi-polish-focus-ring);
+}
+html #content :is(.table-wrap,.table-scroll){
+ overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;
+}
+html #content :is(.table-wrap,.table-scroll) table{max-width:none}
+html #content :where(.card,.settings-card) :is(button,a){touch-action:manipulation}
+@media (hover:hover) and (pointer:fine){
+ html #content :is(.z63-quick-tile,.zavi-v37-action):hover{transform:translateY(-2px)}
+}
+@media (max-width:760px){
+ html #content .page-head{gap:10px;margin-bottom:15px;flex-wrap:wrap}
+ html #content :is(.settings-card,.z63-quick-tile,.zavi-v37-action){border-radius:13px}
+ html #content :is(.z63-quick-tile,.zavi-v37-action){min-width:0}
+ html #content :is(.settings-card,.page-head) :is(button,a,[role="button"]){max-width:100%}
+}
+@media (prefers-reduced-motion:reduce){
+ html #content :is(.z63-quick-tile,.zavi-v37-action){
+  animation:none!important;transition:none!important;transform:none!important;
+ }
+}

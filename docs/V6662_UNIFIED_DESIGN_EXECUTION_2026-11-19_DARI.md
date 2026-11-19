@@ -106,7 +106,7 @@
 - Build ONE با CSS یکدست‌شده: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44471283331 — موفق.
 - Build ADMIN با CSS یکدست‌شده: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44471283326 — موفق.
 - بیلد APK آزمایشی ONE بعد از آخرین اصلاح خوانایی: **SUCCESS** — https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44472845974
-- آزمایش مرورگر بعد از آخرین اصلاح کنتراست: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44472846011 — تا هنگام نگارش در جریان؛ نتیجه نهایی باید بررسی شود.
+- آزمایش مرورگر بعد از آخرین اصلاح کنتراست: **SUCCESS** — 80/80 مسیر و 270/270 حالت چندزبان/چندتم/چنداندازه، بدون شکست — https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44472846011
 - آزمون 36 حالت صفحه ورود ADMIN: **36/36 PASS** — 3 زبان × 3 حالت × 4 اندازه؛ https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44472708213
 
 ### محدودیت‌های عملی که عمداً حل‌شده اعلام نمی‌شوند

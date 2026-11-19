@@ -44,7 +44,7 @@ with sync_playwright() as p:
                     if submit.count():submit.click()
                     page.wait_for_timeout(1400)
             for screen,route in ROUTES:
-                result={"screen":screen,"theme":mode,"route":route,"state":"blocked"}
+                result={"screen":screen,"theme":mode,"route":route,"width":390,"state":"blocked"}
                 try:
                     if page.locator("html.zawi-locked").count():
                         result["state"]="private_lock_visible"
@@ -66,6 +66,54 @@ with sync_playwright() as p:
                 except Exception as ex:
                     result.update(state="capture_error",detail=str(ex)[:260])
                 results.append(result)
+            # V66.62 responsive route parity: real routes, no ledger mutations.
+            original_nav = page.evaluate("""() => [...document.querySelectorAll(
+                '#sidebarLinks [data-go],#sidebarLinks2 [data-go]')]
+                .map(el => el.getAttribute('data-go'))""")
+            if not original_nav:
+                raise RuntimeError("Historic navigation routes missing")
+            for width, height in ((360,780),(768,1024),(1180,800)):
+                page.set_viewport_size({"width":width,"height":height})
+                page.wait_for_timeout(120)
+                for screen,route in ROUTES:
+                    result={"screen":screen,"theme":mode,"route":route,
+                            "width":width,"state":"blocked"}
+                    try:
+                        if page.locator("html.zawi-locked").count():
+                            result["state"]="private_lock_visible"
+                        else:
+                            nodes=page.locator(
+                                f'#sidebarLinks [data-go="{route}"],'
+                                f'#sidebarLinks2 [data-go="{route}"],'
+                                f'#mobileBottom [data-go="{route}"]')
+                            if not nodes.count():
+                                result["state"]="route_button_missing"
+                            else:
+                                nodes.first.evaluate("(el)=>el.click()")
+                                page.wait_for_timeout(100)
+                                data=page.evaluate("""() => {
+                                  const content=document.querySelector('#content');
+                                  return {
+                                   chars:content?.innerText.trim().length||0,
+                                   overflow:document.documentElement.scrollWidth>innerWidth+4,
+                                   nav:[...document.querySelectorAll('#sidebarLinks [data-go],#sidebarLinks2 [data-go]')]
+                                        .map(x=>x.getAttribute('data-go')),
+                                   buttons:content?.querySelectorAll('button').length||0
+                                  };
+                                }""")
+                                result.update({"chars":data["chars"],
+                                               "overflow":data["overflow"],
+                                               "buttons":data["buttons"],
+                                               "nav_preserved":data["nav"]==original_nav})
+                                result["state"]="rendered_unverified" if data["chars"]>30 else "empty_or_broken"
+                                if data["overflow"]:result["state"]="horizontal_overflow"
+                                if not result["nav_preserved"]:result["state"]="navigation_changed"
+                                if width==768 and route in ("dashboard","settings"):
+                                    page.screenshot(path=str(OUT/f"{screen}_{mode}_{width}.png"),
+                                                    full_page=False)
+                    except Exception as ex:
+                        result.update(state="capture_error",detail=str(ex)[:260])
+                    results.append(result)
         except Exception as ex:
             results.append({"screen":"startup","theme":mode,"state":"capture_error","detail":str(ex)[:280]})
         results.append({"screen":"javascript","theme":mode,"errors":errors[:30]})
@@ -77,3 +125,8 @@ if not any(r.get("state")=="rendered_unverified" for r in results):
     raise SystemExit("No original V66.62 module rendered in isolated browser; investigate lock and routes")
 if any(r.get("state")=="horizontal_overflow" for r in results):
     raise SystemExit("V66.62 original design has horizontal overflow; inspect route screenshots before release")
+
+if any(r.get("state") in ("route_button_missing","empty_or_broken","capture_error","private_lock_visible","navigation_changed") for r in results):
+    raise SystemExit("V66.62 design parity failed: a route, original navigation, or render was lost")
+if any(r.get("errors") for r in results):
+    raise SystemExit("V66.62 design parity failed: JavaScript page error")

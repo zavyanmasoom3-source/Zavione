@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Prove the new old-blue QA contains exactly the original business-code assets.
 
-Only index.html (one CSS link + one known durable-save repair) and legacy-ui-fixes.css may differ.
+Only index.html (approved CSS/JS links, UI-only organizer replacement, durable-save fix)\nand three strictly-verified styling assets may differ.
 Does not test native Java behavior, accounts, real networking or upgrade safety.
 """
 import argparse
@@ -13,7 +13,7 @@ from patch_durable_save import transform as fix_durable_save
 
 ORIGINAL_SHA256 = "2eb852d7cdb026ccd828a660328bd26bb474f9880430e0ea3007f51489ee50dc"
 ORIGINAL_COUNT = 265
-CSS_NAME = "assets/legacy-ui-fixes.css"
+CSS_NAME = "assets/legacy-ui-fixes.css"\nSETTINGS_CSS = "assets/legacy-settings-approved.css"\nSETTINGS_JS = "assets/legacy-settings-approved.js"
 INDEX_NAME = "assets/index.html"
 EXPECTED_LINK = '<link rel="stylesheet" href="./legacy-ui-fixes.css?v=6662-qa1" data-zavi-legacy-repair="true">'
 BANNED_NEW = ("zavi-dual-design-v1.css", "zavi-dual-dashboard-v1.css",
@@ -37,15 +37,30 @@ def verify(original, qa, css_file, output):
         old = assets(o)
         now = assets(q)
     assert len(old) == ORIGINAL_COUNT, "Original source asset count changed"
-    assert set(now) == set(old) | {CSS_NAME}, "An original asset is missing or an unknown new asset was added"
+    assert set(now) == set(old) | {CSS_NAME, SETTINGS_CSS, SETTINGS_JS}, "An original asset is missing or an unknown new asset was added"
     assert old[INDEX_NAME].decode("utf-8").count("</head>") >= 1
     expected_html = old[INDEX_NAME].replace(
         b"</head>", (EXPECTED_LINK + "</head>").encode("utf-8"), 1
     )
-    expected_html = fix_durable_save(expected_html.decode("utf-8")).encode("utf-8")
+    expected_source = expected_html.decode("utf-8")
+    for tag in (
+        '<script defer src="./zavi-settings-priority-v6546.js?v=65.46"></script>',
+        '<script defer src="./zavi-final-settings-store-v6559.js?v=20261025-final"></script>',
+    ):
+        assert expected_source.count(tag) == 1, "Unverified historical organizer source"
+        expected_source = expected_source.replace(tag, "", 1)
+    expected_source = expected_source.replace(
+        "</head>",
+        '<link rel="stylesheet" href="./legacy-settings-approved.css?v=6662-approved" data-zavi-settings-approved="true"></head>',
+        1
+    )
+    assert "</body>" in expected_source
+    first, last = expected_source.rsplit("</body>", 1)
+    expected_source = first + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script></body>' + last
+    expected_html = fix_durable_save(expected_source).encode("utf-8")
     assert now[INDEX_NAME] == expected_html, "Unexpected HTML/JS mutation outside the approved durable-save fix"
     expected_css = Path(css_file).read_bytes()
-    assert now[CSS_NAME] == expected_css, "Unverified visual patch"
+    assert now[CSS_NAME] == expected_css, "Unverified visual patch"\n    for name in (SETTINGS_CSS, SETTINGS_JS):\n        source = Path(__file__).with_name(name.removeprefix("assets/"))\n        assert now[name] == source.read_bytes(), f"Unverified approved settings layer: {name}"
     unchanged = [name for name in old if name != INDEX_NAME]
     modified = [name for name in unchanged if sha(old[name]) != sha(now[name])]
     assert not modified, f"Unexpected changed original modules: {modified[:8]}"
@@ -59,9 +74,9 @@ def verify(original, qa, css_file, output):
         "qa_assets": len(now),
         "byte_identical_original_assets": len(unchanged),
         "changed_original_assets": [INDEX_NAME],
-        "added_assets": [CSS_NAME],
+        "added_assets": [CSS_NAME, SETTINGS_CSS, SETTINGS_JS],
         "new_design_present": False,
-        "business_logic_modified": True,
+        "business_logic_modified": True,\n        "original_functional_assets_byte_preserved": True,\n        "approved_settings_ui_only": True,
         "approved_business_logic_change": "after durable local commit, safely report backup/cloud failures and continue callbacks",
         "native_runtime_tested": False,
         "financial_operations_tested": False,

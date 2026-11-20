@@ -82,3 +82,13 @@ html #content .z66-approved-hub :is(summary,button,input,select,textarea,a):focu
 }
 @media(max-width:355px){html #content .z66-trade-list{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){html #content .z66-approved-hub :is(*,summary,button){transition:none!important;animation:none!important}}
+
+html #content .z66-link-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+html #content .z66-quick-links .btn{padding:9px;min-height:42px;text-align:center;justify-content:center}
+html #content .z66-options-subcard :is(.z20-grid,.zavi-module-grid){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+html #content .z66-approved-hub .z66-settings-body>.z66-options-subcard{border:1px solid var(--line,#d9e4f2)!important}
+html #content .z66-approved-hub .z66-settings-body>.z66-quick-links{border:1px solid var(--line,#d9e4f2)!important}
+@media(max-width:530px){
+ html #content .z66-link-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ html #content .z66-options-subcard :is(.z20-grid,.zavi-module-grid){grid-template-columns:1fr}
+}

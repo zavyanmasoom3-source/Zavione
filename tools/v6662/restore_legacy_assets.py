@@ -55,6 +55,30 @@ def main():
     assert patch_file.is_file()
     (dest / patch_file.name).write_bytes(patch_file.read_bytes())
     updated = old.replace("</head>", '<link rel="stylesheet" href="./legacy-ui-fixes.css?v=6662-qa1" data-zavi-legacy-repair="true"></head>', 1)
+    # Approved Settings V66.62: old UI-only organizers conflict and one removes
+    # the original "enable all features" control. Supersede ONLY those organizers;
+    # retain their original JS assets and every functional/settings handler.
+    redundant_organizers = (
+        "zavi-settings-priority-v6546.js",
+        "zavi-final-settings-store-v6559.js",
+    )
+    disabled_organizers = []
+    for name in redundant_organizers:
+        pattern = r'<script\\b[^>]*\\bsrc=["\\\']\\./' + re.escape(name) + r'\\?[^"\\\']*["\\\'][^>]*>\\s*</script>'
+        updated, count = re.subn(pattern, "", updated, flags=re.I)
+        assert count == 1, f"Unexpected old settings organizer references: {name}: {count}"
+        disabled_organizers.append(name)
+    css_name = "legacy-settings-approved.css"
+    js_name = "legacy-settings-approved.js"
+    for name in (css_name, js_name):
+        src = Path(__file__).with_name(name)
+        assert src.is_file(), f"Missing approved settings layer: {name}"
+        (dest / name).write_bytes(src.read_bytes())
+    assert updated.count("</body>") == 1, "Unexpected historical body closure"
+    updated = updated.replace("</head>", '<link rel="stylesheet" href="./legacy-settings-approved.css?v=6662-approved" data-zavi-settings-approved="true"></head>', 1)
+    updated = updated.replace("</body>", '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script></body>', 1)
+    assert 'id="zaviEnableAllFeatures"' in updated, "Original enable-all control changed"
+    assert 'data-module-id=' in updated and 'data-z20-option=' in updated
     html_file.write_text(updated, encoding="utf-8")
     # Ensure every local stylesheet and script in the exact historical HTML still exists.
     references = re.findall(r'<(?:script|link)\b[^>]+?(?:src|href)=["\'](\./[^"\']+)["\']', updated, re.I)
@@ -75,7 +99,8 @@ def main():
             continue
         assert hashlib.sha256((dest/relative).read_bytes()).hexdigest() == original_hash, f"Changed legacy resource: {relative}"
     report = {"baseline_apk_sha256":sha,"baseline_bytes":len(original),
-              "original_resources":len(files),"extra_stylesheets":["legacy-ui-fixes.css"],
+              "original_resources":len(files),"extra_stylesheets":["legacy-ui-fixes.css",css_name],
+              "extra_scripts":[js_name],"superseded_ui_organizers":disabled_organizers,
               "changed_original_resources":["index.html"],
               "preserved_original_resources":len(files)-1,
               "model_size":(dest/"models/ggml-base-q5_1.bin").stat().st_size,

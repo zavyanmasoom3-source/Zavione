@@ -40,7 +40,7 @@
   const card=el('section','card settings-card z66-trade-card');
   card.id='z66-approved-trades';
   card.append(el('h3','', '🏪 انتخاب از میان 23 کسب‌وکار'));
-  card.append(el('p','z66-muted','20 صنف در فهرست منبع موجود است؛ 3 صنف جدید با نشان «جدید» برای بررسی اضافه شده‌اند. تغییر نوع تجارت فقط پس از تأیید مالک در مدیریت عمومی ذخیره می‌شود.'));
+  card.append(el('p','z66-muted','هر 23 صنف در فهرست و فورم‌های برنامه تعریف شده‌اند. تغییر نوع تجارت فقط با تأیید مالک انجام می‌شود؛ ذخیره ابری سه صنف تازه هنوز به آزمایش سرور نیاز دارد.'));
   const search=el('input','z66-trade-search');search.type='search';search.placeholder='جستجوی زرگری، موبایل، کاور، دواخانه...';search.setAttribute('aria-label','جستجوی 23 کسب‌وکار');
   const list=el('div','z66-trade-list');
   const preview=el('section','z66-trade-preview');preview.setAttribute('aria-live','polite');

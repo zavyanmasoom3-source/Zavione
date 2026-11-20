@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Prove the new old-blue QA contains exactly the original business-code assets.
 
-Only index.html (approved CSS/JS links, UI-only organizer replacement, durable-save fix)\nand three strictly-verified styling assets may differ.
+Only index.html (approved CSS/JS links, UI-only organizer replacement, durable-save fix)
+and three strictly-verified styling assets may differ.
 Does not test native Java behavior, accounts, real networking or upgrade safety.
 """
 import argparse
@@ -13,7 +14,9 @@ from patch_durable_save import transform as fix_durable_save
 
 ORIGINAL_SHA256 = "2eb852d7cdb026ccd828a660328bd26bb474f9880430e0ea3007f51489ee50dc"
 ORIGINAL_COUNT = 265
-CSS_NAME = "assets/legacy-ui-fixes.css"\nSETTINGS_CSS = "assets/legacy-settings-approved.css"\nSETTINGS_JS = "assets/legacy-settings-approved.js"
+CSS_NAME = "assets/legacy-ui-fixes.css"
+SETTINGS_CSS = "assets/legacy-settings-approved.css"
+SETTINGS_JS = "assets/legacy-settings-approved.js"
 INDEX_NAME = "assets/index.html"
 EXPECTED_LINK = '<link rel="stylesheet" href="./legacy-ui-fixes.css?v=6662-qa1" data-zavi-legacy-repair="true">'
 BANNED_NEW = ("zavi-dual-design-v1.css", "zavi-dual-dashboard-v1.css",
@@ -60,7 +63,10 @@ def verify(original, qa, css_file, output):
     expected_html = fix_durable_save(expected_source).encode("utf-8")
     assert now[INDEX_NAME] == expected_html, "Unexpected HTML/JS mutation outside the approved durable-save fix"
     expected_css = Path(css_file).read_bytes()
-    assert now[CSS_NAME] == expected_css, "Unverified visual patch"\n    for name in (SETTINGS_CSS, SETTINGS_JS):\n        source = Path(__file__).with_name(name.removeprefix("assets/"))\n        assert now[name] == source.read_bytes(), f"Unverified approved settings layer: {name}"
+    assert now[CSS_NAME] == expected_css, "Unverified visual patch"
+    for name in (SETTINGS_CSS, SETTINGS_JS):
+        source = Path(__file__).with_name(name.removeprefix("assets/"))
+        assert now[name] == source.read_bytes(), f"Unverified approved settings layer: {name}"
     unchanged = [name for name in old if name != INDEX_NAME]
     modified = [name for name in unchanged if sha(old[name]) != sha(now[name])]
     assert not modified, f"Unexpected changed original modules: {modified[:8]}"
@@ -76,7 +82,9 @@ def verify(original, qa, css_file, output):
         "changed_original_assets": [INDEX_NAME],
         "added_assets": [CSS_NAME, SETTINGS_CSS, SETTINGS_JS],
         "new_design_present": False,
-        "business_logic_modified": True,\n        "original_functional_assets_byte_preserved": True,\n        "approved_settings_ui_only": True,
+        "business_logic_modified": True,
+        "original_functional_assets_byte_preserved": True,
+        "approved_settings_ui_only": True,
         "approved_business_logic_change": "after durable local commit, safely report backup/cloud failures and continue callbacks",
         "native_runtime_tested": False,
         "financial_operations_tested": False,

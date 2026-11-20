@@ -76,6 +76,27 @@ with sync_playwright() as p:
                      origParity:window.__z66SettingsApprovedAudit
                    };
                 }""")
+                contrast = page.evaluate("""() => {
+                  function rgb(v) { const m=v.match(/rgba?\\(([^)]+)\\)/);
+                    return m ? m[1].split(',').slice(0,3).map(Number) : [0,0,0]; }
+                  function luma(rgbValue) { const c=rgbValue.map(v => {
+                      const f=v/255;return f<=.04045?f/12.92:((f+.055)/1.055)**2.4;
+                  });return c[0]*.2126+c[1]*.7152+c[2]*.0722; }
+                  function ratio(a,b){const x=luma(rgb(a)),y=luma(rgb(b));
+                    return (Math.max(x,y)+.05)/(Math.min(x,y)+.05); }
+                  return [...document.querySelectorAll('#z66-approved-hub .z66-trade-choice')]
+                    .map((button) => {
+                      const fg=getComputedStyle(button.querySelector('strong')).color;
+                      const bg=getComputedStyle(button).backgroundColor;
+                      return Math.round(ratio(fg,bg)*100)/100;
+                    });
+                }""")
+                assert len(contrast)==23, ("Catalog buttons missing",contrast)
+                assert min(contrast)>=4.5, ("Unreadable trade choice foreground/background",lang,theme,contrast)
+                metrics["minTradeContrast"]=min(contrast)
+                if lang=="fa-AF" and width==390:
+                    page.screenshot(path=str(OUT/f"settings-initial-{theme}-{width}.png"),
+                                    full_page=False)
                 assert metrics["groups"]==8, ("8 settings sections expected",metrics)
                 assert metrics["originalModules"]==14 and metrics["uniqueModuleIds"]==14,metrics
                 assert metrics["originalOptions"]==15 and metrics["uniqueOptionIds"]==15,metrics

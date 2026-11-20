@@ -92,3 +92,56 @@ html #content .z66-approved-hub .z66-settings-body>.z66-quick-links{border:1px s
  html #content .z66-link-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  html #content .z66-options-subcard :is(.z20-grid,.zavi-module-grid){grid-template-columns:1fr}
 }
+
+/* QA contrast correction: actual historical dark/glass CSS forced white
+ * trade buttons while inheriting white text. Scope to the new settings only. */
+html[data-zavi-theme="dark"] #content .z66-approved-hub,
+html[data-zavi-theme="glass"] #content .z66-approved-hub{
+ --z66-ink:#edf5ff;--z66-muted:#bfd0e4;--z66-panel:#112c4c;--z66-card:#183a5d;--z66-border:#3b6586;
+}
+html[data-zavi-theme="dark"] #content .z66-approved-intro,
+html[data-zavi-theme="dark"] #content .z66-settings-group,
+html[data-zavi-theme="glass"] #content .z66-approved-intro,
+html[data-zavi-theme="glass"] #content .z66-settings-group{
+ background:#112c4c!important;
+ color:#edf5ff!important;
+ border-color:#3b6586!important;
+ -webkit-text-fill-color:initial!important;
+}
+html[data-zavi-theme="dark"] #content .z66-trade-choice,
+html[data-zavi-theme="glass"] #content .z66-trade-choice{
+ background:#193c5f!important;
+ color:#f0f7ff!important;
+ border-color:#466d90!important;
+ -webkit-text-fill-color:#f0f7ff!important;
+}
+html[data-zavi-theme="dark"] #content .z66-trade-choice[aria-pressed="true"],
+html[data-zavi-theme="glass"] #content .z66-trade-choice[aria-pressed="true"]{
+ background:#185b86!important;border-color:#66b6eb!important;
+}
+html[data-zavi-theme="dark"] #content .z66-trade-choice :is(strong,small,em),
+html[data-zavi-theme="glass"] #content .z66-trade-choice :is(strong,small,em){
+ color:#f0f7ff!important;-webkit-text-fill-color:#f0f7ff!important;
+ opacity:1!important;text-shadow:none!important;
+}
+html[data-zavi-theme="dark"] #content .z66-approved-hub :is(.z66-group-middle strong,.z66-approved-intro strong,.z66-preview-head strong,.z66-field-heading),
+html[data-zavi-theme="glass"] #content .z66-approved-hub :is(.z66-group-middle strong,.z66-approved-intro strong,.z66-preview-head strong,.z66-field-heading){
+ color:#f0f7ff!important;-webkit-text-fill-color:#f0f7ff!important;
+}
+html[data-zavi-theme="dark"] #content .z66-approved-hub :is(.z66-group-middle small,.z66-approved-intro p,.z66-preview-head small,.z66-muted),
+html[data-zavi-theme="glass"] #content .z66-approved-hub :is(.z66-group-middle small,.z66-approved-intro p,.z66-preview-head small,.z66-muted){
+ color:#c4d8eb!important;-webkit-text-fill-color:#c4d8eb!important;opacity:1!important;
+}
+html[data-zavi-theme="dark"] #content .z66-trade-preview,
+html[data-zavi-theme="glass"] #content .z66-trade-preview{
+ background:#0e2949!important;border-color:#3c698f!important;color:#edf5ff!important;
+}
+html[data-zavi-theme="dark"] #content .z66-approved-hub :is(.z66-setting-search,.z66-trade-search,.z66-feature-filter,.z66-field input,.z66-field select,.z66-color input[type="number"]),
+html[data-zavi-theme="glass"] #content .z66-approved-hub :is(.z66-setting-search,.z66-trade-search,.z66-feature-filter,.z66-field input,.z66-field select,.z66-color input[type="number"]){
+ background:#193b5d!important;border-color:#55799a!important;color:#eef7ff!important;
+ -webkit-text-fill-color:#eef7ff!important;
+}
+html[data-zavi-theme="dark"] #content .z66-approved-hub :is(input,textarea)::placeholder,
+html[data-zavi-theme="glass"] #content .z66-approved-hub :is(input,textarea)::placeholder{
+ color:#c2d3e7!important;opacity:1!important;
+}

@@ -136,6 +136,68 @@
   }
   return localeCard;
  }
+ function controlGroup(input){
+  if(input.dataset.moduleId){
+   const id=input.dataset.moduleId;
+   if(['products','waste','repairs'].includes(id))return 'inventory';
+   if(id==='contacts')return 'people';
+   if(['dashboard','reports'].includes(id))return 'system';
+   return 'operations';
+  }
+  const id=input.dataset.z20Option||'';
+  if(['lowStock','usdStock'].includes(id))return 'inventory';
+  if(['customerShare','debtorOgrai'].includes(id))return 'people';
+  if(['invoiceImage','qr'].includes(id))return 'invoice';
+  if(['backupAlert'].includes(id))return 'advanced';
+  if(['dashboardPhone'].includes(id))return 'account';
+  return 'operations';
+ }
+ function distributeControls(card,bodies){
+  if(!card||card.dataset.z66distributed)return;
+  const modules=[...card.querySelectorAll('input[data-module-id],input[data-z20-option]')];
+  const buckets=new Map();
+  for(const input of modules){
+   const label=input.closest('label');if(!label)throw Error('Original settings toggle lost its label');
+   const group=controlGroup(input),type=input.dataset.moduleId?'module':'option';
+   const key=group+'|'+type;
+   let container=buckets.get(key);
+   if(!container){
+    const shell=el('section','card settings-card z66-options-subcard');
+    shell.append(el('h3','',type==='module'?'نمایش بخش‌های برنامه':'گزینه‌های نمایش و امکانات'));
+    container=el('div',type==='module'?'zavi-module-grid':'z20-grid');
+    shell.append(container);
+    buckets.set(key,container);
+    bodies.get(group).append(shell);
+   }
+   container.append(label);
+  }
+  if(modules.length!==card.querySelectorAll('input[data-module-id],input[data-z20-option]').length+
+      [...buckets.values()].reduce((n,group)=>n+group.querySelectorAll('input').length,0)){
+   throw Error('Settings option redistribution mismatch');
+  }
+  card.dataset.z66distributed='true';
+  card.querySelectorAll('.zavi-module-grid:empty,.z20-grid:empty').forEach(x=>x.remove());
+  for(const h of card.querySelectorAll('h4'))if(/بخش‌هایی که|روشن و خاموش کردن امکانات/.test(h.textContent||''))h.remove();
+ }
+ function quickLinks(bodies){
+  const plans={
+   operations:[['sales','فروش'],['purchases','خرید'],['money','صندوق'],['debtors','طلب‌ها'],['creditors','قرض‌های ما'],['journal','روزنامچه']],
+   inventory:[['products','محصولات و گدام'],['waste','ضایعات']],
+   people:[['contacts','مشتریان']],
+   system:[['reports','گزارش‌ها'],['subscription','اشتراک']]
+  };
+  for(const [group,links] of Object.entries(plans)){
+   const card=el('section','card settings-card z66-quick-links');
+   card.append(el('h3','', 'دسترسی به بخش‌های اصلی'));
+   const row=el('div','z66-link-grid');
+   for(const [route,title] of links){
+    const button=el('button','btn subtle',title);
+    button.type='button';button.dataset.go=route;row.append(button);
+   }
+   card.append(row,el('p','z66-muted','این دکمه‌ها همان مسیرهای اصلی برنامه را باز می‌کنند؛ هیچ معامله‌ای به‌صورت خودکار ثبت نمی‌شود.'));
+   bodies.get(group).append(card);
+  }
+ }
  const createHub=()=>{
   const hub=el('section','z66-approved-hub');hub.id='z66-approved-hub';
   const intro=el('div','z66-approved-intro');
@@ -181,7 +243,7 @@
    let hub=root.querySelector('#z66-approved-hub');
    let bodies;
    if(!hub){const next=createHub();hub=next.hub;bodies=next.bodies;const head=root.querySelector('.page-head');if(head)head.after(hub);else root.prepend(hub);
-    const catalog=catalogCard();bodies.get('account').append(catalog);
+    const catalog=catalogCard();bodies.get('account').append(catalog);quickLinks(bodies);
    }else bodies=new Map([...hub.querySelectorAll('.z66-settings-body')].map(b=>[b.closest('details').dataset.z66group,b]));
    const before=[...root.querySelectorAll('button,input,select,textarea,a')].filter(x=>!hub.contains(x));
    const original=new Set(before);
@@ -190,6 +252,7 @@
    if(localCard)bodies.get('appearance').append(localCard);
    const standalone=[...root.querySelectorAll('.settings-card,#z76-profile-card,#z74-workspace,#z6524CareLauncher')].filter(x=>!x.closest('#z66-approved-hub')&&!x.parentElement?.closest('.settings-card'));
    for(const node of standalone)bodies.get(kind(node)).append(node);
+   if(custom&&custom.isConnected)distributeControls(custom,bodies);
    // Preserve dynamic cloud/device panels and notices not marked as cards.
    for(const node of [...root.children]){
     if(node===hub||node.classList.contains('page-head')||node.id==='z76-settings-groups')continue;

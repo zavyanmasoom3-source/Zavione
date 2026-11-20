@@ -1,0 +1,28 @@
+/* Preserves the old V66.62 blue theme. Only affects the real phone color form. */
+html #overlay .zv-phone-product .zv-phone-color-row{
+ display:grid;grid-template-columns:minmax(72px,1fr) minmax(75px,100px) minmax(110px,1.25fr);
+ align-items:center;gap:8px;padding:9px 10px;margin:5px 0;border:1px solid var(--line,#dce5ef);
+ border-radius:10px;min-width:0;
+}
+html #overlay .zv-phone-product .zv-phone-color-row label{
+ display:flex;align-items:center;gap:7px;min-width:0;font-size:12px;
+ overflow-wrap:break-word;
+}
+html #overlay .zv-phone-product .zv-phone-color-row input:not([type="checkbox"]){
+ min-width:0;width:100%;max-width:100%;min-height:40px;
+ padding:7px 8px;box-sizing:border-box;border-radius:9px;
+ border:1px solid var(--line,#cbd9e8);background:var(--card,#fff);color:var(--text,#203a55);
+}
+html #overlay .zv-phone-product .zv-phone-color-row input[type="checkbox"]{
+ width:18px;height:18px;flex-shrink:0;
+}
+html #overlay .zv-phone-product .zv-phone-add-color{display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+html #overlay .zv-phone-product .zv-phone-add-color input{flex:1 1 140px;min-width:0}
+html #overlay .zv-phone-product .zv-phone-color-row input:disabled{opacity:.55}
+@media(max-width:430px){
+ html #overlay .zv-phone-product .zv-phone-color-row{
+  grid-template-columns:minmax(75px,1fr) minmax(65px,.75fr);gap:7px;padding:8px;
+ }
+ html #overlay .zv-phone-product .zv-phone-color-row>input:last-child{grid-column:1/-1}
+ html #content #zvCaseVariantsAdd{flex:1 1 100%;max-width:100%}
+}

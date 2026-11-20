@@ -1,0 +1,84 @@
+/* Approved V66.62 compact settings: old blue palette and original functionality.
+ * No global hiding of functional controls. Only collapsed user-controlled details,
+ * search filtering and narrow-screen spacing.
+ */
+html #content .z66-approved-hub{width:100%;min-width:0;max-width:1080px;margin:0 auto 26px;direction:inherit}
+html #content .z66-approved-intro{padding:13px 15px 14px;margin-bottom:13px;border-radius:15px;border:1px solid var(--line,#d9e4f2);background:var(--card,#fff);box-shadow:0 4px 16px rgba(21,65,120,.055)}
+html #content .z66-approved-intro strong{display:block;font-size:18px;line-height:1.5;letter-spacing:0;color:var(--text,#243d60)}
+html #content .z66-approved-intro p{font-size:12px;line-height:1.6;color:var(--muted,#586c84);margin:3px 0 11px}
+html #content .z66-setting-search,
+html #content .z66-trade-search,
+html #content .z66-feature-filter{display:block;box-sizing:border-box;width:100%;max-width:100%;min-width:0;min-height:44px;padding:9px 12px;border-radius:10px;border:1px solid var(--line,#cbd9ea);font-size:13px;background:var(--card,#fff);color:var(--text,#243d60);outline-offset:2px}
+html #content .z66-settings-list{display:grid;gap:9px;min-width:0}
+html #content .z66-settings-group{margin:0;padding:0;border:1px solid var(--line,#d9e4f2);border-radius:15px;background:var(--card,#fff);overflow:visible;min-width:0;box-shadow:0 4px 16px rgba(21,65,120,.05)}
+html #content .z66-settings-group[open]{border-color:#91bce7}
+html #content .z66-settings-group>.z66-group-summary{list-style:none;display:flex;align-items:center;gap:11px;min-height:65px;cursor:pointer;padding:12px 13px;user-select:none}
+html #content .z66-settings-group>.z66-group-summary::-webkit-details-marker{display:none}
+html #content .z66-group-icon{display:grid;place-items:center;width:42px;min-width:42px;height:42px;background:rgba(49,124,208,.08);border-radius:11px;font-size:20px;line-height:1}
+html #content .z66-group-middle{display:grid;min-width:0;flex:1;gap:2px}
+html #content .z66-group-middle strong{font-size:14px;font-weight:800;line-height:1.35;overflow-wrap:break-word;color:var(--text,#183e66)}
+html #content .z66-group-middle small{font-size:11px;line-height:1.35;color:var(--muted,#60748c);overflow-wrap:break-word}
+html #content .z66-chevron{font-size:19px;opacity:.65;transition:transform .18s ease}
+html #content details[open]>.z66-group-summary .z66-chevron{transform:rotate(180deg)}
+html #content .z66-settings-body{padding:12px;display:grid;gap:10px;min-width:0;border-top:1px solid var(--line,#d9e4f2)}
+html #content .z66-settings-body>.settings-card,
+html #content .z66-settings-body>.z76-profile-card,
+html #content .z66-settings-body>#z74-workspace,
+html #content .z66-settings-body>.notice{margin:0!important;width:100%;max-width:100%;min-width:0;border-radius:12px!important;padding:13px 14px!important;box-shadow:none!important}
+html #content .z66-settings-body>.settings-card h3{font-size:14px!important;line-height:1.45!important;letter-spacing:0!important;margin:0 0 7px!important;text-shadow:none!important;opacity:1!important}
+html #content .z66-settings-body>.settings-card h4{font-size:13px!important;line-height:1.5!important;margin:10px 0 7px!important;text-shadow:none!important}
+html #content .z66-settings-body :is(.settings-card p,.tiny-note,.small-info,.muted){font-size:11px!important;line-height:1.55!important;letter-spacing:0;text-shadow:none!important;max-width:100%}
+html #content .z66-settings-body :is(label,span,strong,b,small,h2,h3,h4,p){text-shadow:none!important}
+html #content .z66-settings-body :is(input,select,textarea){max-width:100%;min-width:0;box-sizing:border-box}
+html #content .z66-settings-body :is(.form-grid,.z20-grid,.zavi-module-grid,.action-group){gap:9px!important;min-width:0}
+html #content .z66-settings-body :is(.zavi-switch,.z20-toggle){min-height:47px;border-radius:10px;line-height:1.45;gap:8px;overflow-wrap:break-word}
+html #content .z66-settings-body :is(.zavi-switch,.z20-toggle) input{flex-shrink:0}
+html #content .z66-settings-body :is(.zavi-switch,.z20-toggle) span{min-width:0}
+html #content .z66-settings-body :is(button,.btn){min-height:41px;max-width:100%;white-space:normal;line-height:1.4;text-shadow:none!important;touch-action:manipulation}
+html #content .z66-settings-body .zavi-enable-all{padding:9px 0;gap:8px;display:flex;flex-wrap:wrap}
+html #content .z66-settings-body .z66-muted{color:var(--muted,#53677e);font-size:12px!important;line-height:1.6!important;margin:4px 0 9px!important}
+html #content .z66-trade-card{order:-1}
+html #content .z66-trade-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:330px;overflow-y:auto;overscroll-behavior:contain;padding:3px 0;margin:9px 0}
+html #content .z66-trade-choice{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;text-align:start;gap:3px;border:1px solid var(--line,#d6e2ef);background:var(--card,#fff);border-radius:10px;padding:10px;min-height:66px;min-width:0;color:var(--text,#243d60);cursor:pointer}
+html #content .z66-trade-choice[aria-pressed="true"]{background:rgba(41,129,213,.095);border-color:#349de1}
+html #content .z66-trade-choice strong{font-size:12px;line-height:1.5;text-shadow:none!important}
+html #content .z66-trade-choice small{font-size:10px;line-height:1.5;color:var(--muted,#53677e)}
+html #content .z66-new{font-size:10px;font-style:normal;color:#2777c9}
+html #content .z66-trade-preview{background:rgba(61,136,213,.045);border:1px solid var(--line,#d7e5f2);border-radius:12px;padding:12px;min-width:0;display:grid;gap:9px}
+html #content .z66-preview-head{display:grid;gap:3px}
+html #content .z66-preview-head strong{font-size:14px}
+html #content .z66-preview-head small{font-size:11px;color:var(--muted,#586c84)}
+html #content .z66-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+html #content .z66-field{display:grid;gap:5px;font-size:11px;min-width:0}
+html #content .z66-field input,html #content .z66-field select{min-height:40px;width:100%;padding:7px 9px;border-radius:9px;border:1px solid var(--line,#d7e5f2);background:var(--card,#fff);color:var(--text,#243d60);font-size:12px}
+html #content .z66-field-heading{margin-top:5px}
+html #content .z66-colors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+html #content .z66-color{display:grid;grid-template-columns:auto 1fr 72px;gap:7px;align-items:center;border:1px solid var(--line,#d7e5f2);border-radius:9px;padding:8px;font-size:11px}
+html #content .z66-color input[type="checkbox"]{min-width:16px;width:17px;height:17px}
+html #content .z66-color input[type="number"]{width:100%;min-width:0;min-height:35px;padding:5px;font-size:11px;border:1px solid var(--line,#d7e5f2);border-radius:7px;background:var(--card,#fff)}
+html #content .z66-manage-link{display:inline-flex;text-align:center;justify-content:center;align-items:center;text-decoration:none;max-width:100%}
+html #content .z66-approved-hub [hidden]{display:none!important}
+html[data-zavi-theme="dark"] #content .z66-settings-group,
+html[data-zavi-theme="dark"] #content .z66-approved-intro{background:var(--card,#142643);color:var(--text,#ecf4ff)}
+html #content .z66-approved-hub :is(summary,button,input,select,textarea,a):focus-visible{outline:2px solid #3a9ce6!important;outline-offset:3px}
+@media(max-width:760px){
+ html #content .z66-approved-hub{max-width:100%}
+ html #content .z66-approved-intro{padding:12px!important;margin-bottom:10px!important}
+ html #content .z66-approved-intro strong{font-size:16px}
+ html #content .z66-settings-list{gap:8px}
+ html #content .z66-settings-group>.z66-group-summary{min-height:61px;padding:10px}
+ html #content .z66-group-icon{width:36px;min-width:36px;height:36px;font-size:18px}
+ html #content .z66-group-middle strong{font-size:13px}
+ html #content .z66-group-middle small{font-size:10px}
+ html #content .z66-settings-body{padding:9px;gap:8px}
+ html #content .z66-settings-body>.settings-card{padding:11px!important}
+ html #content .z66-settings-body .settings-card :is(.form-grid,.z20-grid,.zavi-module-grid){gap:6px!important}
+ html #content .z66-trade-list{grid-template-columns:1fr 1fr;gap:6px;max-height:250px}
+ html #content .z66-trade-choice{padding:8px;min-height:60px}
+ html #content .z66-trade-choice strong{font-size:11px}
+ html #content .z66-trade-choice small{font-size:10px}
+ html #content .z66-fields{grid-template-columns:1fr}
+ html #content .z66-colors{grid-template-columns:1fr}
+}
+@media(max-width:355px){html #content .z66-trade-list{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){html #content .z66-approved-hub :is(*,summary,button){transition:none!important;animation:none!important}}

@@ -154,3 +154,28 @@ html[data-zavi-theme="light"] #content .z66-trade-choice[aria-pressed="true"]{
 html[data-zavi-theme="light"] #content .z66-trade-choice[aria-pressed="true"] :is(strong,small,em){
  color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important;
 }
+
+/* Per-color quantity and barcode must remain separate, legible inputs. */
+html #content .z66-color{
+ grid-template-columns:20px minmax(48px,1fr) minmax(60px,.7fr) minmax(64px,.8fr);
+}
+html #content .z66-color input[type="text"]{
+ width:100%;min-width:0;min-height:35px;padding:5px;font-size:11px;
+ border:1px solid var(--line,#d7e5f2);border-radius:7px;
+ background:var(--card,#fff);color:var(--text,#243d60);
+}
+html #content .z66-add-color{display:flex;gap:8px;align-items:center;min-width:0}
+html #content .z66-add-color input{flex:1;min-width:0;max-width:100%;min-height:41px}
+html #content .z66-add-color button{flex-shrink:0}
+html[data-zavi-theme="dark"] #content .z66-color input[type="text"],
+html[data-zavi-theme="glass"] #content .z66-color input[type="text"],
+html[data-zavi-theme="dark"] #content .z66-add-color input,
+html[data-zavi-theme="glass"] #content .z66-add-color input{
+ background:#193b5d!important;border-color:#55799a!important;
+ color:#eef7ff!important;-webkit-text-fill-color:#eef7ff!important;
+}
+@media(max-width:390px){
+ html #content .z66-color{grid-template-columns:18px minmax(40px,1fr) 62px 67px;gap:5px;padding:6px}
+ html #content .z66-add-color{flex-wrap:wrap}
+ html #content .z66-add-color button{min-height:38px}
+}

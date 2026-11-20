@@ -73,15 +73,33 @@
      const select=el('select');
      ['Samsung A56','Samsung A55','iPhone 16','iPhone 15 Pro','Redmi Note 14','مدل دیگر'].forEach(x=>{const opt=el('option','',x);opt.value=x;select.append(opt)});
      model.append(select);preview.append(model);
-     const colors=el('div','z66-colors');
-     ['سیاه','سفید','آبی','سرخ','سبز','صورتی','شفاف','طلایی'].forEach(color=>{
-      const group=el('label','z66-color');
-      const check=el('input');check.type='checkbox';group.append(check,el('span','',color));
-      const count=el('input');count.type='number';count.min='0';count.step='1';count.placeholder='تعداد';count.disabled=true;
-      check.addEventListener('change',()=>{count.disabled=!check.checked;if(!check.checked)count.value=''});
-      group.append(count);colors.append(group);
-     });preview.append(colors);
-     preview.append(el('p','z66-muted','بارکد و موجودی هر رنگ در فورم واقعی باید جداگانه ثبت شوند. این پیش‌نمایش هیچ موجودی را تغییر نمی‌دهد.'));
+     const colors=el('div','z66-colors'),named=new Set();
+     function colorRow(color){
+      if(named.has(color))return;named.add(color);
+      const group=el('div','z66-color');
+      const check=el('input');check.type='checkbox';check.setAttribute('aria-label','انتخاب رنگ '+color);
+      group.append(check,el('span','',color));
+      const count=el('input');count.type='number';count.min='0';count.step='1';count.placeholder='تعداد';count.disabled=true;count.setAttribute('aria-label','تعداد رنگ '+color);
+      const barcode=el('input');barcode.type='text';barcode.maxLength=70;barcode.placeholder='بارکد';barcode.disabled=true;barcode.setAttribute('aria-label','بارکد رنگ '+color);
+      check.addEventListener('change',()=>{
+       count.disabled=barcode.disabled=!check.checked;
+       if(!check.checked){count.value='';barcode.value=''}
+      });
+      group.append(count,barcode);colors.append(group);
+     }
+     ['سیاه','سفید','آبی','سرخ','سبز','صورتی','شفاف','طلایی'].forEach(colorRow);
+     preview.append(colors);
+     const addRow=el('div','z66-add-color');
+     const newColor=el('input');newColor.type='text';newColor.maxLength=30;newColor.placeholder='رنگ دلخواه، مثلاً نارنجی';
+     newColor.setAttribute('aria-label','نام رنگ جدید');
+     const add=el('button','btn subtle','افزودن رنگ');add.type='button';
+     add.addEventListener('click',()=>{
+      const value=newColor.value.trim();
+      if(!value||named.size>=20||named.has(value))return;
+      colorRow(value);newColor.value='';
+     });
+     addRow.append(newColor,add);preview.append(addRow);
+     preview.append(el('p','z66-muted','مدل، تعداد و بارکد هر رنگ در اینجا صرفاً برای بررسی طراحی هستند؛ داده محصول یا گدام ذخیره نمی‌شود.'));
     }
    }else{
     preview.append(el('p','z66-muted','برای ذخیره نوع تجارت، مدیریت عمومی را باز کنید. تغییر خودکار یا بدون تأیید انجام نمی‌شود.'));

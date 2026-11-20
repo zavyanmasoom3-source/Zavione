@@ -92,7 +92,17 @@ with sync_playwright() as p:
                     });
                 }""")
                 assert len(contrast)==23, ("Catalog buttons missing",contrast)
-                assert min(contrast)>=4.5, ("Unreadable trade choice foreground/background",lang,theme,contrast)
+                if min(contrast)<4.5:
+                    debug=page.evaluate("""() => {
+                      const b=document.querySelector('#z66-approved-trades .z66-trade-choice[aria-pressed="true"]');
+                      const label=b?.querySelector('strong');
+                      return {buttonColor:b&&getComputedStyle(b).color,
+                        buttonBackground:b&&getComputedStyle(b).backgroundColor,
+                        textColor:label&&getComputedStyle(label).color,
+                        textFill:label&&getComputedStyle(label).webkitTextFillColor,
+                        htmlTheme:document.documentElement.getAttribute('data-zavi-theme')};
+                    }""")
+                    raise AssertionError(("Unreadable trade choice",lang,theme,contrast,debug))
                 metrics["minTradeContrast"]=min(contrast)
                 if lang=="fa-AF" and width==390:
                     page.screenshot(path=str(OUT/f"settings-initial-{theme}-{width}.png"),

@@ -44,13 +44,18 @@ with sync_playwright() as p:
                 kit?.profile(id)&&form?.fields(id)?.length>2),
           built:built?.length,distinctIds:built?.[0].id!==built?.[1].id,
           distinctBarcodes:built?.[0].sku!==built?.[1].sku,
-          amounts:built?.map(x=>x.openingQty)
+          amounts:built?.map(x=>x.openingQty),
+          lookupIndependent:!!built&&window.ZaviBarcodeV641?.lookup(built,'QA-COV-A56-BLK')[0]?.id===built[0].id
+            &&window.ZaviBarcodeV641?.lookup(built,'QA-COV-A56-BLU')[0]?.id===built[1].id,
+          metadataTypes:form?.normalize('covers',{model:'Samsung A56',color:'آبی'})?.type==='covers'
+            &&form?.normalize('accessories',{item:'کابل',color:'سفید'})?.type==='accessories'
          };
         }""")
         assert core["list"]==23 and len(set(core["ids"]))==23,core
         assert core["kit"]==23 and core["forms"]==23 and core["keysPresent"],core
         assert core["built"]==2 and core["distinctIds"] and core["distinctBarcodes"],core
         assert core["amounts"]==[6,3],core
+        assert core["lookupIndependent"] and core["metadataTypes"],core
         business=page.context.new_page()
         business.route("**/*",lambda route:route.continue_() if route.request.url.startswith(BASE) else route.abort())
         business.goto(BASE+"v25-business.html",wait_until="domcontentloaded",timeout=30000)

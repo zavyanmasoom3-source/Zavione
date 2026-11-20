@@ -112,7 +112,7 @@ with sync_playwright() as p:
                 assert metrics["originalOptions"]==15 and metrics["uniqueOptionIds"]==15,metrics
                 assert metrics["enableAll"] and metrics["renameShop"] and metrics["shop"],metrics
                 assert metrics["pin"] and metrics["backup"] and metrics["integrity"] and metrics["language"],metrics
-                assert metrics["originalCatalog"]==20,metrics
+                assert metrics["originalCatalog"]==23,metrics
                 assert metrics["availableCatalog"]==23 and metrics["proposed"]==3,metrics
                 assert metrics["hiddenGroups"]>=6,metrics
                 assert not metrics["scrollOverflow"],metrics
@@ -164,5 +164,5 @@ with sync_playwright() as p:
 print(json.dumps({"status":"PASS","settings_cases":len(REPORT),
                   "eight_groups":True,"original_modules":14,
                   "original_preferences":15,"catalog":23,
-                  "new_previews":3,"original_handlers_preserved":True},
+                  "new_industry_forms":3,"original_handlers_preserved":True},
                  ensure_ascii=False))

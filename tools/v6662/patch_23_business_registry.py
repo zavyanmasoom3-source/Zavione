@@ -49,6 +49,11 @@ def modify(name,old):
  accessories:['لوازم جانبی موبایل','🎧','محصولات، بارکد و موجودی']
 };"""
         s=exactly(s,anchor,changed,name)
+        # Editing a cover/color record must preserve its specialized metadata,
+        # even when the general mobile-store profile is selected.
+        s=exactly(s,"const productIndustry=zaviBusinessTypeV638();",
+          "const productIndustry=(edit&&['covers','accessories'].includes(p.industryDetails?.type))?p.industryDetails.type:zaviBusinessTypeV638();",name)
+
     elif name=="v25-business.html":
         needle='<option value="distribution">شرکت توزیع</option>'
         # Adding only to original select; owner save flow remains original.

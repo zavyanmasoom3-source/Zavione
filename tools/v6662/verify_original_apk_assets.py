@@ -11,6 +11,7 @@ import json
 import zipfile
 from pathlib import Path
 from patch_durable_save import transform as fix_durable_save
+from patch_23_business_registry import modify as extend23, ALL_FILES as TRADE_FILES
 
 ORIGINAL_SHA256 = "2eb852d7cdb026ccd828a660328bd26bb474f9880430e0ea3007f51489ee50dc"
 ORIGINAL_COUNT = 265
@@ -60,16 +61,21 @@ def verify(original, qa, css_file, output):
     assert "</body>" in expected_source
     first, last = expected_source.rsplit("</body>", 1)
     expected_source = first + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script></body>' + last
-    expected_html = fix_durable_save(expected_source).encode("utf-8")
+    expected_html = fix_durable_save(extend23("index.html", expected_source)).encode("utf-8")
     assert now[INDEX_NAME] == expected_html, "Unexpected HTML/JS mutation outside the approved durable-save fix"
     expected_css = Path(css_file).read_bytes()
     assert now[CSS_NAME] == expected_css, "Unverified visual patch"
     for name in (SETTINGS_CSS, SETTINGS_JS):
         source = Path(__file__).with_name(name.removeprefix("assets/"))
         assert now[name] == source.read_bytes(), f"Unverified approved settings layer: {name}"
-    unchanged = [name for name in old if name != INDEX_NAME]
-    modified = [name for name in unchanged if sha(old[name]) != sha(now[name])]
-    assert not modified, f"Unexpected changed original modules: {modified[:8]}"
+    pristine = [name for name in old if name.removeprefix("assets/") not in TRADE_FILES]
+    patched = [name for name in old if name.removeprefix("assets/") in TRADE_FILES and name != INDEX_NAME]
+    for name in patched:
+        expected = extend23(name.removeprefix("assets/"), old[name].decode("utf-8")).encode("utf-8")
+        assert now[name] == expected, f"Unverified 23-trade registry mutation: {name}"
+    untouched = [name for name in pristine if name != INDEX_NAME]
+    modified = [name for name in untouched if sha(old[name]) != sha(now[name])]
+    assert not modified, f"Unexpected changed unrelated original modules: {modified[:8]}"
     assert not any(x in expected_html.decode("utf-8") for x in BANNED_NEW), "New design leaked"
     assert now["assets/models/ggml-base-q5_1.bin"] == old["assets/models/ggml-base-q5_1.bin"]
     result = {
@@ -78,12 +84,14 @@ def verify(original, qa, css_file, output):
         "qa_apk_sha256": sha(qa.read_bytes()),
         "original_assets": len(old),
         "qa_assets": len(now),
-        "byte_identical_original_assets": len(unchanged),
-        "changed_original_assets": [INDEX_NAME],
+        "byte_identical_original_assets": len(untouched),
+        "strictly_verified_trade_registry_assets": patched,
+        "changed_original_assets": [INDEX_NAME, *patched],
         "added_assets": [CSS_NAME, SETTINGS_CSS, SETTINGS_JS],
         "new_design_present": False,
         "business_logic_modified": True,
-        "original_functional_assets_byte_preserved": True,
+        "original_functional_assets_byte_preserved": False,
+        "trade_registry_only_changes_verified": True,
         "approved_settings_ui_only": True,
         "approved_business_logic_change": "after durable local commit, safely report backup/cloud failures and continue callbacks",
         "native_runtime_tested": False,

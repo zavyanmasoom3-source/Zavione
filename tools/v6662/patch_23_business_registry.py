@@ -17,7 +17,8 @@ ADDED = [
 ]
 HTML_FILES = ("index.html","v25-business.html")
 OTHER_FILES = ("zavi-industry-kit-v6525.js","zavi-industry-engine-v6526.js",
-               "zavi-industry-forms-v6529.js","v47-business.js","zavi-unified20.js")
+               "zavi-industry-forms-v6529.js","v47-business.js","zavi-unified20.js",
+               "zavi-industry-focus-v639.js","zavi-smart-business-v642.js")
 ALL_FILES = HTML_FILES + OTHER_FILES
 
 def exactly(source, old, new, path):
@@ -81,6 +82,20 @@ def modify(name,old):
 """
         s=exactly(s,anchor,entries+anchor,name)
         s=exactly(s,"company:'شرکت تجارتی'};", "company:'شرکت تجارتی',restaurant:'رستورانت و کافه',covers:'کاور موبایل',accessories:'لوازم جانبی موبایل'};",name)
+    elif name=="zavi-industry-focus-v639.js":
+        anchor="    company:{title:'شرکت تجارتی'"
+        entries="""    restaurant:{title:'رستورانت و کافه',subtitle:'منو، سفارش، خرید و صندوق',primary:['products','sales','purchases','money'],tips:['هر غذا و نوشیدنی را جدا ثبت کنید.','مواد مصرفی و رسیدها باید با سند مالی ثبت شوند.'],question:'چطور سفارش و فاکتور را ثبت کنم؟'},
+    covers:{title:'کاور، پوش و پوزه موبایل',subtitle:'موجودی و بارکد مستقل هر رنگ',primary:['products','sales','purchases','reports'],tips:['برای هر رنگ از ثبت چندرنگ استفاده کنید.','هر بارکد باید به یک محصول مستقل تعلق داشته باشد.'],question:'چگونه مدل و رنگ‌های کاور را ثبت کنم؟'},
+    accessories:{title:'لوازم جانبی موبایل',subtitle:'کابل، شارژر و هندزفری با موجودی مستقل',primary:['products','sales','purchases','reports'],tips:['مدل سازگار و بارکد هر کالا را ذخیره کنید.','فروش و خرید را با اسناد ثبت کنید.'],question:'چگونه لوازم جانبی را ثبت کنم؟'},
+"""
+        s=exactly(s,anchor,entries+anchor,name)
+    elif name=="zavi-smart-business-v642.js":
+        anchor="  company:['contacts','debtors','creditors','expenses','journal','hawala']"
+        entries="""  restaurant:['contacts','debtors','expenses','purchases'],
+  covers:['contacts','debtors','expenses','reports'],
+  accessories:['contacts','debtors','expenses','reports'],
+"""
+        s=exactly(s,anchor,entries+anchor,name)
     elif name=="v47-business.js":
         anchor="  company:['sales','purchases','products','banking','reports']\n};"
         replacement="""  company:['sales','purchases','products','banking','reports'],

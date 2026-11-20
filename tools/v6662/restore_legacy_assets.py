@@ -10,6 +10,7 @@ import re
 import subprocess
 import zipfile
 from pathlib import Path
+from patch_23_business_registry import run as register_23_trades, ALL_FILES as REGISTERED_TRADE_FILES
 
 ORIGINAL_SHA256 = "2eb852d7cdb026ccd828a660328bd26bb474f9880430e0ea3007f51489ee50dc"
 EXPECTED_BYTES = 62_226_180
@@ -80,6 +81,7 @@ def main():
     assert 'id="zaviEnableAllFeatures"' in updated, "Original enable-all control changed"
     assert 'data-module-id=' in updated and 'data-z20-option=' in updated
     html_file.write_text(updated, encoding="utf-8")
+    registry_change_report = register_23_trades(dest)
     # Ensure every local stylesheet and script in the exact historical HTML still exists.
     references = re.findall(r'<(?:script|link)\b[^>]+?(?:src|href)=["\'](\./[^"\']+)["\']', updated, re.I)
     missing = [ref for ref in references if not (dest / ref.split("?",1)[0].removeprefix("./")).is_file()]
@@ -93,16 +95,15 @@ def main():
     assert not failures, f"Broken original JavaScript: {failures[:10]}"
     assert (dest / "models/ggml-base-q5_1.bin").stat().st_size == 59_707_625
     original_after = dict(files)
-    # Every single original resource must remain byte-identical apart from index.html.
+    # Original business-code changes are exact-string, fail-closed and separately verified.\n    # All other resources remain byte-identical.
     for relative, original_hash in original_after.items():
-        if relative == "index.html":
+        if relative == "index.html" or relative in REGISTERED_TRADE_FILES:
             continue
         assert hashlib.sha256((dest/relative).read_bytes()).hexdigest() == original_hash, f"Changed legacy resource: {relative}"
     report = {"baseline_apk_sha256":sha,"baseline_bytes":len(original),
               "original_resources":len(files),"extra_stylesheets":["legacy-ui-fixes.css",css_name],
               "extra_scripts":[js_name],"superseded_ui_organizers":disabled_organizers,
-              "changed_original_resources":["index.html"],
-              "preserved_original_resources":len(files)-1,
+              "changed_original_resources":list(REGISTERED_TRADE_FILES),\n              "trade_registry_changes":registry_change_report,\n              "preserved_original_resources":len(files)-len(REGISTERED_TRADE_FILES),
               "model_size":(dest/"models/ggml-base-q5_1.bin").stat().st_size,
               "no_new_design_confirmed":True,
               "render_test":"NOT_VERIFIED",

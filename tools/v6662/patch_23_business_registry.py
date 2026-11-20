@@ -90,7 +90,7 @@ def modify(name,old):
 """
         s=exactly(s,anchor,entries+anchor,name)
     elif name=="zavi-smart-business-v642.js":
-        anchor="  company:['contacts','debtors','creditors','expenses','journal','hawala']"
+        anchor=" company:['contacts','debtors','creditors','expenses','journal','hawala']"
         entries="""  restaurant:['contacts','debtors','expenses','purchases'],
   covers:['contacts','debtors','expenses','reports'],
   accessories:['contacts','debtors','expenses','reports'],

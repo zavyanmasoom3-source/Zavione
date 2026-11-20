@@ -125,6 +125,13 @@ with sync_playwright() as p:
                 assert qty.is_enabled()
                 qty.fill('4')
                 assert qty.input_value()=='4'
+                barcode=first.locator('input[type=text]')
+                assert barcode.is_enabled()
+                barcode.fill('COVER-SAMPLE-001')
+                assert barcode.input_value()=='COVER-SAMPLE-001'
+                page.locator('.z66-add-color input').fill('نارنجی')
+                page.locator('.z66-add-color button').click()
+                assert page.locator('.z66-colors .z66-color').count()==9
                 assert page.locator('#shopForm').count()==1
                 # Search must not permanently destroy native controls.
                 input=page.locator('.z66-setting-search')

@@ -59,24 +59,24 @@ def main():
     # the original "enable all features" control. Supersede ONLY those organizers;
     # retain their original JS assets and every functional/settings handler.
     redundant_organizers = (
-        "zavi-settings-priority-v6546.js",
-        "zavi-final-settings-store-v6559.js",
+        '<script defer src="./zavi-settings-priority-v6546.js?v=65.46"></script>',
+        '<script defer src="./zavi-final-settings-store-v6559.js?v=20261025-final"></script>',
     )
     disabled_organizers = []
-    for name in redundant_organizers:
-        pattern = r'<script\\b[^>]*\\bsrc=["\\\']\\./' + re.escape(name) + r'\\?[^"\\\']*["\\\'][^>]*>\\s*</script>'
-        updated, count = re.subn(pattern, "", updated, flags=re.I)
-        assert count == 1, f"Unexpected old settings organizer references: {name}: {count}"
-        disabled_organizers.append(name)
+    for tag in redundant_organizers:
+        assert updated.count(tag) == 1, f"Unexpected old settings organizer tag: {tag}"
+        updated = updated.replace(tag, "", 1)
+        disabled_organizers.append(tag.split('src="./', 1)[1].split('?', 1)[0])
     css_name = "legacy-settings-approved.css"
     js_name = "legacy-settings-approved.js"
     for name in (css_name, js_name):
         src = Path(__file__).with_name(name)
         assert src.is_file(), f"Missing approved settings layer: {name}"
         (dest / name).write_bytes(src.read_bytes())
-    assert updated.count("</body>") == 1, "Unexpected historical body closure"
+    assert "</body>" in updated, "Missing historical body closure"
     updated = updated.replace("</head>", '<link rel="stylesheet" href="./legacy-settings-approved.css?v=6662-approved" data-zavi-settings-approved="true"></head>', 1)
-    updated = updated.replace("</body>", '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script></body>', 1)
+    head, tail = updated.rsplit("</body>", 1)
+    updated = head + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script></body>' + tail
     assert 'id="zaviEnableAllFeatures"' in updated, "Original enable-all control changed"
     assert 'data-module-id=' in updated and 'data-z20-option=' in updated
     html_file.write_text(updated, encoding="utf-8")

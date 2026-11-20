@@ -34,6 +34,8 @@
   https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44702206797
 - آزمون مرورگر شامل 270 نمایش مسیر/زبان/تم، 18 حالت تنظیمات، 3 زبان رجیستری 23تایی و کنترل مستقل بارکد رنگ:
   https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44702206670
+- آزمون تکمیلی بارکدخوان واقعی برای دو رنگ و نگهداری فورم مخصوص صنف: **SUCCESS** — https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44702665719
+- آخرین بیلد موفق با متن به‌روز تنظیمات: https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44702897873
 - 8 تست دوام ذخیره و 7 تست ویژه رنگ/بارکد با موفقیت اجرا شدند.
 - این‌ها تست **منطق ثبت آماده‌سازی محصول و ساختار منابع در مرورگر** هستند، نه آزمون تراکنش واقعی چنددستگاهی یا قرارداد سرور.
 

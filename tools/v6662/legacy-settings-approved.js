@@ -46,13 +46,12 @@
   const preview=el('section','z66-trade-preview');preview.setAttribute('aria-live','polite');
   card.append(search,list,preview);
   const core=Array.isArray(window.ZAVI_UNIFIED_PROFILES)?window.ZAVI_UNIFIED_PROFILES:[];
-  if(core.length!==20){
-   card.querySelector('p').textContent='فهرست کسب‌وکارهای اصلی این نسخه نیازمند بررسی است. انتخاب‌های جدید جایگزین تنظیمات فروشگاه نمی‌شوند.';
+  if(core.length!==23){
+   card.querySelector('p').textContent='فهرست 23 کسب‌وکار نیازمند بررسی منابع است. تنظیمات فروشگاه تا تأیید مالک تغییر نمی‌کند.';
   }
-  const all=[
-   ...core.map((b,i)=>({id:b.id,name:b.name,focus:b.focus||'',number:b.number||i+1})),
-   ...EXTRA.map((b,i)=>({...b,number:core.length+i+1,new:true}))
-  ];
+  const extraById=new Map(EXTRA.map(b=>[b.id,b]));
+  const all=core.map((b,i)=>({...b,...(extraById.get(b.id)||{}),name:b.name,
+      focus:b.focus||'',number:b.number||i+1,new:extraById.has(b.id)}));
   const types=new Set(all.map(b=>b.id));
   if(types.size!==all.length)throw Error('Duplicate industry type in approved settings catalog');
   const lang=locale(),title=b=>b.name?.[lang]||b.name?.fa||b.id;
@@ -127,6 +126,8 @@
    if(!list.children.length)list.append(el('p','z66-muted','صنفی با این نام یافت نشد.'));
   }
   search.addEventListener('input',renderList);renderList();
+  if(all.length!==23||new Set(all.map(b=>b.id)).size!==23)
+   throw Error('Incomplete or duplicated 23-industry registry in settings');
   const active=typeof window.zaviActiveIndustry==='function'?window.zaviActiveIndustry():'general';
   const first=all.find(b=>b.id===active)||all[0];if(first){selection=first.id;renderPreview(first);renderList()}
   return card;

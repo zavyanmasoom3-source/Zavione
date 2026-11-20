@@ -179,3 +179,14 @@ html[data-zavi-theme="glass"] #content .z66-add-color input{
  html #content .z66-add-color{flex-wrap:wrap}
  html #content .z66-add-color button{min-height:38px}
 }
+
+/* Highest-specificity correction: historical LIGHT cascades color onto all
+ * .settings-card descendants with !important. Scope to selected trade choice. */
+html[data-zavi-theme="light"] #content #z66-approved-hub #z66-approved-trades .z66-trade-choice[aria-pressed="true"],
+html[data-zavi-theme="light"] #content #z66-approved-hub #z66-approved-trades .z66-trade-choice[aria-pressed="true"] :is(strong,small,em,span){
+ background-color:#103c65!important;
+ color:#ffffff!important;
+ -webkit-text-fill-color:#ffffff!important;
+ opacity:1!important;
+ text-shadow:none!important;
+}

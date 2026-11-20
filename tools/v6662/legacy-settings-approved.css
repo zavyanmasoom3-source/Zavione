@@ -145,3 +145,12 @@ html[data-zavi-theme="dark"] #content .z66-approved-hub :is(input,textarea)::pla
 html[data-zavi-theme="glass"] #content .z66-approved-hub :is(input,textarea)::placeholder{
  color:#c2d3e7!important;opacity:1!important;
 }
+
+/* Selected trade control must stay readable in LIGHT, including main label. */
+html[data-zavi-theme="light"] #content .z66-trade-choice[aria-pressed="true"]{
+ background:#164a75!important;border-color:#164a75!important;color:#fff!important;
+ -webkit-text-fill-color:#fff!important;
+}
+html[data-zavi-theme="light"] #content .z66-trade-choice[aria-pressed="true"] :is(strong,small,em){
+ color:#fff!important;-webkit-text-fill-color:#fff!important;opacity:1!important;
+}

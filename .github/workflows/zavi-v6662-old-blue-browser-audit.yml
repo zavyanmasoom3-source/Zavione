@@ -15,6 +15,9 @@ on:
       - 'tools/v6662/restore_legacy_assets.py'
       - 'tests/v6662_approved_settings_ui_qa.py'
       - 'tests/v6662_23_business_runtime_qa.py'
+      - 'tests/v6662_approved_auth_recovery_qa.py'
+      - 'tools/v6662/legacy-auth-simple-v6662.js'
+      - 'tools/v6662/legacy-auth-simple-v6662.css'
       - 'tools/v6662/patch_23_business_registry.py'
       - 'tools/v6662/legacy-phone-case-variants.js'
       - 'tools/v6662/legacy-phone-case-variants.css'
@@ -61,6 +64,7 @@ jobs:
           python tests/v6662_original_locale_visual_qa.py
           python tests/v6662_approved_settings_ui_qa.py
           python tests/v6662_23_business_runtime_qa.py
+          python tests/v6662_approved_auth_recovery_qa.py
       - name: Upload visual QA evidence and source check
         if: always()
         uses: actions/upload-artifact@v4

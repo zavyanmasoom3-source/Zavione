@@ -325,3 +325,17 @@ html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean #zawiForgotPinBtn,
 html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean #zawiForgotPinBtn{
  color:#bcdfff!important;-webkit-text-fill-color:#bcdfff!important;
 }
+
+/* Approved auth: suppress decorative 12-dot meter; retain live length feedback.
+ * The original PIN validation, input listeners and live status are not removed. */
+#zawiPrivateGate.zv66-auth-clean #z639PinProgress{display:none!important}
+#zawiPrivateGate.zv66-auth-clean #z639PinStatus{
+ display:block!important;margin:2px 0 4px!important;padding:0!important;
+ min-height:0!important;font-size:11px!important;line-height:1.5!important;
+ color:#526f8c!important;-webkit-text-fill-color:#526f8c!important;
+ text-shadow:none!important;text-align:center!important;
+}
+html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean #z639PinStatus,
+html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean #z639PinStatus{
+ color:#d5e5f5!important;-webkit-text-fill-color:#d5e5f5!important;
+}

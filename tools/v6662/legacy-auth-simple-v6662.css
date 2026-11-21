@@ -339,3 +339,42 @@ html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean #z639PinStatus,
 html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean #z639PinStatus{
  color:#d5e5f5!important;-webkit-text-fill-color:#d5e5f5!important;
 }
+
+/* Final screenshot QA: reduce support block without hiding the help phone,
+ * internet requirement, account-data safety or device-local PIN warning. */
+#z24Recovery.zv66-auth-clean .z24-pbox > p.z24-note:not(:first-of-type){
+ display:block!important;
+ margin:5px 0 8px!important;
+ padding:8px 0!important;
+ background:transparent!important;
+ background-image:none!important;
+ border:0!important;border-top:1px solid #e3ebf5!important;
+ border-radius:0!important;box-shadow:none!important;
+ color:#5d728b!important;-webkit-text-fill-color:#5d728b!important;
+ font:400 10px/1.6 Tahoma,Arial,sans-serif!important;
+}
+#z24Recovery.zv66-auth-clean .zv66-recovery-hint{
+ display:none!important; /* same internet/owner note already in original footer */
+}
+#z24Recovery.zv66-auth-clean #z24Load{
+ min-height:36px!important;
+ padding:6px 9px!important;
+ background:transparent!important;
+ border:1px solid transparent!important;
+ box-shadow:none!important;
+}
+#z24Recovery.zv66-auth-clean[data-zv66-step="approved"] #z24Finish{
+ background:linear-gradient(105deg,#156bbc,#148cce)!important;
+ border:0!important;color:#fff!important;-webkit-text-fill-color:#fff!important;
+ font-weight:800!important;min-height:45px!important;
+}
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean .z24-pbox > p.z24-note:not(:first-of-type),
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean .z24-pbox > p.z24-note:not(:first-of-type){
+ color:#c9d9eb!important;-webkit-text-fill-color:#c9d9eb!important;
+ border-top-color:#395b7d!important;
+}
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean[data-zv66-step="approved"] #z24Finish,
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean[data-zv66-step="approved"] #z24Finish{
+ background:linear-gradient(105deg,#176fba,#0e92d4)!important;
+ color:#fff!important;-webkit-text-fill-color:#fff!important;border:0!important;
+}

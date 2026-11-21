@@ -1,0 +1,49 @@
+name: ZAVI V66.62 approved compact auth - owner-verified UI QA
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - '.github/workflows/zavi-v6662-approved-auth-qa.yml'
+      - 'tools/v6662/legacy-auth-simple-v6662.css'
+      - 'tools/v6662/legacy-auth-simple-v6662.js'
+      - 'tools/v6662/restore_legacy_assets.py'
+      - 'tests/v6662_approved_auth_recovery_qa.py'
+permissions:
+  contents: read
+jobs:
+  approved-auth-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Stage exact original 62MB app and enforce source integrity
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p original-baseline qa-output
+          gh release download zavi-v6662-one-debug-qa --repo "$GITHUB_REPOSITORY" --pattern 'ZAVI_one_V6662_DEBUG_QA.apk' --dir original-baseline
+          python3 tools/v6662/restore_legacy_assets.py --apk original-baseline/ZAVI_one_V6662_DEBUG_QA.apk --dest qa-browser-app --report qa-output/source-audit.json
+          python3 tools/v6662/patch_durable_save.py --html qa-browser-app/index.html --report qa-output/durable-save-stage.json
+      - name: Install browser
+        run: |
+          python -m pip install playwright
+          python -m playwright install --with-deps chromium
+      - name: Verify original lock and protected cloud owner recovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 8188 --bind 127.0.0.1 --directory qa-browser-app >/tmp/zavi-auth-browser.log 2>&1 &
+          python tests/v6662_approved_auth_recovery_qa.py
+      - name: Attach visual and security test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZAVI_V6662_APPROVED_AUTH_QA
+          path: qa-output/
+          retention-days: 14

@@ -1,0 +1,325 @@
+/* ZAVI ONE V66.62 — APPROVED minimal mobile sign-in & recovery.
+ * Scoped to the genuine historical #zawiPrivateGate and #z24Recovery.
+ * Original PIN validation, owner verification, cloud credentials, workspace
+ * selection, reset status and reset-consume flows remain untouched.
+ */
+#zawiPrivateGate.zv66-auth-clean{
+ --zv66-a-blue:#176bbf;
+ --zv66-a-blue2:#148bd4;
+ --zv66-a-border:#dce6f1;
+ --zv66-a-muted:#61758c;
+ --zv66-a-text:#18314d;
+ box-sizing:border-box!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))!important;
+ background:linear-gradient(150deg,#eaf3ff 0%,#f8fbff 75%,#eaf4ff 100%)!important;
+}
+#zawiPrivateGate.zv66-auth-clean .zawi-auth-card{
+ width:min(100%,410px)!important;max-width:410px!important;
+ min-width:0!important;box-sizing:border-box!important;
+ border-radius:20px!important;
+ border:1px solid #dfe8f2!important;
+ background:#fff!important;
+ padding:20px 20px 18px!important;
+ margin:0 auto!important;
+ box-shadow:0 15px 42px rgba(19,62,116,.12)!important;
+ max-height:calc(100dvh - 24px)!important;
+ overflow-y:auto!important;overscroll-behavior:contain!important;
+ color:#18314d!important;direction:inherit;
+}
+#zawiPrivateGate.zv66-auth-clean .zawi-lock-emblem{
+ width:54px!important;height:54px!important;
+ margin:0 auto 9px!important;
+ border-radius:14px!important;
+ box-shadow:none!important;
+ padding:0!important;
+}
+#zawiPrivateGate.zv66-auth-clean .zawi-lock-emblem img{border-radius:13px!important;object-fit:contain!important}
+#zawiPrivateGate.zv66-auth-clean .zawi-brand-latin{
+ font:750 13px/1.5 Tahoma,Arial,sans-serif!important;
+ letter-spacing:.08em!important;
+ text-align:center!important;margin:0 0 6px!important;
+ color:#244f7a!important;
+}
+#zawiPrivateGate.zv66-auth-clean .zawi-brand-dot{color:#1b83c6!important}
+#zawiPrivateGate.zv66-auth-clean .zavi-gate-eyebrow{
+ display:none!important; /* Decorative duplicate; actual PIN title is kept. */
+}
+#zawiPrivateGate.zv66-auth-clean .zavi-auth-language{
+ display:flex!important;justify-content:center!important;align-items:center!important;
+ gap:7px!important;margin:7px 0 15px!important;
+ font-size:11px!important;min-height:0!important;
+}
+#zawiPrivateGate.zv66-auth-clean #zaviGateLanguage{
+ min-height:37px!important;max-width:130px!important;padding:6px 9px!important;
+ border-radius:10px!important;box-shadow:none!important;
+ background:#f6f9fd!important;border:1px solid var(--zv66-a-border)!important;
+ color:#193c61!important;font-size:12px!important;
+}
+#zawiPrivateGate.zv66-auth-clean #zawiGateTitle{
+ font:800 20px/1.4 Tahoma,Arial,sans-serif!important;
+ color:var(--zv66-a-text)!important;margin:6px 0 5px!important;
+ text-align:center!important;text-shadow:none!important;letter-spacing:0!important;
+}
+#zawiPrivateGate.zv66-auth-clean #zawiGateHelp{
+ font-size:12px!important;line-height:1.65!important;
+ color:var(--zv66-a-muted)!important;margin:0 0 15px!important;
+ text-align:center!important;text-shadow:none!important;
+}
+#zawiPrivateGate.zv66-auth-clean #zawiPinForm{
+ display:grid!important;gap:10px!important;
+ margin:0!important;min-width:0!important;
+}
+#zawiPrivateGate.zv66-auth-clean .zawi-pin-field{
+ margin:0!important;padding:0!important;min-width:0!important;
+}
+#zawiPrivateGate.zv66-auth-clean .zawi-pin-field label{
+ display:block!important;font-size:12px!important;font-weight:700!important;
+ margin:0 0 5px!important;color:#294d70!important;line-height:1.5!important;
+}
+#zawiPrivateGate.zv66-auth-clean .zawi-pin-field input{
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ box-sizing:border-box!important;height:47px!important;min-height:47px!important;
+ border-radius:11px!important;border:1px solid var(--zv66-a-border)!important;
+ background:#f9fbfe!important;color:var(--zv66-a-text)!important;
+ font:600 17px/1.4 Tahoma,Arial,sans-serif!important;
+ box-shadow:none!important;padding:9px 13px!important;
+ direction:ltr!important;text-align:center!important;
+}
+#zawiPrivateGate.zv66-auth-clean #zawiPinError{
+ max-width:100%!important;font-size:12px!important;line-height:1.55!important;
+ margin:0!important;min-height:0!important;overflow-wrap:anywhere!important;
+}
+#zawiPrivateGate.zv66-auth-clean #zawiPinSubmit{
+ width:100%!important;max-width:100%!important;min-height:46px!important;
+ margin:1px 0 0!important;
+ border:0!important;border-radius:11px!important;
+ background:linear-gradient(110deg,var(--zv66-a-blue),var(--zv66-a-blue2))!important;
+ color:white!important;-webkit-text-fill-color:#fff!important;
+ box-shadow:none!important;font:700 14px/1.5 Tahoma,Arial,sans-serif!important;
+}
+#zawiPrivateGate.zv66-auth-clean #zawiForgotPinBtn{
+ width:100%!important;max-width:100%!important;min-height:40px!important;
+ margin:0!important;padding:7px 10px!important;
+ border:1px solid transparent!important;
+ border-radius:10px!important;background:transparent!important;
+ box-shadow:none!important;color:#2464a0!important;
+ -webkit-text-fill-color:#2464a0!important;
+ font:600 12px/1.5 Tahoma,Arial,sans-serif!important;
+}
+#zawiPrivateGate.zv66-auth-clean .zawi-auth-card>div:has(> #zawiForgotPinBtn){
+ margin:8px 0 0!important;
+}
+#zawiPrivateGate.zv66-auth-clean :is(button,input,select):focus-visible,
+#z24Recovery.zv66-auth-clean :is(button,input,select):focus-visible{
+ outline:3px solid #55a8e8!important;outline-offset:2px!important;
+}
+#zawiPrivateGate.zv66-auth-clean :is(.zawi-auth-card,#zawiPinForm) *{
+ text-shadow:none!important;
+}
+/* Recovery: modern single compact card, no duplicate gradients or oversized frames. */
+#z24Recovery.zv66-auth-clean{
+ --zv66-r-text:#1a3550;
+ --zv66-r-muted:#5d7085;
+ --zv66-r-border:#dce6f1;
+ position:fixed!important;inset:0!important;z-index:2147483000!important;
+ box-sizing:border-box!important;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))!important;
+ background:linear-gradient(145deg,#eaf3ff,#f9fbff)!important;
+ color:var(--zv66-r-text)!important;
+ font:13px/1.55 Tahoma,Arial,sans-serif!important;
+ direction:inherit!important;
+}
+#z24Recovery.zv66-auth-clean .z24-pbox{
+ box-sizing:border-box!important;
+ width:min(100%,420px)!important;max-width:420px!important;min-width:0!important;
+ max-height:calc(100dvh - 24px)!important;overflow-y:auto!important;
+ overscroll-behavior:contain!important;
+ padding:18px 18px 15px!important;margin:0 auto!important;
+ background:#fff!important;color:#1a3550!important;
+ border:1px solid var(--zv66-r-border)!important;border-radius:19px!important;
+ box-shadow:0 15px 42px rgba(15,60,111,.13)!important;
+ display:flex!important;flex-direction:column!important;gap:0!important;
+}
+#z24Recovery.zv66-auth-clean .z24-ph{
+ border:0!important;background:transparent!important;border-radius:0!important;
+ padding:0!important;margin:0!important;text-align:start!important;
+ box-shadow:none!important;color:#1a3550!important;
+}
+#z24Recovery.zv66-auth-clean .z24-ph h2{
+ font:800 21px/1.4 Tahoma,Arial,sans-serif!important;
+ color:#1a3550!important;text-shadow:none!important;margin:0 0 5px!important;
+}
+#z24Recovery.zv66-auth-clean .z24-ph p{
+ color:#5d7085!important;font-size:12px!important;line-height:1.6!important;
+ margin:0 0 12px!important;text-shadow:none!important;
+}
+#z24Recovery.zv66-auth-clean .zv66-recovery-step{
+ display:block!important;width:max-content;max-width:100%!important;
+ border-radius:8px!important;background:#eef5fc!important;color:#245a89!important;
+ padding:5px 9px!important;margin:0 0 12px!important;
+ font:700 11px/1.5 Tahoma,Arial,sans-serif!important;
+}
+#z24Recovery.zv66-auth-clean .z24-pbox>.z24-note:first-of-type,
+#z24Recovery.zv66-auth-clean .z94-recovery-steps{
+ display:none!important; /* duplicated explanatory text, no functional controls */
+}
+#z24Recovery.zv66-auth-clean .z24-pfield{
+ display:block!important;margin:0 0 12px!important;
+ color:#2d4d6c!important;font-size:12px!important;line-height:1.55!important;
+ font-weight:700!important;text-shadow:none!important;
+}
+#z24Recovery.zv66-auth-clean :is(.z24-pfield input,.z24-pfield select){
+ box-sizing:border-box!important;display:block!important;
+ width:100%!important;max-width:100%!important;min-width:0!important;
+ height:45px!important;min-height:45px!important;margin-top:5px!important;
+ padding:9px 12px!important;border-radius:10px!important;
+ border:1px solid var(--zv66-r-border)!important;background:#f9fbfe!important;
+ color:#183750!important;-webkit-text-fill-color:#183750!important;
+ font:500 13px/1.5 Tahoma,Arial,sans-serif!important;
+ box-shadow:none!important;
+}
+#z24Recovery.zv66-auth-clean .z24-pactions{
+ margin:0 0 12px!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ gap:7px!important;align-items:stretch!important;
+}
+#z24Recovery.zv66-auth-clean .z24-pbtn{
+ box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;min-height:43px!important;
+ border:0!important;border-radius:10px!important;
+ padding:10px 12px!important;margin:0!important;
+ font:700 13px/1.45 Tahoma,Arial,sans-serif!important;
+ text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;
+ background:linear-gradient(105deg,#166cbe,#1595d4)!important;
+ color:#fff!important;-webkit-text-fill-color:#fff!important;
+ box-shadow:none!important;cursor:pointer!important;
+}
+#z24Recovery.zv66-auth-clean .z24-pbtn.alt{
+ background:#f4f8fc!important;color:#23619c!important;
+ -webkit-text-fill-color:#23619c!important;
+ border:1px solid #d9e6f2!important;
+}
+#z24Recovery.zv66-auth-clean .z24-pbtn:disabled{
+ opacity:.52!important;cursor:not-allowed!important;
+}
+#z24Recovery.zv66-auth-clean #z24Load:disabled{display:none!important}
+#z24Recovery.zv66-auth-clean .z24-pstatus{
+ font-size:11px!important;line-height:1.65!important;
+ color:#486c8a!important;text-shadow:none!important;
+ margin:3px 0 11px!important;
+ background:#f4f8fd!important;border:1px solid #e1eaf2!important;
+ border-radius:10px!important;padding:9px 11px!important;
+ white-space:pre-wrap!important;overflow-wrap:anywhere!important;
+}
+#z24Recovery.zv66-auth-clean .z24-pstatus.err{
+ color:#a33342!important;background:#fff5f6!important;border-color:#f0ccd0!important;
+}
+#z24Recovery.zv66-auth-clean .zv66-recovery-hint{
+ margin:1px 0 8px!important;
+ color:#627790!important;font-size:10px!important;line-height:1.65!important;
+}
+#z24Recovery.zv66-auth-clean .z24-pbox>.z24-note:last-of-type{
+ border:0!important;border-top:1px solid #e1ebf4!important;
+ background:transparent!important;border-radius:0!important;
+ padding:9px 0!important;margin:0 0 8px!important;
+ color:#6b7f95!important;font-size:10px!important;line-height:1.55!important;
+ box-shadow:none!important;
+}
+/* Only the relevant original stage is visible; protected handlers stay bound. */
+#z24Recovery.zv66-auth-clean[data-zv66-step="account"] .zv66-shop-field,
+#z24Recovery.zv66-auth-clean[data-zv66-step="account"] .zv66-request-actions,
+#z24Recovery.zv66-auth-clean[data-zv66-step="shop"] #z24LoginFields,
+#z24Recovery.zv66-auth-clean[data-zv66-step="shop"] .zv66-account-actions,
+#z24Recovery.zv66-auth-clean[data-zv66-step="pending"] #z24LoginFields,
+#z24Recovery.zv66-auth-clean[data-zv66-step="pending"] .zv66-account-actions,
+#z24Recovery.zv66-auth-clean[data-zv66-step="approved"] #z24LoginFields,
+#z24Recovery.zv66-auth-clean[data-zv66-step="approved"] .zv66-account-actions{
+ display:none!important;
+}
+#z24Recovery.zv66-auth-clean .zv66-request-actions #z24Finish,
+#z24Recovery.zv66-auth-clean .zv66-request-actions #z24Check,
+#z24Recovery.zv66-auth-clean .zv66-request-actions #z24Ask{
+ display:none!important;
+}
+#z24Recovery.zv66-auth-clean[data-zv66-step="shop"] .zv66-request-actions #z24Ask,
+#z24Recovery.zv66-auth-clean[data-zv66-step="pending"] .zv66-request-actions #z24Check,
+#z24Recovery.zv66-auth-clean[data-zv66-step="approved"] .zv66-request-actions #z24Check,
+#z24Recovery.zv66-auth-clean[data-zv66-step="approved"] .zv66-request-actions #z24Finish{
+ display:block!important;
+}
+#z24Recovery.zv66-auth-clean[data-zv66-step="account"] .z24-pstatus:not(.err){
+ display:none!important;
+}
+#z24Recovery.zv66-auth-clean :is(input,select,button){touch-action:manipulation}
+#z24Recovery.zv66-auth-clean .z24-pbox :is(p,h2,label,button,strong,small){text-shadow:none!important}
+@media(max-width:520px){
+ #zawiPrivateGate.zv66-auth-clean .zawi-auth-card{
+  width:min(100%,385px)!important;padding:17px 16px 15px!important;
+ }
+ #zawiPrivateGate.zv66-auth-clean .zawi-lock-emblem{
+  width:47px!important;height:47px!important;margin-bottom:7px!important;
+ }
+ #zawiPrivateGate.zv66-auth-clean #zawiGateTitle{font-size:19px!important}
+ #z24Recovery.zv66-auth-clean .z24-pbox{
+  width:min(100%,390px)!important;padding:16px!important;
+  max-height:calc(100dvh - 24px)!important;
+ }
+ #z24Recovery.zv66-auth-clean .z24-ph h2{font-size:20px!important}
+}
+@media(max-height:570px) and (orientation:landscape){
+ #zawiPrivateGate.zv66-auth-clean,
+ #z24Recovery.zv66-auth-clean{align-items:flex-start!important}
+ #zawiPrivateGate.zv66-auth-clean .zawi-auth-card,
+ #z24Recovery.zv66-auth-clean .z24-pbox{
+   margin:0 auto!important;max-height:none!important;min-height:0!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #zawiPrivateGate.zv66-auth-clean *,
+ #z24Recovery.zv66-auth-clean *{animation:none!important;transition:none!important}
+}
+/* Three established appearance modes retain blue identity but avoid bright-on-bright text. */
+html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean,
+html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean,
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean,
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean{
+ background:linear-gradient(145deg,#071b37,#12345d)!important;
+}
+html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean .zawi-auth-card,
+html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean .zawi-auth-card,
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean .z24-pbox,
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean .z24-pbox{
+ background:#102b4b!important;color:#edf6ff!important;
+ border-color:#3b6287!important;box-shadow:0 18px 46px #05132966!important;
+}
+html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean :is(#zawiGateTitle,.zawi-brand-latin,.zawi-pin-field label),
+html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean :is(#zawiGateTitle,.zawi-brand-latin,.zawi-pin-field label),
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean :is(.z24-ph h2,.z24-pfield),
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean :is(.z24-ph h2,.z24-pfield){
+ color:#eef7ff!important;-webkit-text-fill-color:#eef7ff!important;
+}
+html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean :is(#zawiGateHelp,.zavi-auth-language),
+html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean :is(#zawiGateHelp,.zavi-auth-language),
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean :is(.z24-ph p,.zv66-recovery-hint,.z24-pbox>.z24-note:last-of-type),
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean :is(.z24-ph p,.zv66-recovery-hint,.z24-pbox>.z24-note:last-of-type){
+ color:#bfd5e9!important;-webkit-text-fill-color:#bfd5e9!important;
+}
+html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean :is(.zawi-pin-field input,#zaviGateLanguage),
+html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean :is(.zawi-pin-field input,#zaviGateLanguage),
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean :is(.z24-pfield input,.z24-pfield select),
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean :is(.z24-pfield input,.z24-pfield select){
+ background:#1a3a5e!important;border-color:#557b9e!important;
+ color:#f2f8ff!important;-webkit-text-fill-color:#f2f8ff!important;
+}
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean :is(.zv66-recovery-step,.z24-pstatus,.z24-pbtn.alt),
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean :is(.zv66-recovery-step,.z24-pstatus,.z24-pbtn.alt){
+ background:#1a3c60!important;border-color:#46729c!important;
+ color:#eef7ff!important;-webkit-text-fill-color:#eef7ff!important;
+}
+html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean #zawiForgotPinBtn,
+html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean #zawiForgotPinBtn{
+ color:#bcdfff!important;-webkit-text-fill-color:#bcdfff!important;
+}

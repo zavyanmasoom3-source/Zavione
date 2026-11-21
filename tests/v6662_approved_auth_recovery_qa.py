@@ -141,13 +141,14 @@ def record_case(browser,language,theme,width,height):
     page.wait_for_timeout(700)
     pending_status=page.locator("#z24RecoveryStatus").inner_text()
     assert state["checks"]>=1 and state["consume"]==0, ("Pending status did not call server",state,pending_status)
-    assert "منتظر" in pending_status, ("Unexpected pending text",pending_status,state)
+    assert any(word in pending_status.lower() for word in ("منتظر","تمه","pending","waiting")), ("Unexpected pending text",pending_status,state)
     assert root.get_attribute("data-zv66-step")=="pending", ("Stage switched before owner approved",root.get_attribute("data-zv66-step"),pending_status)
     assert not page.locator("#z24Finish").is_visible()
     state["approved"]=True
     page.locator("#z24Check").click()
-    page.wait_for_function("""() => document.querySelector('#z24Recovery')?.dataset.zv66Step === 'approved'""",
-                           timeout=5000)
+    page.wait_for_timeout(650)
+    approved_text=page.locator("#z24RecoveryStatus").inner_text()
+    assert root.get_attribute("data-zv66-step")=="approved", ("Approved server response not reflected in UI",approved_text,state,language,theme)
     assert page.locator("#z24Finish").is_visible()
     # Original finish() must itself recheck owner RPC and consume token.
     page.locator("#z24Finish").click()

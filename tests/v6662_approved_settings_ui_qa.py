@@ -68,6 +68,9 @@ with sync_playwright() as p:
                    optionCount:options.length,
                    optionUnique:new Set(options.map(x=>x.dataset.z20Option)).size,
                    controlInHub:modules.every(x=>hub.contains(x))&&options.every(x=>hub.contains(x)),
+                   collapsedSubsections:hub.querySelectorAll('details.z66-settings-subsection:not([open])').length,
+                   totalSubsections:hub.querySelectorAll('details.z66-settings-subsection').length,
+                   uncategorizedFormCards:hub.querySelectorAll('.z66-settings-body > .settings-card,.z66-settings-body > .card,.z66-settings-body > #z76-profile-card').length,
                    nativePicker:!!hub.querySelector('#z66-business-picker-drawer #z74-workspace'),
                    nativePickerCollapsed:!hub.querySelector('#z66-business-picker-drawer').open,
                    duplicateMenu:content.querySelectorAll('#z76-settings-groups,.z673-settings-groups,.zavi-clean-settings-hub').length,
@@ -94,6 +97,9 @@ with sync_playwright() as p:
                 assert metrics["moduleCount"]==14 and metrics["moduleUnique"]==14,metrics
                 assert metrics["optionCount"]==15 and metrics["optionUnique"]==15,metrics
                 assert metrics["controlInHub"] and metrics["nativePicker"] and metrics["nativePickerCollapsed"],metrics
+                assert metrics["totalSubsections"]>=10,metrics
+                assert metrics["collapsedSubsections"]==metrics["totalSubsections"],metrics
+                assert metrics["uncategorizedFormCards"]==0,metrics
                 assert metrics["originalCatalog"]==23 and metrics["unnecessaryPreview"]==0,metrics
                 assert not metrics["duplicateMenu"] and not metrics["strayCards"],metrics
                 assert metrics["calendarMoved"] and metrics["supportMoved"] and metrics["profilePresent"],metrics

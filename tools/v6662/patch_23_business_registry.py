@@ -98,19 +98,21 @@ def modify(name,old):
 """
         s=exactly(s,anchor,entries+anchor,name)
     elif name=="zavi-store-v6576-settings-profile.js":
-        # The old V65.76 UI organizer builds ANOTHER eight nested settings
-        # categories after the approved V66.62 hub. Stop only that grouping.
-        # Keep the real personal profile editor, persistence, dashboard chip,
-        # photo upload handlers, and all other functions byte-for-byte.
-        anchor="function reorganize(){\\n const content=q('#content');if(!content)return;"
-        replacement=("function reorganize(){\\n"
-          " if(window.ZAVI_SETTINGS_SINGLE_HUB){\\n"
-          "  const content=q('#content');\\n"
-          "  if(content?.querySelector('#shopForm')&&!q('#z76-profile-card',content))\\n"
-          "   content.append(profileCard());\\n"
-          "  return;\\n"
-          " }\\n"
-          " const content=q('#content');if(!content)return;")
+        # Disable only the secondary settings-category organizer; retain
+        # original personal profile editor, photo and dashboard logic.
+        nl=chr(10)
+        anchor=nl.join(["function reorganize(){",
+                        " const content=q('#content');if(!content)return;"])
+        replacement=nl.join([
+            "function reorganize(){",
+            " if(window.ZAVI_SETTINGS_SINGLE_HUB){",
+            "  const content=q('#content');",
+            "  if(content?.querySelector('#shopForm')&&!q('#z76-profile-card',content))",
+            "   content.append(profileCard());",
+            "  return;",
+            " }",
+            " const content=q('#content');if(!content)return;"
+        ])
         s=exactly(s,anchor,replacement,name)
     elif name=="v47-business.js":
         anchor="  company:['sales','purchases','products','banking','reports']\n};"

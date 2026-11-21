@@ -223,6 +223,28 @@
    bodies.get(group).append(card);
   }
  }
+ function collapseLongSettingsForms(hub){
+  // One main category, then short subcategories rather than ten long forms.
+  // The ORIGINAL card moves intact into <details>; no IDs, inputs, listeners
+  // or owner permissions are duplicated, edited, disabled or removed.
+  let wrapped=0;
+  for(const body of hub.querySelectorAll('.z66-settings-body')){
+   for(const card of [...body.children]){
+    if(card.matches('details,.z66-settings-group,.z66-business-picker-drawer'))continue;
+    if(!card.matches('.settings-card,.card,#z76-profile-card,.notice,.z6524-launch'))continue;
+    const headingEl=card.querySelector('h2,h3,h4');
+    const title=String(headingEl?.textContent||card.getAttribute('aria-label')||'تنظیمات بیشتر')
+     .replace(/\\s+/g,' ').trim().slice(0,90);
+    const disclosure=el('details','z66-settings-subsection');
+    const summary=el('summary','z66-subsection-summary',title);
+    disclosure.append(summary);
+    card.before(disclosure);
+    disclosure.append(card);
+    wrapped++;
+   }
+  }
+  return wrapped;
+ }
  const createHub=()=>{
   const hub=el('section','z66-approved-hub');hub.id='z66-approved-hub';
   const intro=el('div','z66-approved-intro');
@@ -319,13 +341,14 @@
    // The approved settings HOME is eight short rows with all sections closed.
    // Only the explicitly chosen section expands; the 23-trade picker inside
    // Account stays collapsed independently. No automatic form expansion.
+   const wrapped=collapseLongSettingsForms(hub);
    const missing=before.filter(n=>!root.contains(n));
    if(missing.length)throw Error('Settings preserved-control parity failed: '+missing.length);
    const strayControls=[...root.querySelectorAll('.settings-card,#z76-profile-card,#z74-workspace,#zaviDateSettings,.z6524-launch')].filter(x=>!hub.contains(x));
    if(strayControls.length)throw Error('Settings cards outside single hub: '+strayControls.map(x=>x.id||x.className).join(','));
    const secondGroups=root.querySelectorAll('#z76-settings-groups,.z673-settings-groups,.zavi-clean-settings-hub');
    if(secondGroups.length)throw Error('Duplicate old settings organizers still present');
-   window.__z66SettingsApprovedAudit={ready:true,groups:hub.querySelectorAll('details[data-z66group]').length,originalControls:original.size,preservedControls:original.size-missing.length,modules:root.querySelectorAll('[data-module-id]').length,options:root.querySelectorAll('[data-z20-option]').length,enableAll:!!root.querySelector('#zaviEnableAllFeatures'),catalog:window.ZAVI_UNIFIED_PROFILES?.length||0,extras:EXTRA.length,strayControls:0,secondMenus:0};
+   window.__z66SettingsApprovedAudit={ready:true,groups:hub.querySelectorAll('details[data-z66group]').length,originalControls:original.size,preservedControls:original.size-missing.length,modules:root.querySelectorAll('[data-module-id]').length,options:root.querySelectorAll('[data-z20-option]').length,enableAll:!!root.querySelector('#zaviEnableAllFeatures'),catalog:window.ZAVI_UNIFIED_PROFILES?.length||0,extras:EXTRA.length,strayControls:0,secondMenus:0,collapsedSubsections:hub.querySelectorAll('.z66-settings-subsection:not([open])').length,wrapped};
   }finally{active=false}
  }
  function schedule(){if(frame)return;frame=requestAnimationFrame(()=>{frame=0;try{enhance()}catch(err){console.error('V66.62 settings organization failed',err)}})}

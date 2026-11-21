@@ -18,7 +18,8 @@ ADDED = [
 HTML_FILES = ("index.html","v25-business.html")
 OTHER_FILES = ("zavi-industry-kit-v6525.js","zavi-industry-engine-v6526.js",
                "zavi-industry-forms-v6529.js","v47-business.js","zavi-unified20.js",
-               "zavi-industry-focus-v639.js","zavi-smart-business-v642.js")
+               "zavi-industry-focus-v639.js","zavi-smart-business-v642.js",
+               "zavi-store-v6576-settings-profile.js")
 ALL_FILES = HTML_FILES + OTHER_FILES
 
 def exactly(source, old, new, path):
@@ -96,6 +97,21 @@ def modify(name,old):
   accessories:['contacts','debtors','expenses','reports'],
 """
         s=exactly(s,anchor,entries+anchor,name)
+    elif name=="zavi-store-v6576-settings-profile.js":
+        # The old V65.76 UI organizer builds ANOTHER eight nested settings
+        # categories after the approved V66.62 hub. Stop only that grouping.
+        # Keep the real personal profile editor, persistence, dashboard chip,
+        # photo upload handlers, and all other functions byte-for-byte.
+        anchor="function reorganize(){\\n const content=q('#content');if(!content)return;"
+        replacement=("function reorganize(){\\n"
+          " if(window.ZAVI_SETTINGS_SINGLE_HUB){\\n"
+          "  const content=q('#content');\\n"
+          "  if(content?.querySelector('#shopForm')&&!q('#z76-profile-card',content))\\n"
+          "   content.append(profileCard());\\n"
+          "  return;\\n"
+          " }\\n"
+          " const content=q('#content');if(!content)return;")
+        s=exactly(s,anchor,replacement,name)
     elif name=="v47-business.js":
         anchor="  company:['sales','purchases','products','banking','reports']\n};"
         replacement="""  company:['sales','purchases','products','banking','reports'],

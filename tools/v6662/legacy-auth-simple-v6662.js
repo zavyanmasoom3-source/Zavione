@@ -46,7 +46,11 @@ function visibleStep(root,step){
 function derive(root){
  const workspace=$('z24Workspace'),check=$('z24Check'),message=$('z24RecoveryStatus')?.textContent||'';
  const options=workspace ? [...workspace.options].filter(x=>!!x.value) : [];
- const requested=!!(check&&!check.disabled && workspace?.value);
+ // Original handler temporarily disables actions while its server RPC runs.
+ // A previously-issued request ID, not the transient disabled state, owns stage.
+ let stored='';
+ try{if(workspace?.value)stored=localStorage.getItem('zavi_v24_pin_request_'+workspace.value)||''}catch(_){}
+ const requested=!!(workspace?.value&&(stored||(check&&!check.disabled)));
  const approved=/مدیریت هویت شما را تأیید کرده|approved.*(owner|manager)|تأیید.*۳۰ دقیقه/i.test(message);
  if(requested&&approved)return 'approved';
  if(requested)return 'pending';

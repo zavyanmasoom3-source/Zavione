@@ -316,10 +316,9 @@
    for(const oldGroup of [...root.querySelectorAll('.zavi-settings-6546-group')]){
     if(!oldGroup.querySelector('button,input,select,textarea,a,.settings-card'))oldGroup.remove();
    }
-   // Landing view is short. One user-selected section opens at a time.
-   // Native 23-business selector stays collapsed until explicitly opened.
-   if(!hub.querySelector('details.z66-settings-group[open]'))
-    hub.querySelector('details[data-z66group="account"]').open=true;
+   // The approved settings HOME is eight short rows with all sections closed.
+   // Only the explicitly chosen section expands; the 23-trade picker inside
+   // Account stays collapsed independently. No automatic form expansion.
    const missing=before.filter(n=>!root.contains(n));
    if(missing.length)throw Error('Settings preserved-control parity failed: '+missing.length);
    const strayControls=[...root.querySelectorAll('.settings-card,#z76-profile-card,#z74-workspace,#zaviDateSettings,.z6524-launch')].filter(x=>!hub.contains(x));

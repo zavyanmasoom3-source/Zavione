@@ -116,6 +116,12 @@ def record_case(browser,language,theme,width,height):
         assert page.locator("#"+selector).count()==1, ("Lost recovery control",selector)
     assert page.evaluate("""() => window.__zv66AuthAudit.originalControls()""")
     assert root.get_attribute("data-zv66-step")=="account"
+    def verify_visual(step):
+        overflow=page.evaluate("document.documentElement.scrollWidth > innerWidth + 4")
+        assert not overflow, ("Responsive overflow in recovery",language,theme,width,step)
+        if language=="fa-AF" and width==390:
+            page.screenshot(path=str(OUT/f"recovery-{step}-{theme}.png"),full_page=False)
+    verify_visual("account")
     assert page.locator("#z24Email").is_visible()
     assert page.locator("#z24Password").is_visible()
     assert not page.locator("#z24Finish").is_visible()
@@ -131,12 +137,14 @@ def record_case(browser,language,theme,width,height):
     assert page.locator("#z24Ask").is_visible()
     assert not page.locator("#z24Finish").is_visible()
     assert state["auth"]==1 and state["shops"]>=1 and state["consume"]==0
+    verify_visual("shop")
     page.locator("#z24Ask").click()
     page.wait_for_function("""() => document.querySelector('#z24Recovery')?.dataset.zv66Step === 'pending'""",
                            timeout=10000)
     assert page.locator("#z24Check").is_visible()
     assert not page.locator("#z24Finish").is_visible()
     assert state["request"]==1 and state["consume"]==0
+    verify_visual("pending")
     page.locator("#z24Check").click()
     page.wait_for_timeout(700)
     pending_status=page.locator("#z24RecoveryStatus").inner_text()
@@ -150,6 +158,7 @@ def record_case(browser,language,theme,width,height):
     approved_text=page.locator("#z24RecoveryStatus").inner_text()
     assert root.get_attribute("data-zv66-step")=="approved", ("Approved server response not reflected in UI",approved_text,state,language,theme)
     assert page.locator("#z24Finish").is_visible()
+    verify_visual("approved")
     # Original finish() must itself recheck owner RPC and consume token.
     page.locator("#z24Finish").click()
     page.wait_for_function("""() => !document.querySelector('#z24Recovery')""",timeout=8000)

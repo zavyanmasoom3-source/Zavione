@@ -10,11 +10,13 @@
  --zv66-a-muted:#61758c;
  --zv66-a-text:#18314d;
  box-sizing:border-box!important;
- display:flex!important;align-items:center!important;justify-content:center!important;
+ display:none!important;align-items:center!important;justify-content:center!important;
  overflow-y:auto!important;overflow-x:hidden!important;
  padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom))!important;
  background:linear-gradient(150deg,#eaf3ff 0%,#f8fbff 75%,#eaf4ff 100%)!important;
 }
+/* Never display the private PIN gate after the ORIGINAL lock has opened. */
+html.zawi-locked #zawiPrivateGate.zv66-auth-clean{display:flex!important}
 #zawiPrivateGate.zv66-auth-clean .zawi-auth-card{
  width:min(100%,410px)!important;max-width:410px!important;
  min-width:0!important;box-sizing:border-box!important;

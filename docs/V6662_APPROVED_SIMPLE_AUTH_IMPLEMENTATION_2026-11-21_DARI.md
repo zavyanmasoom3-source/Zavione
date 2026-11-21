@@ -19,8 +19,10 @@
 
 ## آزمون‌ها و حد ادعا
 - ساخت QA Android و کنترل تمامیت منابع بعد از اصلاح قفل: **SUCCESS** — https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44875103310
-- آزمون اختصاصی 18 ترکیب (دری/پشتو/English × روشن/تیره/Glass × موبایل/تبلت) با `tests/v6662_approved_auth_recovery_qa.py`:
-  https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44875238547
+- آزمون اختصاصی 18 ترکیب (دری/پشتو/English × روشن/تیره/Glass × موبایل/تبلت) با `tests/v6662_approved_auth_recovery_qa.py`: **18/18 PASS**؛ حساب ابری نمونه، انتخاب دکان، RPC درخواست، انتظار مالک، پاسخ تأیید، مصرف یک‌باره مجوز و حفظ قفل اصلی — https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44875491103
+- در این آزمون هر زمان قفل اصلی `html.zawi-locked` برداشته شد، کارت ورود دیگر روی برنامه ظاهر نشد.
+- تصویر واقعی حالت روشن و تاریک بازبینی شد. 12 نقطه تزئینی PIN مخفی شدند؛ وضعیت متنی طول رمز باقی ماند و برای حالت تاریک خواناتر شد.
+- آزمون آخرین تغییر نمایشی (حذف نقطه‌های تزئینی) در https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44875613265 اجرا می‌شود؛ نتیجه را جدا باید خواند.
 - آزمون یکپارچه مرورگر اصلی:
   https://github.com/zavyanmasoom3-source/Zavione/actions/runs/44875156278
 - **نتایج آزمون‌های مرورگر باید بعد از اتمام CI بررسی و ثبت شوند**؛ بیلد موفق به‌تنهایی به‌معنی تضمین ورود واقعی روی گوشی نیست.

@@ -20,6 +20,8 @@ SETTINGS_CSS = "assets/legacy-settings-approved.css"
 SETTINGS_JS = "assets/legacy-settings-approved.js"
 VARIANT_CSS = "assets/legacy-phone-case-variants.css"
 VARIANT_JS = "assets/legacy-phone-case-variants.js"
+AUTH_CSS = "assets/legacy-auth-simple-v6662.css"
+AUTH_JS = "assets/legacy-auth-simple-v6662.js"
 INDEX_NAME = "assets/index.html"
 EXPECTED_LINK = '<link rel="stylesheet" href="./legacy-ui-fixes.css?v=6662-qa1" data-zavi-legacy-repair="true">'
 BANNED_NEW = ("zavi-dual-design-v1.css", "zavi-dual-dashboard-v1.css",
@@ -43,7 +45,7 @@ def verify(original, qa, css_file, output):
         old = assets(o)
         now = assets(q)
     assert len(old) == ORIGINAL_COUNT, "Original source asset count changed"
-    assert set(now) == set(old) | {CSS_NAME, SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS}, "An original asset is missing or an unknown new asset was added"
+    assert set(now) == set(old) | {CSS_NAME, SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS, AUTH_CSS, AUTH_JS}, "An original asset is missing or an unknown new asset was added"
     assert old[INDEX_NAME].decode("utf-8").count("</head>") >= 1
     expected_html = old[INDEX_NAME].replace(
         b"</head>", (EXPECTED_LINK + "</head>").encode("utf-8"), 1
@@ -61,14 +63,15 @@ def verify(original, qa, css_file, output):
         1
     )
     expected_source = expected_source.replace("</head>", '<link rel="stylesheet" href="./legacy-phone-case-variants.css?v=6662-trades23"></head>', 1)
+    expected_source = expected_source.replace("</head>", '<link rel="stylesheet" href="./legacy-auth-simple-v6662.css?v=6662-approved-auth"></head>', 1)
     assert "</body>" in expected_source
     first, last = expected_source.rsplit("</body>", 1)
-    expected_source = first + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script>' + '<script defer src="./legacy-phone-case-variants.js?v=6662-trades23"></script></body>' + last
+    expected_source = first + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script>' + '<script defer src="./legacy-phone-case-variants.js?v=6662-trades23"></script>' + '<script defer src="./legacy-auth-simple-v6662.js?v=6662-approved-auth"></script></body>' + last
     expected_html = fix_durable_save(extend23("index.html", expected_source)).encode("utf-8")
     assert now[INDEX_NAME] == expected_html, "Unexpected HTML/JS mutation outside the approved durable-save fix"
     expected_css = Path(css_file).read_bytes()
     assert now[CSS_NAME] == expected_css, "Unverified visual patch"
-    for name in (SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS):
+    for name in (SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS, AUTH_CSS, AUTH_JS):
         source = Path(__file__).with_name(name.removeprefix("assets/"))
         assert now[name] == source.read_bytes(), f"Unverified approved settings layer: {name}"
     pristine = [name for name in old if name.removeprefix("assets/") not in TRADE_FILES]
@@ -90,7 +93,7 @@ def verify(original, qa, css_file, output):
         "byte_identical_original_assets": len(untouched),
         "strictly_verified_trade_registry_assets": patched,
         "changed_original_assets": [INDEX_NAME, *patched],
-        "added_assets": [CSS_NAME, SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS],
+        "added_assets": [CSS_NAME, SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS, AUTH_CSS, AUTH_JS],
         "new_design_present": False,
         "business_logic_modified": True,
         "original_functional_assets_byte_preserved": False,

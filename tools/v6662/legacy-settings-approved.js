@@ -5,6 +5,9 @@
  */
 (() => {
  'use strict';
+ // One owner-approved settings hierarchy only. Older profile code remains active
+ // for the real profile editor, but must not create its own 8-section layout.
+ window.ZAVI_SETTINGS_SINGLE_HUB = true;
  const EXTRA = [
   {id:'restaurant',name:{fa:'رستورانت و کافه',ps:'رستورانت او کافې',en:'Restaurant & Cafe'},focus:'منو، سفارش میز، آشپزخانه و صندوق',fields:['نام غذا','دسته غذا','شماره میز','قیمت']},
   {id:'covers',name:{fa:'کاور، پوش و پوزه موبایل',ps:'د موبایل کاور او پوښ',en:'Phone Cases & Covers'},focus:'مدل سازگار، رنگ‌های متعدد، موجودی و بارکد هر رنگ',fields:['نام کاور','جنس','مدل سازگار','قیمت'],colors:true},
@@ -25,6 +28,9 @@
  const heading=n=>String(n.querySelector('h2,h3,h4')?.textContent||n.getAttribute('aria-label')||'').toLowerCase();
  function kind(n){
   const h=heading(n),c=String(n.className||'').toLowerCase();
+  if(n.id==='zaviDateSettings'||n.classList.contains('zavi-date-settings'))return 'appearance';
+  if(n.classList.contains('z6524-launch'))return 'advanced';
+  if(n.id==='z74-workspace')return 'account';
   if(n.id==='z76-profile-card'||n.querySelector('#shopForm,#zaviRenameShopForm')||/rename|shopform|فروشگاهِ خریدار|تغییر نام فروشگاه|مدیریت عمومی|نوع تجارت|business/.test(h+' '+c))return 'account';
   if(n.querySelector('#zaviSettingsLanguage,#z6515FontChoice,.zavi-theme-picker')||/ظاهر|فونت|زبان|شخصی.سازی|appearance|theme|z6515-font|z637-customize/.test(h+' '+c))return 'appearance';
   if(/invoice|فاکتور|چاپ|thermal|print|receipt/.test(h+' '+c))return 'invoice';
@@ -261,16 +267,35 @@
   try{
    let hub=root.querySelector('#z66-approved-hub');
    let bodies;
-   if(!hub){const next=createHub();hub=next.hub;bodies=next.bodies;const head=root.querySelector('.page-head');if(head)head.after(hub);else root.prepend(hub);
-    const catalog=catalogCard();bodies.get('account').append(catalog);quickLinks(bodies);
+   if(!hub){
+    const next=createHub();hub=next.hub;bodies=next.bodies;
+    const head=root.querySelector('.page-head');if(head)head.after(hub);else root.prepend(hub);
+    // The ORIGINAL 23-industry selector remains functional. Do not render a
+    // second, preview-only 23-card list or duplicate global navigation links.
    }else bodies=new Map([...hub.querySelectorAll('.z66-settings-body')].map(b=>[b.closest('details').dataset.z66group,b]));
    const before=[...root.querySelectorAll('button,input,select,textarea,a')].filter(x=>!hub.contains(x));
    const original=new Set(before);
    const custom=root.querySelector('.zavi-custom-card');
    const localCard=splitFeatureCard(custom);
    if(localCard)bodies.get('appearance').append(localCard);
-   const standalone=[...root.querySelectorAll('.settings-card,#z76-profile-card,#z74-workspace,#z6524CareLauncher')].filter(x=>!x.closest('#z66-approved-hub')&&!x.parentElement?.closest('.settings-card'));
-   for(const node of standalone)bodies.get(kind(node)).append(node);
+   // Retain original form nodes; move ALL cards and the dynamic calendar.
+   // The older organizer used to leave these above the new hub, producing
+   // duplicate sections, a large blank settings header and 2 separate menus.
+   const standalone=[...new Set([
+    ...root.querySelectorAll('.settings-card,#z76-profile-card,#z74-workspace,.z6524-launch,#zaviDateSettings'),
+    ...root.querySelectorAll(':scope > section.card,:scope > div.card')
+   ])].filter(x=>!x.closest('#z66-approved-hub')&&!x.parentElement?.closest('.settings-card')&&!x.parentElement?.closest('#z74-workspace'));
+   for(const node of standalone){
+    if(node.id==='z74-workspace'){
+     let drawer=hub.querySelector('#z66-business-picker-drawer');
+     if(!drawer){
+      drawer=el('details','z66-business-picker-drawer');drawer.id='z66-business-picker-drawer';
+      drawer.append(el('summary','',locale()==='en'?'Choose business type · 23 options':'انتخاب نوع تجارت · 23 کسب‌وکار'));
+      bodies.get('account').append(drawer);
+     }
+     drawer.append(node); // existing owner confirmation and buttons intact
+    }else bodies.get(kind(node)).append(node);
+   }
    if(custom&&custom.isConnected)distributeControls(custom,bodies);
    // Preserve dynamic cloud/device panels and notices not marked as cards.
    for(const node of [...root.children]){
@@ -282,6 +307,8 @@
    // Empty legacy wrappers contain only obsolete section headers after relocation.
    const old=root.querySelector('#z76-settings-groups');
    if(old&&!old.querySelector('button,input,select,textarea,a,.settings-card'))old.remove();
+   for(const legacy of root.querySelectorAll(':scope > .z673-settings-groups'))
+    if(!legacy.querySelector('button,input,select,textarea,a,.settings-card'))legacy.remove();
    const unused=root.querySelector('.zavi-clean-settings-hub');
    if(unused&&!unused.querySelector('button,input,select,textarea,a,.settings-card'))unused.remove();
    const prior=root.querySelector('.zavi-settings-6546-intro');
@@ -289,10 +316,17 @@
    for(const oldGroup of [...root.querySelectorAll('.zavi-settings-6546-group')]){
     if(!oldGroup.querySelector('button,input,select,textarea,a,.settings-card'))oldGroup.remove();
    }
-   if(!hub.querySelector('details[open]'))hub.querySelector('details[data-z66group="account"]').open=true;
+   // Landing view is short. One user-selected section opens at a time.
+   // Native 23-business selector stays collapsed until explicitly opened.
+   if(!hub.querySelector('details.z66-settings-group[open]'))
+    hub.querySelector('details[data-z66group="account"]').open=true;
    const missing=before.filter(n=>!root.contains(n));
    if(missing.length)throw Error('Settings preserved-control parity failed: '+missing.length);
-   window.__z66SettingsApprovedAudit={ready:true,groups:hub.querySelectorAll('details[data-z66group]').length,originalControls:original.size,preservedControls:original.size-missing.length,modules:root.querySelectorAll('[data-module-id]').length,options:root.querySelectorAll('[data-z20-option]').length,enableAll:!!root.querySelector('#zaviEnableAllFeatures'),catalog:window.ZAVI_UNIFIED_PROFILES?.length||0,extras:EXTRA.length};
+   const strayControls=[...root.querySelectorAll('.settings-card,#z76-profile-card,#z74-workspace,#zaviDateSettings,.z6524-launch')].filter(x=>!hub.contains(x));
+   if(strayControls.length)throw Error('Settings cards outside single hub: '+strayControls.map(x=>x.id||x.className).join(','));
+   const secondGroups=root.querySelectorAll('#z76-settings-groups,.z673-settings-groups,.zavi-clean-settings-hub');
+   if(secondGroups.length)throw Error('Duplicate old settings organizers still present');
+   window.__z66SettingsApprovedAudit={ready:true,groups:hub.querySelectorAll('details[data-z66group]').length,originalControls:original.size,preservedControls:original.size-missing.length,modules:root.querySelectorAll('[data-module-id]').length,options:root.querySelectorAll('[data-z20-option]').length,enableAll:!!root.querySelector('#zaviEnableAllFeatures'),catalog:window.ZAVI_UNIFIED_PROFILES?.length||0,extras:EXTRA.length,strayControls:0,secondMenus:0};
   }finally{active=false}
  }
  function schedule(){if(frame)return;frame=requestAnimationFrame(()=>{frame=0;try{enhance()}catch(err){console.error('V66.62 settings organization failed',err)}})}

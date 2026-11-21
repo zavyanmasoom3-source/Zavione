@@ -190,3 +190,105 @@ html[data-zavi-theme="light"] #content #z66-approved-hub #z66-approved-trades .z
  opacity:1!important;
  text-shadow:none!important;
 }
+
+/* V66.62 photographed-device fix: ONE settings architecture.
+ * Previous screenshot showed original page-head and inserted calendar above
+ * the eight categories, plus old V65.76 groups below. The calendar is now
+ * MOVED to Appearance, native profile and 23-type selector to Account. */
+html #content:has(> #z66-approved-hub) > .page-head{
+ display:none!important; /* only a duplicated title and no action buttons */
+}
+html #content:has(> #z66-approved-hub){
+ min-width:0;overflow-x:clip;
+}
+html #content:has(> #z66-approved-hub) > #z66-approved-hub{
+ margin:0 auto 18px!important;
+ width:100%!important;max-width:780px!important;
+ padding:0!important;
+}
+html #content #z66-approved-hub .z66-approved-intro{
+ padding:12px 13px!important;margin-bottom:10px!important;
+ border-radius:14px!important;
+}
+html #content #z66-approved-hub .z66-approved-intro>p{
+ font-size:11px!important;line-height:1.55!important;margin:3px 0 9px!important;
+}
+html #content #z66-approved-hub .z66-settings-list{gap:7px!important}
+html #content #z66-approved-hub .z66-settings-group{
+ margin:0!important;padding:0!important;
+ min-width:0!important;box-shadow:none!important;
+ border:1px solid var(--line,#d9e4f2)!important;
+ border-radius:12px!important;
+}
+html #content #z66-approved-hub .z66-settings-group>.z66-group-summary{
+ min-height:55px!important;padding:9px 11px!important;
+ gap:9px!important;
+}
+html #content #z66-approved-hub .z66-group-icon{
+ width:34px!important;height:34px!important;min-width:34px!important;
+ font-size:17px!important;border-radius:9px!important;
+}
+html #content #z66-approved-hub .z66-group-middle strong{
+ font-size:13px!important;line-height:1.45!important;
+}
+html #content #z66-approved-hub .z66-group-middle small{
+ font-size:10px!important;line-height:1.5!important;
+}
+html #content #z66-approved-hub .z66-settings-body{
+ padding:9px!important;gap:8px!important;
+ min-width:0!important;overflow-wrap:anywhere!important;
+}
+html #content #z66-approved-hub .z66-settings-body>.settings-card,
+html #content #z66-approved-hub .z66-settings-body>.card,
+html #content #z66-approved-hub .z66-settings-body>#z76-profile-card,
+html #content #z66-approved-hub .z66-settings-body>.notice{
+ padding:11px!important;margin:0!important;
+ box-shadow:none!important;border-radius:11px!important;
+ min-width:0!important;max-width:100%!important;
+}
+html #content #z66-approved-hub .z66-settings-body>.card h3,
+html #content #z66-approved-hub .z66-settings-body>.settings-card h3{
+ font-size:14px!important;line-height:1.5!important;
+ margin:0 0 6px!important;
+}
+html #content #z66-approved-hub .z66-settings-body>.card p,
+html #content #z66-approved-hub .z66-settings-body>.settings-card p{
+ font-size:11px!important;line-height:1.6!important;
+}
+html #content #z66-approved-hub .z66-business-picker-drawer{
+ border:1px solid var(--line,#d9e4f2)!important;
+ border-radius:11px!important;background:var(--card,#fff)!important;
+ overflow:hidden!important;
+}
+html #content #z66-approved-hub .z66-business-picker-drawer>summary{
+ list-style:none!important;padding:12px 13px!important;
+ cursor:pointer!important;min-height:42px!important;
+ font-size:13px!important;font-weight:750!important;
+}
+html #content #z66-approved-hub .z66-business-picker-drawer>summary::-webkit-details-marker{display:none}
+html #content #z66-approved-hub .z66-business-picker-drawer>summary:after{
+ content:'⌄';float:inline-end;opacity:.62;font-size:17px;
+}
+html #content #z66-approved-hub .z66-business-picker-drawer[open]>summary:after{content:'⌃'}
+html #content #z66-approved-hub .z66-business-picker-drawer #z74-workspace{
+ padding:9px!important;margin:0!important;
+ border-top:1px solid var(--line,#d9e4f2)!important;
+ box-shadow:none!important;border-radius:0!important;
+ min-width:0!important;max-width:100%!important;
+}
+html #content #z66-approved-hub .z66-settings-body :is(button,a,input,textarea,select){
+ min-width:0;max-width:100%;box-sizing:border-box;
+}
+html #content #z66-approved-hub .z66-settings-body [hidden]{display:none!important}
+html #content #z66-approved-hub .z66-settings-group:not([open])>.z66-settings-body{
+ display:none!important;
+}
+@media(max-width:560px){
+ html #content #z66-approved-hub .z66-settings-body{padding:7px!important}
+ html #content #z66-approved-hub .z66-settings-group>.z66-group-summary{
+  min-height:52px!important;padding:8px 10px!important;
+ }
+ html #content #z66-approved-hub .z66-approved-intro{padding:10px 12px!important}
+ html #content #z66-approved-hub .z66-settings-body>.settings-card,
+ html #content #z66-approved-hub .z66-settings-body>.card{padding:9px 10px!important}
+}

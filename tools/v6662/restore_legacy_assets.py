@@ -72,15 +72,19 @@ def main():
     js_name = "legacy-settings-approved.js"
     variant_css = "legacy-phone-case-variants.css"
     variant_js = "legacy-phone-case-variants.js"
-    for name in (css_name, js_name, variant_css, variant_js):
+    auth_css = "legacy-auth-simple-v6662.css"
+    auth_js = "legacy-auth-simple-v6662.js"
+    for name in (css_name, js_name, variant_css, variant_js, auth_css, auth_js):
         src = Path(__file__).with_name(name)
         assert src.is_file(), f"Missing approved settings layer: {name}"
         (dest / name).write_bytes(src.read_bytes())
     assert "</body>" in updated, "Missing historical body closure"
     updated = updated.replace("</head>", '<link rel="stylesheet" href="./legacy-settings-approved.css?v=6662-approved" data-zavi-settings-approved="true"></head>', 1)
     updated = updated.replace("</head>", '<link rel="stylesheet" href="./legacy-phone-case-variants.css?v=6662-trades23"></head>', 1)
+    # Presentation-only sign-in/recovery. Keep pin-recovery.js and lock HTML unmodified.
+    updated = updated.replace("</head>", '<link rel="stylesheet" href="./legacy-auth-simple-v6662.css?v=6662-approved-auth"></head>', 1)
     head, tail = updated.rsplit("</body>", 1)
-    updated = head + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script>' + '<script defer src="./legacy-phone-case-variants.js?v=6662-trades23"></script></body>' + tail
+    updated = head + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script>' + '<script defer src="./legacy-phone-case-variants.js?v=6662-trades23"></script>' + '<script defer src="./legacy-auth-simple-v6662.js?v=6662-approved-auth"></script></body>' + tail
     assert 'id="zaviEnableAllFeatures"' in updated, "Original enable-all control changed"
     assert 'data-module-id=' in updated and 'data-z20-option=' in updated
     html_file.write_text(updated, encoding="utf-8")
@@ -104,8 +108,8 @@ def main():
             continue
         assert hashlib.sha256((dest/relative).read_bytes()).hexdigest() == original_hash, f"Changed legacy resource: {relative}"
     report = {"baseline_apk_sha256":sha,"baseline_bytes":len(original),
-              "original_resources":len(files),"extra_stylesheets":["legacy-ui-fixes.css",css_name,variant_css],
-              "extra_scripts":[js_name,variant_js],"superseded_ui_organizers":disabled_organizers,
+              "original_resources":len(files),"extra_stylesheets":["legacy-ui-fixes.css",css_name,variant_css,auth_css],
+              "extra_scripts":[js_name,variant_js,auth_js],"superseded_ui_organizers":disabled_organizers,
               "changed_original_resources":list(REGISTERED_TRADE_FILES),
               "trade_registry_changes":registry_change_report,
               "preserved_original_resources":len(files)-len(REGISTERED_TRADE_FILES),

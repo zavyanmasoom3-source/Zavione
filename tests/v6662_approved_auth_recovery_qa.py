@@ -99,6 +99,12 @@ def record_case(browser,language,theme,width,height):
     })""")
     assert before["style"] and before["formInOriginal"] and before["brand"],before
     assert not before["overflow"],before
+    # Original security controller decides whether the gate is open.
+    # Presentation CSS must NEVER force it back over a legitimately unlocked app.
+    page.evaluate("document.documentElement.classList.remove('zawi-locked')")
+    assert not page.locator("#zawiPrivateGate").is_visible(), "Gate overlays an unlocked app"
+    page.evaluate("document.documentElement.classList.add('zawi-locked')")
+    assert page.locator("#zawiPrivateGate").is_visible(), "Gate disappeared while locked"
     if language=="fa-AF" and width==390:
         page.screenshot(path=str(OUT/f"login-{theme}.png"),full_page=False)
     page.locator("#zawiForgotPinBtn").click()

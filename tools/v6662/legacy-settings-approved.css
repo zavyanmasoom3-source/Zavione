@@ -292,3 +292,54 @@ html #content #z66-approved-hub .z66-settings-group:not([open])>.z66-settings-bo
  html #content #z66-approved-hub .z66-settings-body>.settings-card,
  html #content #z66-approved-hub .z66-settings-body>.card{padding:9px 10px!important}
 }
+
+/* Secondary accordions: long settings forms remain available without an
+ * endless page after one of the eight primary groups is opened. */
+html #content #z66-approved-hub .z66-settings-subsection{
+ margin:0!important;padding:0!important;min-width:0!important;
+ border:1px solid var(--line,#d9e4f2)!important;border-radius:11px!important;
+ background:var(--card,#fff)!important;overflow:hidden!important;
+}
+html #content #z66-approved-hub .z66-settings-subsection>.z66-subsection-summary{
+ display:flex!important;align-items:center!important;
+ min-height:43px!important;padding:10px 12px!important;
+ gap:8px!important;cursor:pointer!important;list-style:none!important;
+ color:var(--text,#243d60)!important;
+ -webkit-text-fill-color:currentColor!important;
+ font-size:12px!important;font-weight:750!important;line-height:1.5!important;
+ text-shadow:none!important;overflow-wrap:break-word!important;
+}
+html #content #z66-approved-hub .z66-settings-subsection>.z66-subsection-summary::-webkit-details-marker{display:none}
+html #content #z66-approved-hub .z66-settings-subsection>.z66-subsection-summary:after{
+ content:'⌄';margin-inline-start:auto;opacity:.65;
+}
+html #content #z66-approved-hub .z66-settings-subsection[open]>.z66-subsection-summary:after{
+ content:'⌃';
+}
+html #content #z66-approved-hub .z66-settings-subsection>.settings-card,
+html #content #z66-approved-hub .z66-settings-subsection>.card,
+html #content #z66-approved-hub .z66-settings-subsection>#z76-profile-card,
+html #content #z66-approved-hub .z66-settings-subsection>.notice{
+ margin:0!important;max-width:100%!important;min-width:0!important;
+ padding:12px!important;box-shadow:none!important;border:0!important;
+ border-top:1px solid var(--line,#d9e4f2)!important;
+ border-radius:0!important;background:transparent!important;
+}
+html #content #z66-approved-hub .z66-settings-subsection>.settings-card h3:first-child,
+html #content #z66-approved-hub .z66-settings-subsection>.card h3:first-child{
+ display:none!important; /* title retained in DOM and repeated in summary */
+}
+html #content #z66-approved-hub .z66-settings-subsection:not([open])>:not(summary){
+ display:none!important;
+}
+html #content #z66-approved-hub .z66-settings-subsection>.z66-subsection-summary:focus-visible{
+ outline:2px solid #358ddd!important;outline-offset:-3px!important;
+}
+html[data-zavi-theme="dark"] #content #z66-approved-hub .z66-settings-subsection,
+html[data-zavi-theme="glass"] #content #z66-approved-hub .z66-settings-subsection{
+ background:#163455!important;border-color:#42688e!important;
+}
+html[data-zavi-theme="dark"] #content #z66-approved-hub .z66-subsection-summary,
+html[data-zavi-theme="glass"] #content #z66-approved-hub .z66-subsection-summary{
+ color:#f0f7ff!important;-webkit-text-fill-color:#f0f7ff!important;
+}

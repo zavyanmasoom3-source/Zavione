@@ -36,8 +36,15 @@ function ensureGateSupport(){
  text(link,copy().support);link.setAttribute('aria-label',copy().support);
 }
 function ensureRecoverySupport(root){
- const note=root?.querySelector('.z24-pbox > p.z24-note:last-of-type');
- if(!note)return;
+ const box=root?.querySelector('.z24-pbox');
+ if(!box)return;
+ const notes=[...box.querySelectorAll('.z24-note')];
+ let note=notes.find(x=>/پشتیبانی|0764713434|support/i.test(x.textContent||''))||notes.at(-1);
+ if(!note){
+  note=DOC.createElement('p');note.className='z24-note';
+  const cancel=box.querySelector('#z24Cancel');
+  if(cancel)cancel.before(note);else box.append(note);
+ }
  let message=note.querySelector('.zv66-support-copy');
  let link=note.querySelector('.zv66-wa-support');
  if(!message||!link){

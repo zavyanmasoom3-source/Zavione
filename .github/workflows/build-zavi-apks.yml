@@ -73,6 +73,11 @@ jobs:
           cp -a "$SRC/." "$DST/"
           test -s "$DST/index.html"
 
+          mkdir -p android-build/app/src/main/res/drawable-nodpi
+          cp "android-build/icons/${{ matrix.app }}.webp" \
+            android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+          test -s android-build/app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+
           python3 - <<'PY'
           from pathlib import Path
           app="${{ matrix.app }}"

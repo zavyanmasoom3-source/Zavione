@@ -11,6 +11,14 @@ if (legacyBaselineQa && productionMode) {
     throw new GradleException("Legacy baseline is for isolated debug QA; never sign as production")
 }
 
+File stagedAssets = file("src/main/assets")
+if (!new File(stagedAssets, "index.html").isFile()) {
+    throw new GradleException(
+        "ZAVI Android build requires staged web assets at " + stagedAssets +
+        " (missing index.html); refusing to produce an incomplete APK."
+    )
+}
+
 
 if (productionMode) {
     for (String name in ["ZAVI_KEYSTORE_PATH", "ZAVI_KEYSTORE_PASSWORD", "ZAVI_KEY_ALIAS", "ZAVI_KEY_PASSWORD"]) {

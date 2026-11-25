@@ -102,17 +102,17 @@ jobs:
             exit 1
           fi
           rm -f "$RUNNER_TEMP/zavi-keycheck.p12"
-          echo "ZAVI_RELEASE_STORE_FILE=$store" >> "$GITHUB_ENV"
+          echo "ZAVI_KEYSTORE_PATH=$store" >> "$GITHUB_ENV"
+          echo "ZAVI_KEYSTORE_PASSWORD=$STORE_PASS" >> "$GITHUB_ENV"
+          echo "ZAVI_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ZAVI_KEY_PASSWORD=$KEY_PASS" >> "$GITHUB_ENV"
       - name: Assemble actual signed release-type candidate from maintained source
         working-directory: android-build
-        env:
-          ZAVI_RELEASE_STORE_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_STORE_PASSWORD || secrets.ZAVI_ADMIN_STORE_PASSWORD }}
-          ZAVI_RELEASE_KEY_ALIAS: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_ALIAS || secrets.ZAVI_ADMIN_KEY_ALIAS }}
-          ZAVI_RELEASE_KEY_PASSWORD: ${{ matrix.app == 'one' && secrets.ZAVI_ONE_KEY_PASSWORD || secrets.ZAVI_ADMIN_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          cp app/src/main/res/drawable/ic_launcher.xml app/src/main/res/drawable/zavi_launcher_image.xml
-          gradle --no-daemon :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviProduction=false
+          mkdir -p app/src/main/res/drawable-nodpi
+          cp "icons/${{ matrix.app }}.webp" app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
+          gradle --no-daemon :app:assembleRelease -PzaviApp=${{ matrix.app }} -PzaviProduction=true
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose app/build/outputs/apk/release/app-release.apk
       - name: Compare installed legacy APK certificate and package identity
         env:

@@ -47,7 +47,8 @@ jobs:
       - name: Android source-only Debug build (no release signing)
         working-directory: android-build
         run: |
-          cp app/src/main/res/drawable/ic_launcher.xml app/src/main/res/drawable/zavi_launcher_image.xml
+          mkdir -p app/src/main/res/drawable-nodpi
+          cp "icons/${{ matrix.app }}.webp" app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
           gradle --no-daemon :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviProduction=false
       - name: Install and run on clean Android API 34 emulator
         uses: reactivecircus/android-emulator-runner@v2

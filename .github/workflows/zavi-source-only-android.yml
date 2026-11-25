@@ -175,7 +175,8 @@ jobs:
         working-directory: android-build
         run: |
           set -euo pipefail
-          cp app/src/main/res/drawable/ic_launcher.xml app/src/main/res/drawable/zavi_launcher_image.xml
+          mkdir -p app/src/main/res/drawable-nodpi
+          cp "icons/${{ matrix.app }}.webp" app/src/main/res/drawable-nodpi/zavi_launcher_image.webp
           gradle --no-daemon :app:assembleDebug -PzaviApp=${{ matrix.app }} -PzaviProduction=false
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify app/build/outputs/apk/debug/app-debug.apk
       - name: Check exact QA APK size and do not claim it contains offline voice model

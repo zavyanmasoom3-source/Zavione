@@ -87,6 +87,10 @@ def record_case(browser,language,theme,width,height):
         assert page.locator("#"+selector).count()==1, ("Missing PIN control",selector)
     assert page.locator("#zawiPrivateGate #zawiPinForm").is_visible()
     assert page.locator("#zawiPrivateGate #zawiForgotPinBtn").is_visible()
+    gate_support=page.locator("#zawiPrivateGate .zv66-wa-support")
+    assert gate_support.count()==1
+    assert gate_support.get_attribute("href")=="https://wa.me/93764713434"
+    assert "0764713434" not in page.locator("#zawiPrivateGate").inner_text()
     assert page.locator("#zawiPinSubmit").get_attribute("type")=="submit"
     assert page.locator("#zawiPinOne").get_attribute("type")=="password"
     assert page.locator("#zawiPinRepeat").get_attribute("type")=="password"
@@ -114,6 +118,10 @@ def record_case(browser,language,theme,width,height):
                            timeout=6000)
     for selector in BUTTONS:
         assert page.locator("#"+selector).count()==1, ("Lost recovery control",selector)
+    recovery_support=root.locator(".zv66-wa-support")
+    assert recovery_support.count()==1
+    assert recovery_support.get_attribute("href")=="https://wa.me/93764713434"
+    assert "0764713434" not in root.inner_text()
     assert page.evaluate("""() => window.__zv66AuthAudit.originalControls()""")
     assert root.get_attribute("data-zv66-step")=="account"
     def verify_visual(step):
@@ -143,6 +151,7 @@ def record_case(browser,language,theme,width,height):
                            timeout=10000)
     assert page.locator("#z24Check").is_visible()
     assert not page.locator("#z24Finish").is_visible()
+    assert "0764713434" not in root.inner_text()
     assert state["request"]==1 and state["consume"]==0
     verify_visual("pending")
     page.locator("#z24Check").click()

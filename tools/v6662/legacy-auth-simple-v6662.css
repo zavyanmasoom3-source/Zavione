@@ -340,8 +340,8 @@ html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean #z639PinStatus{
  color:#d5e5f5!important;-webkit-text-fill-color:#d5e5f5!important;
 }
 
-/* Final screenshot QA: reduce support block without hiding the help phone,
- * internet requirement, account-data safety or device-local PIN warning. */
+/* Compact support: keep the recovery safety note, replace the visible phone
+ * number with one direct WhatsApp action. */
 #z24Recovery.zv66-auth-clean .z24-pbox > p.z24-note:not(:first-of-type){
  display:block!important;
  margin:5px 0 8px!important;
@@ -377,4 +377,45 @@ html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean[data-zv66-step="approv
 html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean[data-zv66-step="approved"] #z24Finish{
  background:linear-gradient(105deg,#176fba,#0e92d4)!important;
  color:#fff!important;-webkit-text-fill-color:#fff!important;border:0!important;
+}
+
+/* One compact, visible support action for both auth screens.  The phone is
+ * intentionally not rendered; the href is the only support destination. */
+#zawiPrivateGate.zv66-auth-clean .zv66-wa-support,
+#z24Recovery.zv66-auth-clean .zv66-wa-support{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ gap:7px!important;width:100%!important;min-height:38px!important;
+ box-sizing:border-box!important;margin:7px 0 0!important;padding:8px 10px!important;
+ border:1px solid #b9e3ce!important;border-radius:10px!important;
+ background:#f1fbf5!important;color:#147447!important;
+ -webkit-text-fill-color:#147447!important;text-decoration:none!important;
+ font:700 11px/1.45 Tahoma,Arial,sans-serif!important;
+ box-shadow:none!important;text-shadow:none!important;
+}
+#zawiPrivateGate.zv66-auth-clean .zv66-wa-support::before,
+#z24Recovery.zv66-auth-clean .zv66-wa-support::before{
+ content:'WA';display:inline-flex;align-items:center;justify-content:center;
+ width:18px;height:18px;border-radius:50%;background:#20b86b;color:#fff;
+ font:800 8px/1 Arial,sans-serif;
+}
+#z24Recovery.zv66-auth-clean .z24-pbox > p.z24-note:not(:first-of-type){
+ display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+ justify-content:center!important;gap:7px!important;text-align:center!important;
+}
+#z24Recovery.zv66-auth-clean .z24-pbox > p.z24-note:not(:first-of-type) .zv66-wa-support{
+ width:auto!important;min-height:30px!important;margin:0!important;padding:5px 9px!important;
+ font-size:10px!important;border-radius:8px!important;
+}
+html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean .zv66-wa-support,
+html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean .zv66-wa-support,
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean .zv66-wa-support,
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean .zv66-wa-support{
+ background:#123c31!important;border-color:#3b8b6b!important;
+ color:#bdf3d5!important;-webkit-text-fill-color:#bdf3d5!important;
+}
+html[data-zavi-theme="dark"] #zawiPrivateGate.zv66-auth-clean .zv66-wa-support::before,
+html[data-zavi-theme="glass"] #zawiPrivateGate.zv66-auth-clean .zv66-wa-support::before,
+html[data-zavi-theme="dark"] #z24Recovery.zv66-auth-clean .zv66-wa-support::before,
+html[data-zavi-theme="glass"] #z24Recovery.zv66-auth-clean .zv66-wa-support::before{
+ background:#2acb7a!important;color:#09291e!important;
 }

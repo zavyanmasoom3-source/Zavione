@@ -8,10 +8,11 @@ const DOC=document;
 const $=id=>DOC.getElementById(id);
 const ACTIVE='zv66-auth-clean';
 const COPY={
- 'fa':{title:'بازیابی رمز',intro:'حساب آنلاین را تأیید کنید و دکان خود را انتخاب کنید.',account:'1 / 3 · حساب آنلاین',shop:'2 / 3 · انتخاب دکان',pending:'3 / 3 · تأیید مالک',approved:'تأیید شد · ساخت رمز جدید',back:'بازگشت به ورود',forgot:'رمز را فراموش کرده‌ام',login:'ورود',reset:'درخواست بازیابی',check:'بررسی پاسخ',finish:'ساخت رمز جدید',load:'دریافت دکان‌ها',previous:'دکان از حساب قبلی',hint:'برای بازیابی، اینترنت و تأیید مالک ضروری است.'},
- 'ps':{title:'د رمز بېرته ترلاسه کول',intro:'خپل انلاین حساب تایید او خپل دوکان غوره کړئ.',account:'1 / 3 · انلاین حساب',shop:'2 / 3 · دوکان وټاکئ',pending:'3 / 3 · د مالک تایید',approved:'تایید شو · نوی رمز',back:'ننوتلو ته ستنېدل',forgot:'رمز مو هېر شوی؟',login:'ننوتل',reset:'د بېرته ترلاسه کولو غوښتنه',check:'ځواب کتل',finish:'نوی رمز جوړول',load:'دوکانونه ترلاسه کړئ',previous:'پخوانی حساب',hint:'د رمز د بیا ترلاسه کولو لپاره انټرنېټ او د مالک تایید اړین دي.'},
- 'en':{title:'Recover password',intro:'Verify your account and select your shop.',account:'1 / 3 · Cloud account',shop:'2 / 3 · Choose shop',pending:'3 / 3 · Owner approval',approved:'Approved · Set new PIN',back:'Back to sign in',forgot:'Forgot your password?',login:'Sign in',reset:'Request recovery',check:'Check response',finish:'Set new PIN',load:'Get shops',previous:'Previous account',hint:'Internet and owner approval are required to recover a PIN.'}
+ 'fa':{title:'بازیابی رمز',intro:'حساب آنلاین را تأیید کنید و دکان خود را انتخاب کنید.',account:'1 / 3 · حساب آنلاین',shop:'2 / 3 · انتخاب دکان',pending:'3 / 3 · تأیید مالک',approved:'تأیید شد · ساخت رمز جدید',back:'بازگشت به ورود',forgot:'رمز را فراموش کرده‌ام',login:'ورود',reset:'درخواست بازیابی',check:'بررسی پاسخ',finish:'ساخت رمز جدید',load:'دریافت دکان‌ها',previous:'دکان از حساب قبلی',hint:'برای بازیابی، اینترنت و تأیید مالک ضروری است.',support:'پشتیبانی در واتساپ',security:'برای ورود و بازیابی، اتصال انترنت ضروری است. اطلاعات حسابداری پاک نمی‌شود.'},
+ 'ps':{title:'د رمز بېرته ترلاسه کول',intro:'خپل انلاین حساب تایید او خپل دوکان غوره کړئ.',account:'1 / 3 · انلاین حساب',shop:'2 / 3 · دوکان وټاکئ',pending:'3 / 3 · د مالک تایید',approved:'تایید شو · نوی رمز',back:'ننوتلو ته ستنېدل',forgot:'رمز مو هېر شوی؟',login:'ننوتل',reset:'د بېرته ترلاسه کولو غوښتنه',check:'ځواب کتل',finish:'نوی رمز جوړول',load:'دوکانونه ترلاسه کړئ',previous:'پخوانی حساب',hint:'د رمز د بیا ترلاسه کولو لپاره انټرنېټ او د مالک تایید اړین دي.',support:'په واتساپ کې ملاتړ',security:'د ننوتلو او بیا ترلاسه کولو لپاره انټرنېټ اړین دی. د حسابدارۍ معلومات نه پاکېږي.'},
+ 'en':{title:'Recover password',intro:'Verify your account and select your shop.',account:'1 / 3 · Cloud account',shop:'2 / 3 · Choose shop',pending:'3 / 3 · Owner approval',approved:'Approved · Set new PIN',back:'Back to sign in',forgot:'Forgot your password?',login:'Sign in',reset:'Request recovery',check:'Check response',finish:'Set new PIN',load:'Get shops',previous:'Previous account',hint:'Internet and owner approval are required to recover a PIN.',support:'WhatsApp support',security:'Internet is required for sign-in and recovery. Accounting data is not deleted.'}
 };
+const SUPPORT_URL='https://wa.me/93764713434';
 let overlay=null, statusObserver=null, optionsObserver=null, scheduled=false;
 function lang(){
  const v=String($('zaviGateLanguage')?.value||DOC.documentElement.lang||'fa').toLowerCase();
@@ -19,11 +20,48 @@ function lang(){
 }
 function copy(){return COPY[lang()]}
 function text(el,value){if(el&&el.textContent!==value)el.textContent=value}
+function supportLink(label){
+ const link=DOC.createElement('a');
+ link.className='zv66-wa-support';link.href=SUPPORT_URL;link.target='_blank';
+ link.rel='noopener noreferrer';link.textContent=label;
+ link.setAttribute('aria-label',label);return link;
+}
+function ensureGateSupport(){
+ const root=$('zawiPrivateGate'),forgot=$('zawiForgotPinBtn');
+ if(!root||!forgot)return;
+ let link=root.querySelector('.zv66-wa-support');
+ if(!link||!forgot.parentElement?.contains(link)){
+  link=supportLink(copy().support);forgot.insertAdjacentElement('afterend',link);
+ }
+ text(link,copy().support);link.setAttribute('aria-label',copy().support);
+}
+function ensureRecoverySupport(root){
+ const note=root?.querySelector('.z24-pbox > p.z24-note:last-of-type');
+ if(!note)return;
+ let message=note.querySelector('.zv66-support-copy');
+ let link=note.querySelector('.zv66-wa-support');
+ if(!message||!link){
+  while(note.firstChild)note.removeChild(note.firstChild);
+  message=DOC.createElement('span');message.className='zv66-support-copy';
+  link=supportLink(copy().support);note.append(message,link);
+ }
+ text(message,copy().security);text(link,copy().support);
+ link.setAttribute('aria-label',copy().support);
+}
+function sanitizeSupportNumber(){
+ const status=$('z24RecoveryStatus');if(!status)return;
+ const cleaned=(status.textContent||'')
+  .replace(/\s*شماره\s*پشتیبانی\s*[:：]?\s*0764713434\s*/g,' ')
+  .replace(/\s*0764713434\s*/g,' ')
+  .replace(/\s{2,}/g,' ').trim();
+ if(cleaned!==status.textContent)status.textContent=cleaned;
+}
 function gate(){
  const root=$('zawiPrivateGate');
  if(!root)return;
  root.classList.add(ACTIVE);
  root.dataset.zv66AuthRole='private-pin';
+ ensureGateSupport();
  const forgot=$('zawiForgotPinBtn');
  if(forgot && !forgot.dataset.zv66AuthOriginalLabel)
   forgot.dataset.zv66AuthOriginalLabel=forgot.textContent;
@@ -59,6 +97,7 @@ function derive(root){
 }
 function sync(){
  if(!overlay||!overlay.isConnected)return;
+ ensureRecoverySupport(overlay);sanitizeSupportNumber();
  visibleStep(overlay,derive(overlay));
 }
 function schedule(){
@@ -67,6 +106,7 @@ function schedule(){
 }
 function updateLabels(root){
  const c=copy();
+ ensureRecoverySupport(root);sanitizeSupportNumber();
  text(root.querySelector('.z24-ph h2'),c.title);
  text(root.querySelector('.z24-ph p'),c.intro);
  text($('z24Login'),c.load);

@@ -1,0 +1,35 @@
+/* ZAVI ONE ADMIN Compact Auth v1
+   Presentation-only layer for the owner login screen. */
+:root{--zavi-admin-auth-bg:#eaf0f5;--zavi-admin-auth-card:#fff;--zavi-admin-auth-text:#1b2e40;--zavi-admin-auth-muted:#728294;--zavi-admin-auth-line:#dbe4eb;--zavi-admin-auth-blue:#1269d6;--zavi-admin-auth-blue-dark:#0b55b3;--zavi-admin-auth-wa:#159866;--zavi-admin-auth-wa-soft:#edf9f3}
+#authScreen.auth-wrapper{min-height:100dvh!important;height:100dvh!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:14px!important;background:var(--zavi-admin-auth-bg)!important;overflow:auto!important;position:relative!important;isolation:isolate}
+#authScreen.auth-wrapper:before{content:"";position:absolute;top:-88px;left:-50px;width:155px;height:155px;border:1px solid rgba(18,105,214,.09);border-radius:50%;pointer-events:none;animation:zavi-admin-auth-soft-move 14s ease-in-out infinite}
+#authScreen .auth-card{width:min(100%,330px)!important;max-width:330px!important;margin:0!important;padding:18px 16px 15px!important;background:var(--zavi-admin-auth-card)!important;border:1px solid var(--zavi-admin-auth-line)!important;border-radius:17px!important;box-shadow:0 15px 38px rgba(29,60,85,.13)!important;position:relative;z-index:1;animation:zavi-admin-auth-appear .32s ease both;direction:rtl}
+#authScreen .auth-card:before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--zavi-admin-auth-blue),#37b698);border-radius:17px 17px 0 0;pointer-events:none}
+#authScreen .auth-logo{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:8px!important;direction:rtl!important}
+#authScreen .auth-logo img{width:36px!important;height:36px!important;border-radius:11px!important;object-fit:cover!important;filter:none!important}
+#authScreen .auth-logo strong{font-size:11px!important;letter-spacing:0!important;color:var(--zavi-admin-auth-text)!important}
+#authScreen .auth-logo strong span{color:var(--zavi-admin-auth-blue)!important}
+#authScreen .auth-logo small{display:block!important;margin-top:2px!important;color:var(--zavi-admin-auth-muted)!important;text-align:center!important;font-size:9px!important}
+#authScreen .admin-auth-language{display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;margin:14px 0 18px!important;color:var(--zavi-admin-auth-muted)!important;font-size:10px!important}
+#authScreen .admin-auth-language select{height:29px!important;min-height:29px!important;width:auto!important;padding:0 6px!important;border:1px solid var(--zavi-admin-auth-line)!important;border-radius:8px!important;background:var(--zavi-admin-auth-card)!important;color:var(--zavi-admin-auth-text)!important;font-size:10px!important;box-shadow:none!important}
+#authScreen .auth-card>.eyebrow{margin:0 0 4px!important;color:var(--zavi-admin-auth-blue)!important;font-size:9px!important;letter-spacing:0!important;text-align:center!important}
+#authScreen .auth-card h1{font-size:19px!important;line-height:1.5!important;margin:0!important;color:var(--zavi-admin-auth-text)!important;text-align:center!important;letter-spacing:0!important}
+#authScreen .auth-card .hint{font-size:10px!important;line-height:1.8!important;margin:6px 3px 17px!important;color:var(--zavi-admin-auth-muted)!important;text-align:center!important}
+#authScreen .auth-card .form-group{margin:12px 0 0!important}
+#authScreen .auth-card .form-group label{display:block!important;margin:0 4px 5px!important;font-size:10px!important;font-weight:700!important;color:var(--zavi-admin-auth-text)!important}
+#authScreen .auth-card .form-row{display:block!important}
+#authScreen .auth-card :is(input,select){width:100%!important;height:42px!important;min-height:42px!important;border:1px solid var(--zavi-admin-auth-line)!important;border-radius:10px!important;background:var(--zavi-admin-auth-card)!important;color:var(--zavi-admin-auth-text)!important;padding:0 10px!important;font-size:12px!important;box-shadow:none!important}
+#authScreen .auth-card :is(input,select):focus{border-color:var(--zavi-admin-auth-blue)!important;box-shadow:0 0 0 3px rgba(18,105,214,.1)!important}
+#authScreen .auth-card .button.full{width:100%!important;height:43px!important;min-height:43px!important;margin-top:15px!important;padding:0 10px!important;border:0!important;border-radius:10px!important;background:linear-gradient(105deg,var(--zavi-admin-auth-blue-dark),var(--zavi-admin-auth-blue))!important;color:#fff!important;font-size:11px!important;font-weight:700!important;box-shadow:0 7px 14px rgba(18,105,214,.16)!important}
+#authScreen .auth-card .auth-actions{text-align:center!important;margin-top:7px!important}
+#authScreen .auth-card .auth-actions .button{font-size:10px!important;padding:0!important;background:transparent!important;color:var(--zavi-admin-auth-muted)!important}
+#authScreen .auth-card .security-note{margin:10px 0 0!important;padding:8px 9px!important;border:1px solid var(--zavi-admin-auth-line)!important;border-radius:9px!important;background:#f4f7fa!important;color:var(--zavi-admin-auth-muted)!important;font-size:9px!important;line-height:1.75!important}
+#authScreen .auth-card .zavi-auth-support{height:37px!important;margin-top:9px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;border:1px solid rgba(21,152,102,.25)!important;border-radius:10px!important;background:var(--zavi-admin-auth-wa-soft)!important;color:var(--zavi-admin-auth-wa)!important;font-size:10px!important;font-weight:700!important;text-decoration:none!important}
+#authScreen .zavi-support-mark{width:19px;height:19px;border-radius:50%;display:grid;place-items:center;background:var(--zavi-admin-auth-wa);color:#fff;font-size:7px;font-weight:800;direction:ltr}
+#authScreen .auth-promo{display:none!important}
+html[data-zavi-theme="dark"] #authScreen.auth-wrapper{--zavi-admin-auth-bg:#121c24;--zavi-admin-auth-card:#1b2b36;--zavi-admin-auth-text:#f1f6f9;--zavi-admin-auth-muted:#a4b3bc;--zavi-admin-auth-line:#354a55;--zavi-admin-auth-wa-soft:#173a2e}
+html[data-zavi-theme="dark"] #authScreen .auth-card :is(input,select){background:var(--zavi-admin-auth-card)!important}
+@keyframes zavi-admin-auth-appear{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes zavi-admin-auth-soft-move{50%{transform:translate(12px,9px)}}
+@media(prefers-reduced-motion:reduce){#authScreen *{animation:none!important;transition:none!important}}
+@media(max-width:350px){#authScreen.auth-wrapper{padding:8px!important}}

@@ -1,0 +1,60 @@
+/* ZAVI ONE Compact Auth v1
+   Presentation-only layer for the local PIN gate and recovery modal.
+   Authentication, storage, RPCs and accounting screens remain untouched. */
+:root{--zavi-auth-bg:#eaf0f5;--zavi-auth-card:#fff;--zavi-auth-text:#1b2e40;--zavi-auth-muted:#728294;--zavi-auth-line:#dbe4eb;--zavi-auth-blue:#1269d6;--zavi-auth-blue-dark:#0b55b3;--zavi-auth-wa:#159866;--zavi-auth-wa-soft:#edf9f3}
+
+#zawiPrivateGate.zawi-lock-screen{background:var(--zavi-auth-bg)!important;color:var(--zavi-auth-text)!important;padding:14px!important;align-items:center!important;justify-content:center!important;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;isolation:isolate}
+#zawiPrivateGate.zawi-lock-screen:before{content:"";position:absolute;top:-88px;left:-50px;width:155px;height:155px;border:1px solid rgba(18,105,214,.09);border-radius:50%;pointer-events:none;animation:zavi-auth-soft-move 14s ease-in-out infinite}
+#zawiPrivateGate .zawi-auth-card{width:min(100%,330px)!important;max-width:330px!important;margin:0 auto!important;padding:18px 16px 15px!important;background:var(--zavi-auth-card)!important;border:1px solid var(--zavi-auth-line)!important;border-radius:17px!important;box-shadow:0 15px 38px rgba(29,60,85,.13)!important;position:relative;z-index:1;overflow:visible!important;animation:zavi-auth-appear .32s ease both;direction:rtl}
+#zawiPrivateGate .zawi-auth-card:before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--zavi-auth-blue),#37b698);border-radius:17px 17px 0 0;pointer-events:none}
+#zawiPrivateGate .zawi-lock-emblem{width:36px!important;height:36px!important;margin:0 auto 8px!important;border-radius:11px!important;background:#edf4ff!important;box-shadow:none!important;color:var(--zavi-auth-blue)!important;overflow:hidden}
+#zawiPrivateGate .zawi-lock-emblem img{width:100%!important;height:100%!important;border-radius:11px!important;object-fit:cover!important}
+#zawiPrivateGate .zawi-brand-latin{font-size:11px!important;font-weight:800!important;letter-spacing:0!important;color:var(--zavi-auth-text)!important;line-height:1.5}
+#zawiPrivateGate .zawi-brand-latin .zawi-brand-dot{color:var(--zavi-auth-muted)!important;margin:0 4px!important}
+#zawiPrivateGate .zawi-gate-eyebrow{display:none!important}
+#zawiPrivateGate .zavi-auth-language{display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;margin:14px 0 18px!important;color:var(--zavi-auth-muted)!important;font-size:10px!important}
+#zawiPrivateGate .zavi-auth-language select{height:29px!important;min-height:29px!important;padding:0 6px!important;border:1px solid var(--zavi-auth-line)!important;border-radius:8px!important;background:var(--zavi-auth-card)!important;color:var(--zavi-auth-text)!important;font-size:10px!important;box-shadow:none!important}
+#zawiPrivateGate h2{font-size:19px!important;line-height:1.5!important;margin:0!important;color:var(--zavi-auth-text)!important;text-align:center!important;letter-spacing:0!important}
+#zawiPrivateGate .zawi-lock-description{font-size:10px!important;line-height:1.8!important;margin:6px 3px 17px!important;max-width:none!important;color:var(--zavi-auth-muted)!important;text-align:center!important}
+#zawiPrivateGate .zawi-pin-field{text-align:right!important;margin:12px 0 0!important}
+#zawiPrivateGate .zawi-pin-field label{display:block!important;margin:0 4px 5px!important;font-size:10px!important;font-weight:700!important;color:var(--zavi-auth-text)!important}
+#zawiPrivateGate .zawi-pin-field input{width:100%!important;height:42px!important;min-height:42px!important;border:1px solid var(--zavi-auth-line)!important;border-radius:10px!important;background:var(--zavi-auth-card)!important;color:var(--zavi-auth-text)!important;padding:0 10px!important;direction:ltr!important;text-align:center!important;font-size:16px!important;letter-spacing:5px!important;outline:0!important;box-shadow:none!important}
+#zawiPrivateGate .zawi-pin-field input:focus{border-color:var(--zavi-auth-blue)!important;box-shadow:0 0 0 3px rgba(18,105,214,.1)!important}
+#zawiPrivateGate .zawi-pin-btn{width:100%!important;height:43px!important;min-height:43px!important;margin-top:15px!important;border:0!important;border-radius:10px!important;background:linear-gradient(105deg,var(--zavi-auth-blue-dark),var(--zavi-auth-blue))!important;color:#fff!important;font-size:11px!important;font-weight:700!important;box-shadow:0 7px 14px rgba(18,105,214,.16)!important;transition:transform .18s ease,filter .18s ease!important}
+#zawiPrivateGate .zawi-pin-btn:hover{transform:translateY(-1px)!important;filter:brightness(1.03)!important}
+#zawiPrivateGate .zawi-lock-error{min-height:18px!important;margin:8px 0 0!important;padding:0!important;font-size:9px!important;line-height:1.6!important;text-align:center!important;color:#b4404e!important}
+#zawiPrivateGate #zawiForgotPinBtn{display:block!important;width:100%!important;max-width:none!important;height:36px!important;min-height:36px!important;margin:7px 0 0!important;padding:0!important;border:0!important;background:transparent!important;color:var(--zavi-auth-muted)!important;font:500 10px/1.4 system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif!important;cursor:pointer!important;box-shadow:none!important}
+#zawiPrivateGate #zawiForgotPinBtn:hover{color:var(--zavi-auth-blue)!important}
+#zawiPrivateGate .zavi-auth-support{height:37px!important;margin-top:9px!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;border:1px solid rgba(21,152,102,.25)!important;border-radius:10px!important;background:var(--zavi-auth-wa-soft)!important;color:var(--zavi-auth-wa)!important;font-size:10px!important;font-weight:700!important;text-decoration:none!important}
+#zawiPrivateGate .zavi-support-mark{width:19px;height:19px;border-radius:50%;display:grid;place-items:center;background:var(--zavi-auth-wa);color:#fff;font-size:7px;font-weight:800;direction:ltr}
+#zawiPrivateGate .zavi-auth-foot{color:var(--zavi-auth-muted);font-size:9px;text-align:center;margin-top:11px;line-height:1.6}
+
+html[data-zavi-theme="dark"] #zawiPrivateGate.zawi-lock-screen{--zavi-auth-bg:#121c24;--zavi-auth-card:#1b2b36;--zavi-auth-text:#f1f6f9;--zavi-auth-muted:#a4b3bc;--zavi-auth-line:#354a55;--zavi-auth-wa-soft:#173a2e}
+html[data-zavi-theme="dark"] #zawiPrivateGate .zawi-lock-emblem{background:#223b61!important}
+html[data-zavi-theme="dark"] #zawiPrivateGate .zavi-pin-field input,html[data-zavi-theme="dark"] #zawiPrivateGate .zavi-auth-language select{background:var(--zavi-auth-card)!important}
+
+#z24Recovery{background:rgba(12,39,63,.28)!important;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);padding:14px!important;font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif!important}
+#z24Recovery .z24-pbox{width:min(330px,100%)!important;padding:18px 16px 15px!important;background:#fff!important;border:1px solid var(--zavi-auth-line)!important;border-radius:17px!important;box-shadow:0 15px 38px rgba(29,60,85,.16)!important;position:relative;overflow:hidden;animation:zavi-auth-appear .32s ease both}
+#z24Recovery .z24-pbox:before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--zavi-auth-blue),#37b698);border-radius:17px 17px 0 0}
+#z24Recovery .z24-ph{padding:0!important;background:transparent!important;border-radius:0!important;color:var(--zavi-auth-text)!important;text-align:center!important}
+#z24Recovery .z24-ph h2{margin:0!important;font-size:19px!important;line-height:1.5!important;color:var(--zavi-auth-text)!important}
+#z24Recovery .z24-ph p{margin:6px 3px 17px!important;color:var(--zavi-auth-muted)!important;font-size:10px!important;line-height:1.8!important}
+#z24Recovery .z24-note{margin:10px 0!important;padding:8px 9px!important;border:1px solid var(--zavi-auth-line)!important;border-radius:9px!important;background:#f4f7fa!important;color:var(--zavi-auth-muted)!important;font-size:9px!important;line-height:1.75!important}
+#z24Recovery .z24-pfield{margin:12px 0 0!important;color:var(--zavi-auth-text)!important;font-size:10px!important;font-weight:700!important}
+#z24Recovery .z24-pfield input,#z24Recovery .z24-pfield select{height:42px!important;min-height:42px!important;margin-top:5px!important;padding:0 10px!important;border:1px solid var(--zavi-auth-line)!important;border-radius:10px!important;background:#fff!important;color:var(--zavi-auth-text)!important;font:12px system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif!important;outline:0!important;box-shadow:none!important}
+#z24Recovery .z24-pfield input:focus,#z24Recovery .z24-pfield select:focus{border-color:var(--zavi-auth-blue)!important;box-shadow:0 0 0 3px rgba(18,105,214,.1)!important}
+#z24Recovery .z24-pactions{display:flex!important;gap:6px!important;flex-wrap:wrap!important;margin:15px 0 0!important}
+#z24Recovery .z24-pbtn{width:100%!important;height:43px!important;min-height:43px!important;padding:0 10px!important;border:0!important;border-radius:10px!important;background:linear-gradient(105deg,var(--zavi-auth-blue-dark),var(--zavi-auth-blue))!important;color:#fff!important;font:700 10px system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif!important;cursor:pointer!important}
+#z24Recovery .z24-pbtn.alt{background:#fff!important;border:1px solid var(--zavi-auth-line)!important;color:var(--zavi-auth-muted)!important}
+#z24Recovery .z24-pstatus{margin:9px 0 0!important;font-size:9px!important;line-height:1.7!important;color:#147b68!important}
+#z24Recovery .z24-pstatus.err{color:#b4404e!important}
+#z24Recovery .z24-label{padding:4px 7px!important;border-radius:6px!important;background:#f4f7fa!important;color:var(--zavi-auth-muted)!important;font-size:9px!important}
+#z24Recovery .z24-recovery-brand{display:flex;flex-direction:column;align-items:center;gap:8px;margin:0 0 14px;color:var(--zavi-auth-text);font-size:11px;font-weight:800}
+#z24Recovery .z24-recovery-brand img{width:36px;height:36px;border-radius:11px;object-fit:cover}
+#z24Recovery .z24-recovery-brand b{color:var(--zavi-auth-muted);margin:0 4px}
+#z24Recovery .z24-support-link{display:inline-flex;align-items:center;justify-content:center;gap:5px;color:var(--zavi-auth-wa)!important;font-weight:700;text-decoration:none}
+#z24Recovery .z24-support-mark{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--zavi-auth-wa);color:#fff;font-size:6px;direction:ltr}
+@keyframes zavi-auth-appear{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes zavi-auth-soft-move{50%{transform:translate(12px,9px)}}
+@media(prefers-reduced-motion:reduce){#zawiPrivateGate *,#z24Recovery *{animation:none!important;transition:none!important}}
+@media(max-width:350px){#zawiPrivateGate.zawi-lock-screen{padding:8px!important}#z24Recovery{padding:8px!important}}

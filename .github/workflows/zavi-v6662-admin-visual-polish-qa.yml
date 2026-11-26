@@ -103,12 +103,11 @@ jobs:
             --original original/admin/ZAVI_admin_V6662_DEBUG_QA.apk \
             --qa "$APK" \
             --report qa-output/admin-polish-verified.json
-          cp "$APK" qa-output/ZAVI_ADMIN_V6662_BLUE_VISUAL_ONLY_QA.apk
+          cp "$APK" "qa-output/ZAVI_ADMIN_V6662_QA_${GITHUB_SHA}.apk"
       - name: Upload QA candidate, browser captures and integrity report
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ZAVI_ADMIN_V6662_BLUE_VISUAL_ONLY_QA
           path: qa-output/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: error

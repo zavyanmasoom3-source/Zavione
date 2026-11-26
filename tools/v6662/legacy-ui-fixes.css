@@ -289,3 +289,27 @@ html #content .zinv .zinv-summary small{
  html #content .zinv .zinv-tabs:has(button){grid-template-columns:repeat(2,minmax(0,1fr))!important}
  html #overlay .zinv-dialog form .form-grid{grid-template-columns:minmax(0,1fr)!important}
 }
+
+/* Keep long account names and monetary columns usable on narrow screens. */
+@media screen {
+ html #content :is(.panel-head,.table-bar,.record-card,.settings-card) > *{
+  min-inline-size:0;
+ }
+ html #content :is(.record-card,.settings-card,.panel-head) :is(h3,p,small){
+  overflow-wrap:anywhere;
+ }
+ html #content :is(.table-wrap,.table-scroll) :is(th,td){
+  vertical-align:middle;
+  font-variant-numeric:tabular-nums;
+ }
+ html #content .settings-card :is(input[type=search],select){max-inline-size:100%}
+ html #overlay :is(.modal,.dialog) textarea{resize:vertical}
+}
+@media screen and (max-width:480px){
+ html #content .panel-head{flex-wrap:wrap;row-gap:8px}
+ html #content .panel-head .action-group{flex-wrap:wrap;max-width:100%}
+ html #content .table-bar .searchbox input{min-width:0;width:100%}
+ html #content :is(.report-grid,.accounts-grid,.stat-grid)>*{min-width:0}
+ html #content :is(.report-stat,.card.stat) strong{overflow-wrap:anywhere}
+ html #overlay :is(.modal,.dialog) :is(.action-group,.actions){flex-wrap:wrap;row-gap:8px}
+}

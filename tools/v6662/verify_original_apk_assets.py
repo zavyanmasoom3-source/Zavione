@@ -10,6 +10,7 @@ import hashlib
 import json
 import zipfile
 from pathlib import Path
+from patch_approved_sales import modify as approved_sales
 from patch_durable_save import transform as fix_durable_save
 from patch_23_business_registry import modify as extend23, ALL_FILES as TRADE_FILES
 
@@ -67,7 +68,7 @@ def verify(original, qa, css_file, output):
     assert "</body>" in expected_source
     first, last = expected_source.rsplit("</body>", 1)
     expected_source = first + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script>' + '<script defer src="./legacy-phone-case-variants.js?v=6662-trades23"></script>' + '<script defer src="./legacy-auth-simple-v6662.js?v=6662-approved-auth"></script></body>' + last
-    expected_html = fix_durable_save(extend23("index.html", expected_source)).encode("utf-8")
+    expected_html = fix_durable_save(approved_sales("index.html", extend23("index.html", expected_source))).encode("utf-8")
     assert now[INDEX_NAME] == expected_html, "Unexpected HTML/JS mutation outside the approved durable-save fix"
     expected_css = Path(css_file).read_bytes()
     assert now[CSS_NAME] == expected_css, "Unverified visual patch"
@@ -77,7 +78,7 @@ def verify(original, qa, css_file, output):
     pristine = [name for name in old if name.removeprefix("assets/") not in TRADE_FILES]
     patched = [name for name in old if name.removeprefix("assets/") in TRADE_FILES and name != INDEX_NAME]
     for name in patched:
-        expected = extend23(name.removeprefix("assets/"), old[name].decode("utf-8")).encode("utf-8")
+        expected = approved_sales(name.removeprefix("assets/"), extend23(name.removeprefix("assets/"), old[name].decode("utf-8"))).encode("utf-8")
         assert now[name] == expected, f"Unverified 23-trade registry mutation: {name}"
     untouched = [name for name in pristine if name != INDEX_NAME]
     modified = [name for name in untouched if sha(old[name]) != sha(now[name])]
@@ -97,7 +98,8 @@ def verify(original, qa, css_file, output):
         "new_design_present": False,
         "business_logic_modified": True,
         "original_functional_assets_byte_preserved": False,
-        "trade_registry_only_changes_verified": True,
+        "trade_registry_only_changes_verified": False,
+        "approved_sales_and_registry_changes_verified": True,
         "approved_settings_ui_only": True,
         "approved_business_logic_change": "after durable local commit, safely report backup/cloud failures and continue callbacks",
         "native_runtime_tested": False,

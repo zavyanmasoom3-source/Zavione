@@ -1,0 +1,29 @@
+﻿app,route,proposed destination,status
+ONE,dashboard,خانه,آزمایش عملی در انتظار
+ONE,sales,فروش,آزمایش عملی در انتظار
+ONE,purchases,خرید,آزمایش عملی در انتظار
+ONE,products,گدام,آزمایش عملی در انتظار
+ONE,contacts,بیشتر / حساب اشخاص,آزمایش عملی در انتظار
+ONE,phonebook,بیشتر / دفترچه تماس,آزمایش عملی در انتظار
+ONE,debtors,بیشتر / طلب ما,آزمایش عملی در انتظار
+ONE,creditors,بیشتر / قرض ما,آزمایش عملی در انتظار
+ONE,money,بیشتر / صندوق,آزمایش عملی در انتظار
+ONE,hawala,بیشتر / حواله,آزمایش عملی در انتظار
+ONE,expenses,بیشتر / مصارف,آزمایش عملی در انتظار
+ONE,waste,گدام / ضایعات,آزمایش عملی در انتظار
+ONE,reports,بیشتر / راپورها,آزمایش عملی در انتظار
+ONE,journal,خانه / روزنامچه,آزمایش عملی در انتظار
+ONE,repairs,بیشتر / ترمیمات,آزمایش عملی در انتظار
+ONE,settings,بیشتر / تنظیمات,آزمایش عملی در انتظار
+ONE,subscription,بیشتر / اشتراک,آزمایش عملی در انتظار
+ADMIN,activity,ADMIN / activity,آزمایش عملی در انتظار
+ADMIN,brand,ADMIN / brand,آزمایش عملی در انتظار
+ADMIN,customers,ADMIN / customers,آزمایش عملی در انتظار
+ADMIN,devices,ADMIN / devices,آزمایش عملی در انتظار
+ADMIN,finance,ADMIN / finance,آزمایش عملی در انتظار
+ADMIN,health,ADMIN / health,آزمایش عملی در انتظار
+ADMIN,overview,ADMIN / overview,آزمایش عملی در انتظار
+ADMIN,payments,ADMIN / payments,آزمایش عملی در انتظار
+ADMIN,security,ADMIN / security,آزمایش عملی در انتظار
+ADMIN,settings,ADMIN / settings,آزمایش عملی در انتظار
+ADMIN,support,ADMIN / support,آزمایش عملی در انتظار

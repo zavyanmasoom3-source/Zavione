@@ -85,6 +85,9 @@ html #overlay .zsales-dialog .order-row [data-field=productName]{grid-column:1/-
 html #overlay .zsales-dialog .order-row input{min-height:42px!important}
 html #overlay .zsales-dialog .zsales-optional>summary{font-size:12px!important;padding:8px 10px!important;min-height:40px!important}
 html #overlay .zsales-dialog .zsales-tools{display:flex;gap:6px;padding:8px}
+html #overlay .zsales-dialog .zsales-pay-actions{display:flex;gap:8px}
+html #overlay .zsales-dialog .zsales-pay-actions button{flex:1}
+html:has(#overlay .zsales-dialog) :is(#z637AiButton,.z637-ai-button,#z605-launch){visibility:hidden!important}
 html #overlay .zsales-dialog .z629-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 html #overlay .zsales-dialog .z629-field select{font-size:11px!important}
 html #overlay .zsales-dialog .zavi-barcode-box{margin:6px 0!important;padding:8px!important}
@@ -139,6 +142,34 @@ def index(s):
 """
     s=once(s,anchor,behavior+anchor)
     s=once(s,"const pagingButton=e.target.closest('[data-zavi-page]');","const salesFilterButton=e.target.closest('[data-zsales-filter]');if(salesFilterButton&&page==='sales'){zsalesFilter=salesFilterButton.dataset.zsalesFilter;z647Pages.sales=0;render();return;}\n const pagingButton=e.target.closest('[data-zavi-page]');")
+    # Use the existing paid/discount/account controls; quick payment only fills the actual input.
+    payment=expr("field('paid',isReturn?'مبلغ بازپرداخت فعلی':'مبلغ پرداخت‌شده فعلی',0,'number','min=\"0\" step=\"any\" required')")
+    s=once(s,payment,expr("compactSale?'<div class=\"field full zsales-pay-actions\"><button type=\"button\" class=\"btn subtle\" data-zsales-pay=\"full\">پرداخت کامل</button><button type=\"button\" class=\"btn subtle\" data-zsales-pay=\"credit\">قرض کامل</button></div>':''")+payment)
+    s=once(s," if(compactSale){\n  box.addEventListener('change',e=>{",""" if(compactSale){
+  form.addEventListener('click',e=>{
+   const pay=e.target.closest('[data-zsales-pay]');if(!pay)return;
+   try{
+    if(pay.dataset.zsalesPay==='credit')f.paid.value='0';
+    else{
+     const lines=[...box.querySelectorAll('.order-line')].map(row=>({qty:row.querySelector('[data-field="qty"]').value||'0',price:row.querySelector('[data-field="price"]').value||'0'}));
+     f.paid.value=String(Math.max(0,window.ZaviDecimal.roundMoney(window.ZaviDecimal.sumLineTotals(lines)-window.ZaviDecimal.roundMoney(f.discount.value||'0'))));
+    }
+    updateTotals();
+   }catch(err){toast(err.message||'مبلغ فاکتور را بررسی کنید.');}
+  });
+  box.addEventListener('change',e=>{""")
+    s=once(s,"window.ZaviIndustryForms6529.display(x.industryDetails,6)","window.ZaviIndustryForms6529.display(x.industryDetails,t.type==='sale'?99:6)")
+    # Preserve all selected metadata on sale canvas and thermal outputs, without changing calculations.
+    s=once(s," const W=1080, H=1325+count*71;",""" const saleMeta=t.type==='sale'?lines.map(item=>window.ZaviIndustryForms6529.display(item.industryDetails,99).flatMap(([k,v])=>Array.from((k+': '+v).matchAll(/.{1,40}/gu),m=>m[0]))):[];
+ const rowHeight=i=>71+(saleMeta[i]?.length||0)*24;
+ const W=1080, H=1325+Array.from({length:count},(_,i)=>rowHeight(i)).reduce((a,b)=>a+b,0);""")
+    s=once(s,"if(i%2===0)box(58,y,964,71,even,8);","if(i%2===0)box(58,y,964,rowHeight(i),even,8);")
+    s=once(s,"if(item.industryDetails?.values&&Object.keys(item.industryDetails.values).length){const extra=window.ZaviIndustryForms6529.display(item.industryDetails,2).map(([k,v])=>k+': '+v).join(' · ');print(extra,842,y+61,14,sub,500,'right',350)}",
+       """if(t.type==='sale'){(saleMeta[i]||[]).forEach((line,j)=>print(line,980,y+72+j*24,17,sub,500,'right',900))}
+   else if(item.industryDetails?.values&&Object.keys(item.industryDetails.values).length){const extra=window.ZaviIndustryForms6529.display(item.industryDetails,2).map(([k,v])=>k+': '+v).join(' · ');print(extra,842,y+61,14,sub,500,'right',350)}""")
+    s=once(s,"rule(60,y+69,960);y+=71;","rule(60,y+rowHeight(i)-2,960);y+=rowHeight(i);")
+    s=once(s,"items:invoice.items.map(row=>({name:row.productName||productName(row.productId),qty:row.qty,price:row.price}))",
+       "items:invoice.items.map(row=>({name:(row.productName||productName(row.productId))+(invoice.type==='sale'?window.ZaviIndustryForms6529.display(row.industryDetails,99).map(([k,v])=>' · '+k+': '+v).join(''):''),qty:row.qty,price:row.price}))")
     return s.replace("</head>",CSS+"</head>",1)
 
 def modify(name,s):

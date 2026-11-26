@@ -27,6 +27,23 @@ with sync_playwright() as p:
     go('products');
   }""")
   assert page.locator('[data-zinv-tab]').count()==4
+  # Guard the approved landing layout itself, not merely the existence of tabs.
+  assert page.locator('.zinv-compact-head').is_visible()
+  assert page.locator('.zinv-summary .card').count()==3
+  assert page.locator('.zinv-summary').is_visible()
+  assert page.locator('.zinv-product-card').count()==1
+  assert 'QA GOLD' in page.locator('.zinv-product-card').inner_text()
+  assert page.locator('.zinv .report-grid').count()==0
+  assert page.locator('#zinvScanPanel').get_attribute('open') is None
+  assert not page.locator('#zaviWarehouseScan').is_visible()
+  page.locator('[data-zinv-scan]').click()
+  assert page.locator('#zaviWarehouseScan').is_visible()
+  page.locator('#zinvScanPanel summary').click()
+  assert page.locator('#zinvScanPanel').get_attribute('open') is None
+  assert page.locator('#productCsvImport').count()==1
+  assert page.locator('.zinv [data-action=stock_adjust]').count()==1
+  assert page.locator('.zinv [data-action=product_template]').count()==1
+  assert page.evaluate("document.documentElement.scrollWidth<=innerWidth+4")
   assert page.evaluate("Object.keys(zinvCategories).length")==23
   assert page.evaluate("ZaviIndustryForms6529.types.every(x=>zinvCategories[x]?.length)")
   page.locator("#zinvFilter").select_option("low")

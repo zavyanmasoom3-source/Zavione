@@ -105,6 +105,25 @@ def main():
         if checked.returncode:
             failures.append([str(js.relative_to(dest)), checked.stderr[:250]])
     assert not failures, f"Broken original JavaScript: {failures[:10]}"
+    # Validate inline SPA source as well; an APK can compile despite JavaScript syntax errors.
+    from html.parser import HTMLParser
+    class InlineScripts(HTMLParser):
+        def __init__(self):
+            super().__init__(); self.active=False; self.parts=[]
+        def handle_starttag(self, tag, attrs):
+            if tag=="script":
+                a=dict(attrs)
+                self.active=not a.get("src") and a.get("type","") in ("","text/javascript","application/javascript","module")
+        def handle_data(self, data):
+            if self.active:self.parts.append(data)
+        def handle_endtag(self,tag):
+            if tag=="script":self.active=False
+    parser=InlineScripts();parser.feed(updated)
+    for i,src in enumerate(parser.parts):
+        check=subprocess.run(["node","--check"],input=src,capture_output=True,text=True)
+        if check.returncode:
+            raise ValueError("Invalid inline script "+str(i)+": "+check.stderr[:3000])
+
     assert (dest / "models/ggml-base-q5_1.bin").stat().st_size == 59_707_625
     original_after = dict(files)
     # Original business-code changes are exact-string, fail-closed and separately verified.\n    # All other resources remain byte-identical.

@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/zavi-v6662-original-design-qa.yml'
       - 'tools/v6662/**'
+      - 'tests/v6662-approved-sales.cjs'
       - 'android-build/**'
 
 permissions:
@@ -94,6 +95,7 @@ jobs:
           ZAVI_REPAIRED_INDEX=android-build/app/src/main/assets/index.html \
             node --test tests/v6662-durable-save-regression.cjs
           node --test tests/v6662-phone-case-variants.test.cjs
+          ZAVI_SALES_ASSETS=android-build/app/src/main/assets node --test tests/v6662-approved-sales.cjs
 
       - name: Set up Android build tools
         shell: bash

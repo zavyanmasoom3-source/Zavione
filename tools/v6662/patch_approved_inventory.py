@@ -142,6 +142,12 @@ def compact_inventory(s):
  s=once(s,"if(e.target.closest('[data-zinv-new]'))", "if(e.target.closest('[data-zinv-scan]')){const panel=document.getElementById('zinvScanPanel');if(panel){panel.open=true;document.getElementById('zaviWarehouseScan')?.focus();}return;}\n if(e.target.closest('[data-zinv-new]'))")
  s=once(s,"header('محصولات و گدام‌ها','',button('product','محصول جدید'))", "'<div class=\"zinv-compact-head\"><h2>'+({warehouses:'گدام‌ها',moves:'حرکت‌ها',labels:'چاپ لیبل'}[zinvTab]||'محصولات و گدام‌ها')+'</h2></div>'")
  s=once(s,"showModal(edit?'ویرایش محصول و تعداد گدام':'ثبت محصولی جدید',body,'ثبت و ذخیره');", "showModal(edit?'ویرایش محصول':'محصول جدید',body,'ذخیره');")
+ # Preserve the exact original input names and handlers; collapse explanatory UI only.
+ s=once(s,'<div class="field full"><div class="small-info">اگر قیمت را به دالر می‌نویسید، نخست نرخ دالر را در داشبورد ثبت کنید. بعد قیمت فروش و قیمت خرید را هر دو به دالر وارد کنید؛ هنگام ذخیره، معادل حسابداری به پول اصلی ثبت می‌شود.</div></div>','<details class="field full zinv-optional"><summary>راهنمای قیمت و ارز</summary><div class="small-info">برای قیمت دالری، نرخ را در داشبورد ثبت کنید. هنگام ذخیره، معادل به پول اصلی حسابداری ثبت می‌شود.</div></details>')
+ s=once(s,'<div class="field full"><label>عکس محصول (اختیاری)</label><div class="zavi-photo-preview" id="zaviProductPhotoPreview">','<details class="field full zinv-optional"><summary>عکس محصول (اختیاری)</summary><div class="zavi-photo-preview" id="zaviProductPhotoPreview">')
+ s=once(s,'capture="environment" hidden></label></div></div></div>','capture="environment" hidden></label></div></div></details>')
+ s=once(s,'نام و کود گدام‌ها · موجودی فعلاً در دفتر مشترک ثبت می‌شود. انتقال مالی و مقدار مستقل هنوز فعال نیست.','موجودی مشترک · تفکیک و انتقال هنوز فعال نیست.')
+ s=once(s,'این ثبت فقط نام و کود موقعیت است؛ موجودی حسابداری فعلاً مشترک است.','موجودی فعلاً مشترک است.')
  return s.replace('</head>',COMPACT_CSS+'</head>',1)
 
 def modify(name,s):

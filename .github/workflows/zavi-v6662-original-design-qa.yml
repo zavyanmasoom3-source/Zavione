@@ -145,8 +145,6 @@ jobs:
           Path('qa-output/original-design-provenance.json').write_text(json.dumps(data,indent=2,ensure_ascii=False)+'\n')
           print(json.dumps(data,indent=2))
           PY
-          cp "$APK" qa-output/ZAVI_ONE_V6662_ORIGINAL_DESIGN_FIXED_QA.apk
-          sha256sum qa-output/*.apk
 
       - name: Assert complete 265-file historical business-code integrity
         shell: bash
@@ -158,11 +156,12 @@ jobs:
             --css tools/v6662/legacy-ui-fixes.css \
             --output qa-output/verified-original-source-assets.json
 
+          cp android-build/app/build/outputs/apk/debug/app-debug.apk "qa-output/ZAVI_ONE_V6662_QA_${GITHUB_SHA}.apk"
+
       - name: Upload the REAL 62MB old-design QA APK and provenance
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: ZAVI_ONE_V6662_OLD_BLUE_DESIGN_QA_APK
           path: qa-output/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: error

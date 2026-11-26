@@ -64,7 +64,7 @@ function zinvMovementRows(){
  for(const t of orderByDate(db.tx)){
   if(t.voided)continue;
   const factor=({purchase:1,sale:-1,sale_return:1,purchase_return:-1})[t.type];
-  if(factor){for(const item of t.items||[])if(item.productId)result.push({date:t.date,code:t.code||'',name:item.productName||productName(item.productId),delta:factor*num(item.qty),type:txLabel(t.type),note:t.note||''});}
+  if(factor){for(const item of t.items||[])if(item.productId)result.push({date:t.date,code:t.code||'',name:item.productName||productName(item.productId),delta:factor*num(item.qty),type:txLabel(t),note:t.note||''});}
   else if(t.type==='stock_adjust')result.push({date:t.date,code:t.code||'',name:productName(t.productId),delta:num(t.delta),type:'اصلاح موجودی',note:t.note||''});
  }
  return result;
@@ -136,12 +136,13 @@ def modify(name,s):
  s=once(s,'<span class="muted">قیمت‌ها به:</span><select id="stockCurrency"', '<select id="zinvFilter" aria-label="فیلتر موجودی">'+E("[['all','همه محصولات'],['low','کم‌موجودی'],['out','ناموجود']].map(([k,l])=>'<option value=\"'+k+'\" '+(zinvFilter===k?'selected':'')+'>'+l+'</option>').join('')")+'</select><select id="stockCurrency"')
  s=once(s,'جستجوی نام، بارکد اصلی یا اضافی، دسته‌بندی','نام، کود یا بارکد')
  s=once(s,'با دوربین، بارکدخوان USB / Bluetooth یا نوشتن کود، محصول و قیمت واقعی همان گدام را ببینید.','دوربین، USB، Bluetooth یا ورود دستی')
+ s=once(s,"const productIndustry=(edit&&['covers','accessories'].includes(p.industryDetails?.type))?p.industryDetails.type:zaviBusinessTypeV638();","const productIndustry=(edit&&window.ZaviIndustryForms6529.types.includes(p.industryDetails?.type))?p.industryDetails.type:zaviBusinessTypeV638();")
  s=once(s,"const catData="+chr(96)+'<datalist id="zawiCategoryOptions">'+E("[...PRODUCT_CATS,'سایر'].map(x=>"+chr(96)+'<option value="'+E("escapeHtml(x)")+'"></option>'+chr(96)+").join('')")+'</datalist>'+chr(96)+";",
  'const catData='+chr(96)+'<datalist id="zawiCategoryOptions">'+E("[...new Set([...(zinvCategories[productIndustry]||PRODUCT_CATS),...(p.category?[p.category]:[]),'سایر'])].map(x=>"+chr(96)+'<option value="'+E("escapeHtml(x)")+'"></option>'+chr(96)+").join('')")+'</datalist>'+chr(96)+";")
  s=once(s,'📷 گرفتن بارکد با دوربین برای محصول</button><small class="field-hint">برای USB یا Bluetooth، مکان‌نما را روی فیلد «کود / مدل» قرار دهید و اسکن کنید. بارکد تکراری هنگام ذخیره رد می‌شود.</small>','دوربین</button><button type="button" class="btn subtle" id="zinvAutoCode">کود خودکار</button><small class="field-hint">USB / Bluetooth · در خانه کود اسکن کنید.</small>')
  s=once(s,'<div class="field full"><label for="zaviExtraBarcodes">بارکدهای اضافی (هر کود در یک خط)</label>','<details class="field full zinv-optional"><summary>بارکدهای اضافی (اختیاری)</summary><label for="zaviExtraBarcodes">هر کود در یک خط</label>')
  s=once(s,'بارکد محصول خودش دوباره ثبت نمی‌شود.</small></div>','بارکد محصول خودش دوباره ثبت نمی‌شود.</small></details>')
- s=once(s,E("window.ZaviIndustryForms6529.render(productIndustry,p.industryDetails,{expanded:!!p.industryDetails})"),E("window.ZaviIndustryForms6529.renderSale(productIndustry).replace(/<div class=\"zsales-tools\">[\\\\s\\\\S]*?<\\\\/div>/,'').replace('zsales-optional','zinv-optional')"))
+ s=once(s,E("window.ZaviIndustryForms6529.render(productIndustry,p.industryDetails,{expanded:!!p.industryDetails})"),E("window.ZaviIndustryForms6529.renderSale(productIndustry).replace(/<div class=\"zsales-tools\">.*?<[/]div>/,'').replace('zsales-optional','zinv-optional')"))
  s=once(s,"const productForm=document.getElementById('dialogForm');","""const productForm=document.getElementById('dialogForm');
  productForm.closest('.modal')?.classList.add('zinv-dialog');
  const spec=productForm.querySelector('.z629-industry.zinv-optional');

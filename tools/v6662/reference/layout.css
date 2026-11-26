@@ -44,7 +44,7 @@
  html #content[data-screen] .zref-summary button{display:grid;gap:5px;align-content:center;min-height:68px;padding:10px 13px;border:0;border-radius:12px;text-align:start;background:var(--ref-soft);color:var(--ref-text);font:inherit}
  html #content[data-screen] .zref-summary button:first-child{background:var(--ref-brand);color:#fff}
  html #content[data-screen] .zref-summary strong{font-size:1.12rem;font-variant-numeric:tabular-nums}
- html #content[data-screen] :is(.zinv,.z66-approved-hub,.zsh)::before{
+ html #content[data-screen] :is(.zinv,.zsh)::before{
   content:"";display:block;margin:2px auto 12px;width:min(100%,320px);height:135px;
   border-radius:12px;background:var(--ref-art) center/contain no-repeat
  }
@@ -53,4 +53,18 @@
  html #content[data-screen] .page-head .action-group>.btn{flex:1 1 auto}
  html #overlay :is(.modal-body,.modal-head,.modal-footer){background:var(--ref-card)!important;color:var(--ref-text)!important}
  html #overlay :is(input:not([type=checkbox],[type=radio]),select,textarea){border:1px solid var(--ref-line)!important;color:var(--ref-text)!important;background:var(--ref-bg)!important;border-radius:9px!important}
+}
+
+@media screen {
+ html #content[data-screen=settings] #z66-approved-hub .z66-approved-intro {
+  padding-inline-end:82px!important;
+  min-height:64px;
+  background-image:var(--ref-art)!important;
+  background-repeat:no-repeat!important;
+  background-size:72px auto!important;
+  background-position:left 5px center!important;
+ }
+ html[dir=ltr] #content[data-screen=settings] #z66-approved-hub .z66-approved-intro {
+  background-position:right 5px center!important;
+ }
 }

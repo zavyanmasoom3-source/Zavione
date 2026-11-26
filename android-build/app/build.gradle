@@ -11,6 +11,15 @@ if (legacyBaselineQa && productionMode) {
     throw new GradleException("Legacy baseline is for isolated debug QA; never sign as production")
 }
 
+int baseVersionCode = admin ? (legacyBaselineQa ? 4171 : 4170) : (legacyBaselineQa ? 6681 : 6679)
+String qaBuildNumber = providers.gradleProperty("zaviQaBuildNumber").orNull
+if (qaBuildNumber != null) {
+    if (!legacyBaselineQa || !(qaBuildNumber ==~ /[1-9][0-9]{0,8}/)) {
+        throw new GradleException("Expected a positive build number for isolated QA")
+    }
+    baseVersionCode += qaBuildNumber.toInteger()
+}
+
 File stagedAssets = file("src/main/assets")
 if (!new File(stagedAssets, "index.html").isFile()) {
     throw new GradleException(
@@ -92,7 +101,7 @@ android {
         applicationId admin ? 'com.zavione.one.admin' : 'com.zavione.one'
         minSdk 26
         targetSdk 36
-        versionCode admin ? (legacyBaselineQa ? 4171 : 4170) : (legacyBaselineQa ? 6681 : 6679)
+        versionCode baseVersionCode
         versionName admin ? (legacyBaselineQa ? '1.4.54-original-design-qa1' : '1.4.70-pdf-final') : (legacyBaselineQa ? '66.62-original-design-qa1' : '66.79-pdf-final')
         resValue 'string', 'app_name', admin ? 'ZAVI ONE ADMIN' : 'ZAVI ONE'
     }

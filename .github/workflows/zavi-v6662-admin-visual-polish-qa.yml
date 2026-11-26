@@ -90,14 +90,15 @@ jobs:
         working-directory: android-build
         run: |
           set -euo pipefail
-          ./gradlew --no-daemon :app:assembleDebug -PzaviApp=admin -PzaviLegacyBaselineQa=true -PzaviProduction=false
+          ./gradlew --no-daemon :app:assembleDebug -PzaviApp=admin -PzaviLegacyBaselineQa=true -PzaviProduction=false -PzaviQaBuildNumber="$GITHUB_RUN_NUMBER"
       - name: Verify signer, package and strict historical source parity
         shell: bash
         run: |
           set -euo pipefail
           APK=android-build/app/build/outputs/apk/debug/app-debug.apk
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK"
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "package: name='com.zavione.one.admin.legacyqa'"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
+          grep -F "package: name='com.zavione.one.admin.legacyqa' versionCode='$((4171 + GITHUB_RUN_NUMBER))'" "$RUNNER_TEMP/badging.txt"
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | grep -F "versionName='1.4.54-original-design-qa1-debug'"
           python3 tools/v6662/stage_admin_visual_polish.py verify \
             --original original/admin/ZAVI_admin_V6662_DEBUG_QA.apk \

@@ -110,7 +110,7 @@ jobs:
         working-directory: android-build
         run: |
           set -euo pipefail
-          ./gradlew --no-daemon :app:assembleDebug -PzaviApp=one -PzaviLegacyBaselineQa=true -PzaviProduction=false
+          ./gradlew --no-daemon :app:assembleDebug -PzaviApp=one -PzaviLegacyBaselineQa=true -PzaviProduction=false -PzaviQaBuildNumber="$GITHUB_RUN_NUMBER"
 
       - name: Verify signed debug APK, untouched old resources, package, version
         shell: bash
@@ -120,7 +120,8 @@ jobs:
           APK="android-build/app/build/outputs/apk/debug/app-debug.apk"
           test -s "$APK"
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$APK"
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" | head -5
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
+          grep -F "package: name='com.zavione.one.legacyqa' versionCode='$((6681 + GITHUB_RUN_NUMBER))'" "$RUNNER_TEMP/badging.txt"
           unzip -p "$APK" assets/index.html | cmp - "$SOURCE/index.html"
           unzip -p "$APK" assets/models/ggml-base-q5_1.bin | sha256sum | cut -d' ' -f1 > /tmp/model-embedded.sha
           sha256sum "$SOURCE/models/ggml-base-q5_1.bin" | cut -d' ' -f1 > /tmp/model-original.sha

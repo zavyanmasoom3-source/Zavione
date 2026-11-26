@@ -11,6 +11,7 @@ import subprocess
 import zipfile
 from pathlib import Path
 from patch_approved_sales import run as approved_sales
+from patch_approved_inventory import run as approved_inventory
 from patch_23_business_registry import run as register_23_trades, ALL_FILES as REGISTERED_TRADE_FILES
 
 ORIGINAL_SHA256 = "2eb852d7cdb026ccd828a660328bd26bb474f9880430e0ea3007f51489ee50dc"
@@ -91,6 +92,7 @@ def main():
     html_file.write_text(updated, encoding="utf-8")
     registry_change_report = register_23_trades(dest)
     approved_sales(dest)
+    approved_inventory(dest)
     updated = html_file.read_text(encoding='utf-8')
     # Ensure every local stylesheet and script in the exact historical HTML still exists.
     references = re.findall(r'<(?:script|link)\b[^>]+?(?:src|href)=["\'](\./[^"\']+)["\']', updated, re.I)

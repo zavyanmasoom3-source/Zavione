@@ -258,3 +258,34 @@ html[data-zavi-theme="dark"] #content .page-head .btn.primary{
  -webkit-text-fill-color:#fff!important;
  text-shadow:none!important;
 }
+
+/* Shared reading rhythm for the connected app and its inventory workspace. */
+html #content :is(.stat-value,.report-stat strong,.record-card b,.zinv-product-bottom b){
+ font-variant-numeric:tabular-nums;
+}
+html #content :is(.page-head,.panel-head,.record-card,.settings-card) :is(h2,h3,strong){
+ overflow-wrap:break-word;
+}
+html #content :is(.table-bar,.filterbar,.action-group){
+ row-gap:8px;
+}
+html #content .zinv .zinv-product-card{
+ border-inline-start:3px solid var(--zavi-polish-focus,currentColor);
+}
+html #content .zinv .zinv-product-bottom>div+div{
+ border-inline-start:1px solid var(--border,#829ab84d);
+ padding-inline-start:8px;
+}
+html #content .zinv .zinv-summary small{
+ line-height:1.45!important;
+}
+@media(max-width:420px){
+ html #content .page-head{flex-wrap:wrap}
+ html #content .zinv .zinv-tabs button.btn{min-height:44px!important}
+ html #content .zinv .zinv-product-bottom small{font-size:11px!important}
+ html #overlay .zinv-dialog .form-grid:has(input) label{line-height:1.45}
+}
+@media(max-width:350px){
+ html #content .zinv .zinv-tabs:has(button){grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ html #overlay .zinv-dialog form .form-grid{grid-template-columns:minmax(0,1fr)!important}
+}

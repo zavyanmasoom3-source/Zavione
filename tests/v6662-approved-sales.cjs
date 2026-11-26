@@ -36,5 +36,5 @@ test('actual sale entry routes keep stock, existing barcode and finance guards',
  const order=html.slice(start,end);
  for(const anchor of ['collectSale','data-zsales-load','data-zsales-choice','window.ZaviDecimal.invoiceTotals','stockOf(pid)','invoiceSubmitting','n.tx.push(payload)','zaviBarcodeScan','z659BarcodeConfirm','data-zavi-camera-open','f.accountId.value','f.paid.value','f.discount.value','printInvoice(saved)'])assert.ok(order.includes(anchor),anchor);
  assert.ok(html.includes('zsales-approved'));
- assert.ok(html.includes('zsalesFilterButton'));
+ assert.ok(html.includes('salesFilterButton')&&html.includes("[data-zsales-filter]"));
 });

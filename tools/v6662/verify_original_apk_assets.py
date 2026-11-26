@@ -5,6 +5,7 @@ Only index.html (approved CSS/JS links, UI-only organizer replacement, durable-s
 and three strictly-verified styling assets may differ.
 Does not test native Java behavior, accounts, real networking or upgrade safety.
 """
+import reference_layout
 import argparse
 import hashlib
 import json
@@ -47,7 +48,9 @@ def verify(original, qa, css_file, output):
         old = assets(o)
         now = assets(q)
     assert len(old) == ORIGINAL_COUNT, "Original source asset count changed"
-    assert set(now) == set(old) | {CSS_NAME, SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS, AUTH_CSS, AUTH_JS}, "An original asset is missing or an unknown new asset was added"
+    for name in reference_layout.FILES:
+        assert now["assets/reference/" + name] == (reference_layout.ROOT / name).read_bytes()
+    assert set(now) == set(old) | {"assets/reference/" + n for n in reference_layout.FILES} | {CSS_NAME, SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS, AUTH_CSS, AUTH_JS}, "An original asset is missing or an unknown new asset was added"
     assert old[INDEX_NAME].decode("utf-8").count("</head>") >= 1
     expected_html = old[INDEX_NAME].replace(
         b"</head>", (EXPECTED_LINK + "</head>").encode("utf-8"), 1
@@ -69,7 +72,7 @@ def verify(original, qa, css_file, output):
     assert "</body>" in expected_source
     first, last = expected_source.rsplit("</body>", 1)
     expected_source = first + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script>' + '<script defer src="./legacy-phone-case-variants.js?v=6662-trades23"></script>' + '<script defer src="./legacy-auth-simple-v6662.js?v=6662-approved-auth"></script></body>' + last
-    expected_html = fix_durable_save(approved_inventory("index.html", approved_sales("index.html", extend23("index.html", expected_source)))).encode("utf-8")
+    expected_html = fix_durable_save(approved_inventory("index.html", approved_sales("index.html", extend23("index.html", reference_layout.apply(expected_source))))).encode("utf-8")
     assert now[INDEX_NAME] == expected_html, "Unexpected HTML/JS mutation outside the approved durable-save fix"
     expected_css = Path(css_file).read_bytes()
     assert now[CSS_NAME] == expected_css, "Unverified visual patch"
@@ -95,8 +98,8 @@ def verify(original, qa, css_file, output):
         "byte_identical_original_assets": len(untouched),
         "strictly_verified_trade_registry_assets": patched,
         "changed_original_assets": [INDEX_NAME, *patched],
-        "added_assets": [CSS_NAME, SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS, AUTH_CSS, AUTH_JS],
-        "new_design_present": False,
+        "added_assets": [CSS_NAME, SETTINGS_CSS, SETTINGS_JS, VARIANT_CSS, VARIANT_JS, AUTH_CSS, AUTH_JS] + ["assets/reference/" + n for n in reference_layout.FILES],
+        "new_design_present": True,
         "business_logic_modified": True,
         "original_functional_assets_byte_preserved": False,
         "trade_registry_only_changes_verified": False,

@@ -3,6 +3,7 @@
 Input is the immutable GitHub V6662 QA release APK; output is Android staging.
 No customer data, server state, permissions, or financial rules are modified.
 """
+import reference_layout
 import argparse
 import hashlib
 import json
@@ -89,6 +90,8 @@ def main():
     updated = head + '<script defer src="./legacy-settings-approved.js?v=6662-approved"></script>' + '<script defer src="./legacy-phone-case-variants.js?v=6662-trades23"></script>' + '<script defer src="./legacy-auth-simple-v6662.js?v=6662-approved-auth"></script></body>' + tail
     assert 'id="zaviEnableAllFeatures"' in updated, "Original enable-all control changed"
     assert 'data-module-id=' in updated and 'data-z20-option=' in updated
+    reference_layout.stage(dest)
+    updated = reference_layout.apply(updated)
     html_file.write_text(updated, encoding="utf-8")
     registry_change_report = register_23_trades(dest)
     approved_sales(dest)
@@ -138,7 +141,7 @@ def main():
               "trade_registry_changes":registry_change_report,
               "preserved_original_resources":len(files)-len(REGISTERED_TRADE_FILES),
               "model_size":(dest/"models/ggml-base-q5_1.bin").stat().st_size,
-              "no_new_design_confirmed":True,
+              "reference_layout_staged":True,
               "render_test":"NOT_VERIFIED",
               "finance_and_sync_test":"NOT_VERIFIED",
               "original_package_upgrade":"NOT_SUPPORTED_without_matching_signing_key"}

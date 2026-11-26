@@ -144,7 +144,7 @@ def modify(name,s):
  s=once(s,E("window.ZaviIndustryForms6529.render(productIndustry,p.industryDetails,{expanded:!!p.industryDetails})"),E("window.ZaviIndustryForms6529.renderSale(productIndustry).replace(/<div class=\"zsales-tools\">[\\\\s\\\\S]*?<\\\\/div>/,'').replace('zsales-optional','zinv-optional')"))
  s=once(s,"const productForm=document.getElementById('dialogForm');","""const productForm=document.getElementById('dialogForm');
  productForm.closest('.modal')?.classList.add('zinv-dialog');
- const spec=productForm.querySelector('.zinv-optional');
+ const spec=productForm.querySelector('.z629-industry.zinv-optional');
  window.ZaviIndustryForms6529.fill(spec,productIndustry,p.industryDetails);
  spec?.addEventListener('change',e=>{const c=e.target.closest('[data-zsales-choice]');if(!c||!c.value)return;const input=[...spec.querySelectorAll('[data-z629-key]')].find(x=>x.dataset.z629Key===c.dataset.zsalesChoice);if(input)input.value=c.value;c.value='';});
  document.getElementById('zinvAutoCode').onclick=()=>{let code;do{code='PR-'+newId('p').replace(/[^a-zA-Z0-9]/g,'').slice(-14).toUpperCase();}while(db.products.some(x=>zaviProductCodes(x).includes(normalizeName(code))));productForm.elements.sku.value=code;refreshProductBarcodeNotice();};
@@ -152,7 +152,6 @@ def modify(name,s):
  s=once(s,"window.ZaviIndustryForms6529.collect(productForm.querySelector('.z629-industry'),productIndustry)","window.ZaviIndustryForms6529.collectSale(productForm.querySelector('.z629-industry'),productIndustry)")
  s=once(s,'<div class="tiny-note">عکس کوچک و فشرده ذخیره می‌شود. برای نگهداری تعداد زیاد عکس، پشتیبان JSON بگیرید.</div>','<label class="btn subtle">دوربین<input id="zinvCameraPhoto" type="file" accept="image/*" capture="environment" hidden></label>')
  s=once(s,"document.getElementById('zaviProductPhotoClear').onclick=","document.getElementById('zinvCameraPhoto').onchange=document.getElementById('zaviProductPhotoInput').onchange;\n document.getElementById('zaviProductPhotoClear').onclick=")
- s=once(s,"const imei=industryDetails.values.imei;","const imei=industryDetails.values.imei;")
  s=once(s,"if(industryDetails.type==='mobile'&&industryDetails.values.imei){","if(industryDetails.type==='mobile'&&(industryDetails.values.imei||industryDetails.values.imei2)){")
  s=once(s,"const imei=industryDetails.values.imei;","const imeis=[industryDetails.values.imei,industryDetails.values.imei2].filter(Boolean);if(new Set(imeis).size!==imeis.length)return toast('IMEI 1 و IMEI 2 باید متفاوت باشند.');")
  s=once(s,"x.industryDetails.values?.imei===imei","[x.industryDetails.values?.imei,x.industryDetails.values?.imei2].some(v=>v&&imeis.includes(v))")

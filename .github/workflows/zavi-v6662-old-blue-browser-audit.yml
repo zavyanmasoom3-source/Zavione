@@ -11,6 +11,8 @@ on:
       - 'tests/v6662-durable-save-regression.cjs'
       - 'tools/v6662/patch_durable_save.py'
       - 'tools/v6662/patch_approved_sales.py'
+      - 'tools/v6662/patch_approved_inventory.py'
+      - 'tests/v6662_approved_inventory_browser.py'
       - 'tools/v6662/legacy-ui-fixes.css'
       - 'tools/v6662/legacy-settings-approved.js'
       - 'tools/v6662/legacy-settings-approved.css'
@@ -62,6 +64,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m http.server 8188 --bind 127.0.0.1 --directory qa-browser-app >/tmp/zavi-old-browser.log 2>&1 &
+          python tests/v6662_approved_inventory_browser.py
           python tests/v6662_approved_sales_browser.py
           python tests/v6662_original_browser_qa.py
           python tests/v6662_original_locale_visual_qa.py

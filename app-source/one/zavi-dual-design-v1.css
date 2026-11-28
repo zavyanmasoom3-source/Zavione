@@ -245,3 +245,26 @@ html.zawi-locked body #side #z637AiButton{
 @media print{
  html[data-zavi-theme] #side .zavi-assistants-dock{display:none!important}
 }
+
+/* Modern dual UI — phase 1: compact, accessible visual foundation. */
+@media screen {
+ html[data-zavi-theme="light"]{--zui-canvas:#F1F5FB;--zui-canvas-end:#E8EFF9;--zui-raised:#F7F9FD;--zui-border:#D4DFED;--zui-primary:#174CCB;--zui-primary-strong:#1261C8;--zui-radius:20px;--zui-muted:#465872}
+ html[data-zavi-theme="dark"]{--zui-canvas:#080F20;--zui-canvas-end:#101C32;--zui-surface:#142139;--zui-raised:#1B2A45;--zui-border:#354764;--zui-primary:#2862D8;--zui-primary-strong:#2054C4;--zui-focus:#9BC9FF;--zui-radius:20px}
+ html[data-zavi-theme] #content :is(.page-head,.panel-head){gap:12px}
+ html[data-zavi-theme] #content :is(.stat-label,.stat-foot,.hint,.subtitle){line-height:1.6}
+ html[data-zavi-theme] #content :is(.stat,.metric,.stat-card){min-width:0;font-variant-numeric:tabular-nums}
+ html[data-zavi-theme] #content :is(.searchbox,.filterbar){min-width:0;max-width:100%}
+ html[data-zavi-theme] #content .searchbox input{min-width:0;flex:1;border:0!important;background:transparent!important}
+ html[data-zavi-theme] #content :is(.btn.primary,button.primary){font-weight:700;letter-spacing:0}
+ html[data-zavi-theme="dark"] :is(.mobile-bottom,.admin-mobile-nav) :is(.bottom-btn.active,button.active,button.selected){color:#DCEAFF!important}
+ @media(max-width:767px){
+  html[data-zavi-theme] #content :is(.stat-grid,.report-grid)>:last-child:nth-child(odd){grid-column:1/-1}
+  html[data-zavi-theme] #content :is(.page-head h1,.page-head h2){font-size:clamp(20px,5vw,27px)!important;line-height:1.45}
+  html[data-zavi-theme] .mobile-bottom .bottom-btn{min-width:0;font-size:11px;line-height:1.35}
+ }
+ @media(prefers-reduced-motion:no-preference){
+  html[data-zavi-theme] #content :is(.btn,button){transition:transform 160ms cubic-bezier(.2,.8,.2,1),background-color 180ms ease,box-shadow 180ms ease}
+  html[data-zavi-theme] #content :is(.btn,button):not(:disabled):active{transform:scale(.97)}
+  @media(hover:hover){html[data-zavi-theme] #content :is(.btn,button):not(:disabled):hover{box-shadow:0 4px 12px rgba(20,60,130,.15)}}
+ }
+}

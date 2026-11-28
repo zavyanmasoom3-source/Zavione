@@ -68,3 +68,67 @@
   background-position:right 5px center!important;
  }
 }
+
+@media screen and (max-width: 720px) {
+  /* Keep the illustration beside the heading, with actions in their own row. */
+  html #content[data-screen] .page-head {
+    grid-template-columns: minmax(0, 1fr) minmax(92px, 40%) !important;
+    grid-template-rows: auto auto;
+    align-content: start !important;
+  }
+  html #content[data-screen] .page-head > div:first-child {
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+  html #content[data-screen] .page-head::before {
+    content: none !important;
+  }
+  html #content[data-screen] .page-head > .action-group {
+    grid-area: 2 / 1 / 3 / -1;
+    margin: 0 !important;
+    align-self: start;
+  }
+  html #content[data-screen] .page-head:not(:has(.action-group > *)) {
+    grid-template-rows: auto;
+  }
+  html #content[data-screen=sales] .zsales-approved .page-head {
+    display: grid !important;
+    gap: 12px 8px !important;
+    padding: 10px 4px !important;
+  }
+  html #content[data-screen=sales] .zsales-approved .page-head::after {
+    height: clamp(96px, 29vw, 145px) !important;
+  }
+  html #content[data-screen=sales] .zsales-approved .page-head .action-group {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 6px;
+  }
+  html #content[data-screen=sales] .zsales-approved .page-head .btn {
+    min-height: 44px !important;
+    width: 100%;
+    justify-content: center;
+    margin: 0;
+  }
+  html #content[data-screen=sales] .zsales-approved .page-head .btn.subtle {
+    background: var(--ref-card) !important;
+    color: var(--ref-text) !important;
+    border: 1px solid var(--ref-line) !important;
+  }
+  html #content[data-screen=sales] .zsales-approved .stat-grid .stat {
+    background: var(--ref-soft) !important;
+    border: 1px solid var(--ref-line) !important;
+    box-shadow: none !important;
+    color: var(--ref-text) !important;
+  }
+  html #content[data-screen=sales] .zsales-approved .zsales-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px;
+  }
+  html #content[data-screen=sales] .zsales-approved .zsales-tabs button {
+    padding-inline: 2px !important;
+    white-space: normal;
+    line-height: 1.4;
+  }
+}

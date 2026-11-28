@@ -209,3 +209,21 @@ html[data-zavi-theme] #content.zrf-dashboard .z63-secondary-grid .z63-quick-tile
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
  }
 }
+
+/* Modern dashboard: preserve controllers and existing destination order. */
+@media screen {
+ html[data-zavi-theme] body #content.zrf-dashboard .z62-hero{
+  background:radial-gradient(ellipse at 10% 0%,rgba(135,190,255,.24),transparent 65%),linear-gradient(135deg,var(--zui-primary),var(--zui-primary-strong))!important;
+  border-radius:24px!important;
+ }
+ html[data-zavi-theme] #content.zrf-dashboard .z63-quick-grid>.z63-quick-tile{min-height:78px!important;border-radius:16px!important}
+ html[data-zavi-theme] #content.zrf-dashboard .z63-quick-grid>.z63-quick-tile .z63-quick-glyph{width:32px!important;height:32px!important;line-height:32px!important;border-radius:11px!important}
+ html[data-zavi-theme="dark"] #content.zrf-dashboard .z63-quick-tile .z63-quick-glyph{color:#B9D6FF!important}
+ html[data-zavi-theme="dark"] body #content.zrf-dashboard .z62-hero .z62-sale{color:#DCEAFF!important;-webkit-text-fill-color:#DCEAFF!important}
+ html[data-zavi-theme] #content.zrf-dashboard :is(.zrf-tile,.z63-finance-grid>*){font-variant-numeric:tabular-nums;min-width:0}
+ html[dir="ltr"][data-zavi-theme] #content.zrf-dashboard .z62-hero-copy{text-align:left!important}
+ @media(prefers-reduced-motion:no-preference){
+  html[data-zavi-theme] #content.zrf-dashboard :is(.zrf-primary,.z63-quick-tile){transition:transform 160ms cubic-bezier(.2,.8,.2,1),border-color 180ms ease!important}
+  html[data-zavi-theme] #content.zrf-dashboard :is(.zrf-primary,.z63-quick-tile):active{transform:scale(.97)}
+ }
+}
